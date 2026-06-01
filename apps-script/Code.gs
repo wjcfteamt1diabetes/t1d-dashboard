@@ -52,12 +52,22 @@ function countDistinct(rows, col) {
 // ── Main payload ─────────────────────────────────────────────
 
 // Read a sheet's DISPLAYED values (including IMPORTRANGE results) via the
-// Google Sheets Advanced Service. Requires "Google Sheets API" added under Services.
-// headerRow is 0-indexed (0 = first row is headers).
+// Sheets REST API using the script's own OAuth token.
+// No additional services needed — works with the existing spreadsheet scope.
 function readTabViaAPI(spreadsheetId, tabName, headerRow) {
-  var range = "'" + tabName + "'";
-  var resp  = Sheets.Spreadsheets.Values.get(spreadsheetId, range);
-  var data  = resp.values || [];
+  var token = ScriptApp.getOAuthToken();
+  var range = encodeURIComponent("'" + tabName + "'");
+  var url   = 'https://sheets.googleapis.com/v4/spreadsheets/' + spreadsheetId +
+              '/values/' + range + '?valueRenderOption=FORMATTED_VALUE&majorDimension=ROWS';
+  var resp  = UrlFetchApp.fetch(url, {
+    headers: { 'Authorization': 'Bearer ' + token },
+    muteHttpExceptions: true
+  });
+  if (resp.getResponseCode() !== 200) {
+    throw new Error('Sheets API error ' + resp.getResponseCode() + ': ' +
+      resp.getContentText().substring(0, 300));
+  }
+  var data = JSON.parse(resp.getContentText()).values || [];
   if (data.length === 0) return [];
   var hdrs = (data[headerRow] || []).map(function(h) { return String(h).trim(); });
   return data.slice(headerRow + 1)
