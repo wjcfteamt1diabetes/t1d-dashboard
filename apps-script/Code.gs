@@ -51,50 +51,35 @@ function countDistinct(rows, col) {
 
 // ── Main payload ─────────────────────────────────────────────
 
-// ── Static copy of Enrolled List ────────────────────────────
-// IMPORTRANGE in Enrolled List never evaluates in Apps Script server context.
-// This function copies the live sheet to a static tab Apps Script can read reliably.
-// Run once manually, then the trigger keeps it fresh every 6 hours.
-
-function refreshEnrolledListStatic() {
-  var wb1  = SpreadsheetApp.openById(WB1_ID);
-  var src  = wb1.getSheetByName('Enrolled List');
-  var rows = src.getLastRow();
-  var cols = src.getLastColumn();
-  if (rows < 100) {
-    throw new Error('Enrolled List only has ' + rows + ' rows — cannot refresh static copy. ' +
-      'Open the sheet in a browser first so IMPORTRANGE can evaluate, then run this again.');
-  }
-  var dst = wb1.getSheetByName('Enrolled_List_Static');
-  if (!dst) dst = wb1.insertSheet('Enrolled_List_Static');
-  dst.clearContents();
-  var data = src.getRange(1, 1, rows, cols).getValues();
-  dst.getRange(1, 1, data.length, data[0].length).setValues(data);
-  Logger.log('Enrolled_List_Static refreshed: ' + rows + ' rows, ' + cols + ' cols');
-}
-
-// Run once to set up automatic refresh every 6 hours
-function createEnrolledListTrigger() {
-  // Remove existing triggers for this function first
-  ScriptApp.getProjectTriggers().forEach(function(t) {
-    if (t.getHandlerFunction() === 'refreshEnrolledListStatic') ScriptApp.deleteTrigger(t);
-  });
-  ScriptApp.newTrigger('refreshEnrolledListStatic').timeBased().everyHours(6).create();
-  Logger.log('Trigger created — refreshEnrolledListStatic will run every 6 hours');
+// Read a sheet's DISPLAYED values (including IMPORTRANGE results) via the
+// Google Sheets Advanced Service. Requires "Google Sheets API" added under Services.
+// headerRow is 0-indexed (0 = first row is headers).
+function readTabViaAPI(spreadsheetId, tabName, headerRow) {
+  var range = "'" + tabName + "'";
+  var resp  = Sheets.Spreadsheets.Values.get(spreadsheetId, range);
+  var data  = resp.values || [];
+  if (data.length === 0) return [];
+  var hdrs = (data[headerRow] || []).map(function(h) { return String(h).trim(); });
+  return data.slice(headerRow + 1)
+    .filter(function(r) { return r && r.some(function(v) { return v !== '' && v !== undefined; }); })
+    .map(function(r) {
+      var obj = {};
+      hdrs.forEach(function(h, i) { obj[h] = (r[i] !== undefined ? r[i] : ''); });
+      return obj;
+    });
 }
 
 function buildPayload() {
   var wb1 = SpreadsheetApp.openById(WB1_ID);
   var wb2 = SpreadsheetApp.openById(WB2_ID);
 
-  // Read from static copy of Enrolled List (IMPORTRANGE doesn't work in Apps Script context).
-  // If static copy doesn't exist yet, run refreshEnrolledListStatic() once from the editor.
-  // Enrolled List: title row removed — headers now in row 1, headerRow=0
-  var enrolledTabName = wb1.getSheetByName('Enrolled_List_Static') ? 'Enrolled_List_Static' : 'Enrolled List';
-  var enrolled = readTab(wb1, enrolledTabName, 0);
+  // Enrolled List uses IMPORTRANGE. SpreadsheetApp.getValues() cannot read it.
+  // Sheets Advanced Service (Sheets.Spreadsheets.Values.get) returns displayed values.
+  // Prerequisite: enable "Google Sheets API" under Services in the Apps Script editor.
+  var enrolled = readTabViaAPI(WB1_ID, 'Enrolled List', 0);
   if (enrolled.length < 100) {
-    throw new Error('Patient data unavailable (' + enrolled.length + ' rows from ' + enrolledTabName + '). ' +
-      'Run refreshEnrolledListStatic() from the Apps Script editor, then retry.');
+    throw new Error('Enrolled List returned only ' + enrolled.length + ' rows via API. ' +
+      'Make sure "Google Sheets API" is added under Services, and the sheet has data visible in the browser.');
   }
   var csFac    = readTab(wb1, 'CompleteSupport_Facilities', 1);
   var cap      = readTab(wb1, 'Capacity_Building',          0);
