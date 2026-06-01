@@ -55,8 +55,22 @@ function buildPayload() {
   var wb1 = SpreadsheetApp.openById(WB1_ID);
   var wb2 = SpreadsheetApp.openById(WB2_ID);
 
+  // Enrolled List uses IMPORTRANGE/dynamic formulas.
+  // On cold script runs getLastRow() returns 2 (formulas not yet evaluated).
+  // Peek at the sheet to trigger evaluation, wait, then retry once.
+  var enrolledSh = wb1.getSheetByName('Enrolled List');
+  enrolledSh.getRange(3, 1).getValue(); // peek triggers IMPORTRANGE load
+  if (enrolledSh.getLastRow() < 100) {
+    Utilities.sleep(6000);
+  }
+
   // Load all tabs (headerRow=1 for sheets with a title row, 0 for clean headers)
   var enrolled = readTab(wb1, 'Enrolled List',             1);
+  if (enrolled.length < 100) {
+    throw new Error('Enrolled List loaded only ' + enrolled.length + ' rows — ' +
+      'IMPORTRANGE may need re-authorisation. Open the sheet in a browser, accept any ' +
+      'permission prompt, then hit Refresh Data on the dashboard.');
+  }
   var csFac    = readTab(wb1, 'CompleteSupport_Facilities', 1);
   var cap      = readTab(wb1, 'Capacity_Building',          0);
   var orient   = readTab(wb1, 'Orientation_T1D signs',      1);
@@ -668,6 +682,30 @@ var HBA1C_MOCK = {
   distLt7:[0,0,0,0,0,0], dist7_10:[0,0,0,0,0,0], dist10_13:[0,0,0,0,0,0],
   dist13_16:[0,0,0,0,0,0], distGt16:[0,0,0,0,0,0], latestAvg:[0,0,0,0,0,0]
 };
+
+// RUN THIS if clinicOps shows all-zero — checks actual values in Operations_Summary
+function diagnose_opsValues() {
+  var sh = SpreadsheetApp.openById(WB2_ID).getSheetByName('Operations_Summary');
+  var data = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  // Print facility names (row 2, index 1) cols 5-15
+  var facRow = data[1];
+  Logger.log('Facility names (cols 5-15): ' + JSON.stringify(
+    facRow.slice(4,15).map(function(v){ return String(v).substring(0,20); })
+  ));
+  // Print last 5 data rows with their month label + first 5 facility values
+  for (var r = data.length - 5; r < data.length; r++) {
+    var row = data[r];
+    Logger.log('ROW' + (r+1) + ' label=' + String(row[2]).substring(0,8) +
+      ' vals=' + JSON.stringify(row.slice(4,9).map(function(v){ return v === '' ? 'EMPTY' : v; })));
+  }
+  // Count months with at least one non-empty facility value
+  var filledMonths = 0;
+  for (var r2 = 6; r2 < data.length; r2++) {
+    var hasVal = data[r2].slice(4).some(function(v){ return v !== '' && v !== null && !isNaN(Number(v)); });
+    if (hasVal) filledMonths++;
+  }
+  Logger.log('Months with at least one facility value: ' + filledMonths + ' of ' + (data.length - 6));
+}
 
 // ── Payload health check — run from editor to verify all sections ─────────────
 function testPayload() {
