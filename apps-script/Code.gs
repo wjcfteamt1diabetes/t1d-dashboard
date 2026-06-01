@@ -227,3 +227,44 @@ function readTab(wb, tabName) {
 
 function norm(v) { return String(v == null ? '' : v).trim().toLowerCase(); }
 */
+
+// ─── DIAGNOSTIC — run once from the Apps Script editor ───
+// Select diagnoseTabs from the function dropdown and click Run.
+// Copy the output from the Execution Log and share it to proceed with Phase 2.
+function diagnoseTabs() {
+  var result = {};
+
+  [
+    { key: 'Sheet1', id: WB1_ID },
+    { key: 'Sheet2', id: WB2_ID }
+  ].forEach(function(wb) {
+    var workbook = SpreadsheetApp.openById(wb.id);
+    result[wb.key] = { name: workbook.getName(), tabs: {} };
+
+    workbook.getSheets().forEach(function(sheet) {
+      var tabName = sheet.getName();
+      var data = sheet.getDataRange().getValues();
+      if (!data || data.length === 0) {
+        result[wb.key].tabs[tabName] = { headers: [], rowCount: 0, sampleRow: [] };
+        return;
+      }
+      var headers = data[0].map(function(h) { return String(h).trim(); });
+      var sampleRow = data.length > 1
+        ? data[1].map(function(v) {
+            // mask anything that looks like a patient ID or name
+            var s = String(v).trim();
+            if (s.length > 3 && /^[A-Z]{2,}\d+/i.test(s)) return '***ID***';
+            return s.substring(0, 40); // truncate long values
+          })
+        : [];
+      result[wb.key].tabs[tabName] = {
+        headers: headers,
+        rowCount: data.length - 1,
+        sampleRow: sampleRow
+      };
+    });
+  });
+
+  Logger.log(JSON.stringify(result, null, 2));
+  return result;
+}
