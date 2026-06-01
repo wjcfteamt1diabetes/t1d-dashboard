@@ -1018,7 +1018,7 @@ function buildOffDays(){
 }
 
 function hbaPending(canvasId){
-  // Returns true and shows a pending overlay when HbA1c data is all zeros (sheet not yet populated)
+  // Returns true and collapses the chart area when HbA1c data is all zeros
   var hasData=(HBA_N||[]).some(function(v){return v>0;});
   var el=document.getElementById(canvasId);
   if(!el) return !hasData;
@@ -1026,14 +1026,19 @@ function hbaPending(canvasId){
   var existingMsg=wrap.querySelector('.hba-pending');
   if(!hasData){
     el.style.display='none';
+    wrap.style.height='auto';
+    wrap.style.minHeight='0';
     if(!existingMsg){
       var msg=document.createElement('div');
       msg.className='hba-pending data-pending';
+      msg.style.cssText='margin:12px 0;text-align:center;padding:14px;';
       msg.textContent='HbA1c data pending — Hba1c_Baseline/Latest sheet not yet populated';
       wrap.appendChild(msg);
     }
   } else {
     el.style.display='';
+    wrap.style.height='';
+    wrap.style.minHeight='';
     if(existingMsg) existingMsg.remove();
   }
   return !hasData;
