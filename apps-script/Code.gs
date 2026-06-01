@@ -1,328 +1,670 @@
 // T1D Program Dashboard — Apps Script aggregation endpoint
+// Phase 2: real aggregation from Google Sheets
 // Deploy as: Web app · Execute as Me · Access Anyone
-// Version control: edit here, then Manage deployments → new version in Apps Script UI
 
 const WB1_ID = '1cgMB5RIomWGSw_cQfmFkxx3qfBXlXxIL9fR4FzFuwIg'; // T1D_Data_Claude_Sheet1_v1
 const WB2_ID = '1zObGfUcDOszt82v9V65OAK7yV5McXzeusFx5XqU_d6M'; // T1D_Data_Claude_Sheet2_v1
-const CACHE_KEY = 't1d_payload_v1';
-const CACHE_SECONDS = 600; // 10 min
+const CACHE_KEY  = 't1d_payload_v2';
+const CACHE_SECS = 600; // 10 min
 
 function doGet(e) {
   var cache = CacheService.getScriptCache();
-  var json = cache.get(CACHE_KEY);
+  var json  = cache.get(CACHE_KEY);
   if (!json || (e && e.parameter && e.parameter.fresh === '1')) {
     json = JSON.stringify(buildPayload());
-    cache.put(CACHE_KEY, json, CACHE_SECONDS);
+    cache.put(CACHE_KEY, json, CACHE_SECS);
   }
   return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
 }
 
-// ─── PHASE 1: hardcoded mock payload (same numbers as the original HTML) ───
-// Replace this with real aggregation in Phase 2.
+// ── Utilities ────────────────────────────────────────────────
+
+function norm(v) { return String(v == null ? '' : v).trim().toLowerCase(); }
+function pct(num, den) { return den > 0 ? Math.round(num / den * 100) : 0; }
+
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fmtMonth(d) {
+  if (!(d instanceof Date) || isNaN(d.getTime())) return null;
+  return MON[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2);
+}
+
+// Read sheet using a specific row (0-indexed) as header row.
+// Multi-row-header sheets (title in row 1, headers in row 2) use headerRow=1.
+function readTab(wb, tabName, headerRow) {
+  var sh = wb.getSheetByName(tabName);
+  if (!sh) throw new Error('Missing tab: ' + tabName);
+  var data = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  var hdrs = data[headerRow].map(function(h) { return String(h).trim(); });
+  return data.slice(headerRow + 1).map(function(r) {
+    var obj = {};
+    hdrs.forEach(function(h, i) { obj[h] = r[i]; });
+    return obj;
+  });
+}
+
+function countDistinct(rows, col) {
+  var s = {};
+  rows.forEach(function(r) { var v = norm(r[col]); if (v) s[v] = true; });
+  return Object.keys(s).length;
+}
+
+// ── Main payload ─────────────────────────────────────────────
+
 function buildPayload() {
+  var wb1 = SpreadsheetApp.openById(WB1_ID);
+  var wb2 = SpreadsheetApp.openById(WB2_ID);
+
+  // Load all tabs (headerRow=1 for sheets with a title row, 0 for clean headers)
+  var enrolled = readTab(wb1, 'Enrolled List',             1);
+  var csFac    = readTab(wb1, 'CompleteSupport_Facilities', 1);
+  var cap      = readTab(wb1, 'Capacity_Building',          0);
+  var orient   = readTab(wb1, 'Orientation_T1D signs',      1);
+  var targets  = readTab(wb1, 'Targets',                    0);
+  var ltSh     = wb1.getSheetByName('Light_touch_facilities');
+  var fupSh    = wb1.getSheetByName('Followup_adherence');
+  var opsSh    = wb2.getSheetByName('Operations_Summary');
+  var offsSh   = wb2.getSheetByName('# of offs');
+
+  // Global rule 1: exclude non-survivors from all metrics
+  // (Enrolled List = CS patients only per global rule 2)
+  var survivors = enrolled.filter(function(p) {
+    return norm(p['Survival Status']) !== 'no';
+  });
+
+  // Per-facility lookup sets (normalised facility names)
+  var csFacSet = buildFacSet(csFac,  'Facility name');
+  var ltFacSet = buildLtFacSet(ltSh);
+
+  // Per-state target map
+  var tgtMap = buildTargetMap(targets);
+
   return {
     meta: {
       generatedAt: new Date().toISOString(),
-      n: 2216,
-      schemaVersion: '1.1'
+      n:            survivors.length,
+      schemaVersion:'1.1'
     },
-
-    // Per-state aggregates. target now reads from Targets sheet (corrected from 3080).
-    states: {
-      all: {
-        states:4, dist:46, plan:58, op:56, csOp:38, ltOp:18,
-        enr:2216, target:5954, csEnr:1647, ltEnr:569,
-        active:1950, inactive:215, nonSurviving:51,
-        newLast:51, newPrev:96, avgClin:0.9,
-        insBase:44, insLast:96,
-        hbTest:38, hbDec:61, hbDecN:843,
-        dka:8, hypo:11,
-        drBat:11, drTr:387, drPre:62, drPost:81,
-        nrBat:4,  nrTr:60,  nrPre:79, nrPost:87,
-        flwSes:73, flwHr:12817, flwDist:15, flwTotDist:46
-      },
-      RJ: {
-        states:1, dist:18, plan:24, op:23, csOp:14, ltOp:9,
-        enr:810, target:4000, csEnr:520, ltEnr:290,
-        active:712, inactive:79, nonSurviving:19,
-        newLast:18, newPrev:38, avgClin:0.8,
-        insBase:41, insLast:94,
-        hbTest:35, hbDec:58, hbDecN:312,
-        dka:9, hypo:12,
-        drBat:4, drTr:142, drPre:60, drPost:79,
-        nrBat:2, nrTr:22,  nrPre:77, nrPost:85,
-        flwSes:28, flwHr:4820, flwDist:6, flwTotDist:18
-      },
-      MP: {
-        states:1, dist:14, plan:18, op:17, csOp:17, ltOp:0,
-        enr:712, target:1082, csEnr:712, ltEnr:0,
-        active:626, inactive:69, nonSurviving:17,
-        newLast:16, newPrev:31, avgClin:0.9,
-        insBase:46, insLast:97,
-        hbTest:40, hbDec:63, hbDecN:268,
-        dka:7, hypo:10,
-        drBat:3, drTr:118, drPre:64, drPost:82,
-        nrBat:1, nrTr:20,  nrPre:81, nrPost:89,
-        flwSes:22, flwHr:3800, flwDist:5, flwTotDist:14
-      },
-      UK: {
-        states:1, dist:8, plan:10, op:10, csOp:5, ltOp:5,
-        enr:380, target:602, csEnr:210, ltEnr:170,
-        active:334, inactive:37, nonSurviving:9,
-        newLast:10, newPrev:16, avgClin:1.0,
-        insBase:43, insLast:96,
-        hbTest:37, hbDec:60, hbDecN:148,
-        dka:8, hypo:11,
-        drBat:2, drTr:74,  drPre:61, drPost:80,
-        nrBat:1, nrTr:10,  nrPre:78, nrPost:86,
-        flwSes:14, flwHr:2200, flwDist:3, flwTotDist:8
-      },
-      CG: {
-        states:1, dist:6, plan:6, op:6, csOp:6, ltOp:0,
-        enr:314, target:270, csEnr:314, ltEnr:0,
-        active:278, inactive:30, nonSurviving:6,
-        newLast:7, newPrev:11, avgClin:1.2,
-        insBase:47, insLast:97,
-        hbTest:42, hbDec:66, hbDecN:115,
-        dka:6, hypo:9,
-        drBat:2, drTr:53,  drPre:65, drPost:83,
-        nrBat:1, nrTr:8,   nrPre:80, nrPost:90,
-        flwSes:9, flwHr:1997, flwDist:1, flwTotDist:6
-      }
-    },
-
-    series: {
-      months:    ['Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26'],
-      csCum:     [152,216,318,370,540,638,704,762,804,862,914,980,1034,1090,1140,1186,1221],
-      ltCum:     [65,79,95,107,146,160,174,176,179,185,190,196,200,206,214,232,237],
-      clin:      [17,19,22,26,32,35,42,44,47,49,50,52,52,54,55,56,56],
-      newEnrCs:  [58,45,102,80,134,107,100,118,86,108,68,80,72,61,72,34,0],
-      newEnrLt:  [26,21,48,34,57,43,46,61,47,57,31,33,39,35,37,17,0],
-      avgCl:     [4.9,3.5,6.8,4.4,5.9,4.3,3.5,4.1,2.8,3.4,2.0,2.2,2.1,1.8,2.0,0.9,0]
-    },
-
-    followup: {
-      mom: [
-        {m:'May 26',v:25,n:1843},{m:'Apr 26',v:49,n:1987},{m:'Mar 26',v:42,n:1893},
-        {m:'Feb 26',v:48,n:1764},{m:'Jan 26',v:50,n:1580},{m:'Dec 25',v:46,n:1469},
-        {m:'Nov 25',v:40,n:1372}
-      ]
-    },
-
-    smbg: {
-      mom: [
-        {m:'Apr 26',v:[25,54,12,9],n:1512},{m:'Mar 26',v:[25,43,18,14],n:1398},
-        {m:'Feb 26',v:[21,42,21,16],n:1244},{m:'Jan 26',v:[20,48,19,13],n:1108},
-        {m:'Dec 25',v:[27,51,17,5],n:1002},{m:'Nov 25',v:[30,43,19,8],n:889}
-      ],
-      last: {m:'May 26',v:[25,55,12,8],n:911}
-    },
-
-    glycemia: {
-      months:    [{m:'May 26',n:943},{m:'Apr 26',n:891},{m:'Mar 26',n:824}],
-      hyperDist: [[22,31,27,13,7],[20,29,28,15,8],[18,28,30,16,8]],
-      hypoDist:  [[63,20,10,5,2],[60,22,11,5,2],[62,21,10,5,2]]
-    },
-
-    clinicOps: {
-      months:        ['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26'],
-      functionalPct: [75,78,72,80,78,82,84,82],
-      offDays:       [[35,25,20,10],[38,28,18,8],[32,30,20,10],[40,27,18,8],[38,29,19,7],[42,28,17,6],[44,27,16,6],[43,27,17,6]]
-    },
-
-    trainedStaff: [
-      {lbl:'With trained Pediatrician',    v:72},
-      {lbl:'With trained MD Medicine',     v:65},
-      {lbl:'With trained MO',              v:45},
-      {lbl:'With Paed + MD Medicine both', v:58}
-    ],
-
-    hba1c: {
-      changeLabels: [
-        ['Overall','(n=77)'],['3–6 months','(n=27)'],['6–9 months','(n=24)'],
-        ['9–12 months','(n=21)'],['12–15 months','(n=14)'],['15–18 months','(n=10)'],['>18 months','(n=5)']
-      ],
-      changeN:    [77,27,24,21,14,10,5],
-      improved4:  [14,0,4,5,8,12,18],
-      improved2:  [3,19,13,14,18,22,26],
-      improvedL:  [38,41,33,38,34,30,26],
-      noChange:   [5,7,4,5,5,4,4],
-      worsenedL:  [35,26,42,33,28,24,20],
-      worsened2:  [3,4,0,0,4,5,4],
-      worsened4:  [3,4,4,5,3,3,2],
-      avgBaseline:[9.2,9.2,9.3,9.2,9.1,9.0,8.9],
-      avgLatest:  [8.8,8.8,9.1,8.6,8.3,7.9,7.7],
-      distLabels: [
-        ['3–6m','(n=27)'],['6–9m','(n=24)'],['9–12m','(n=21)'],
-        ['12–15m','(n=14)'],['15–18m','(n=10)'],['>18m','(n=5)']
-      ],
-      distLt7:    [4,8,14,22,30,40],
-      dist7_10:   [30,34,36,38,40,36],
-      dist10_13:  [38,33,30,26,22,18],
-      dist13_16:  [19,17,14,10,6,4],
-      distGt16:   [9,8,6,4,2,2],
-      latestAvg:  [9.1,8.7,8.5,8.2,7.9,7.7]
-    },
-
-    demographics: {
-      gender: [
-        {l:'Male',v:58},{l:'Female',v:40},{l:'Other/NS',v:2}
-      ],
-      age: [
-        {l:'Pediatric (<13)',v:19},{l:'Pubertal (13–17)',v:12},{l:'Adults (≥18)',v:69}
-      ],
-      prevFacility: [
-        {l:'PHC',v:22},{l:'CHC',v:31},{l:'DH',v:18},{l:'State MC',v:8},
-        {l:'Central MC',v:3},{l:'Pvt Hospital',v:10},{l:'Pvt Clinic',v:4},{l:'Newly Dx',v:4}
-      ],
-      inactiveReasons: []
-    },
-
-    insulin: {
-      tdd: [
-        {grp:'Pediatric <13',  n:423,  below:24, inRange:58, above:18},
-        {grp:'Pubertal 13–17', n:264,  below:20, inRange:62, above:18},
-        {grp:'Adults ≥18',     n:1529, below:18, inRange:67, above:15}
-      ],
-      basal: [
-        {l:'<20%',   v:8},
-        {l:'20–30%', v:14},
-        {l:'30–50%', v:38, ideal:true},
-        {l:'50–60%', v:28},
-        {l:'> 60%',  v:12}
-      ]
-    },
-
-    capacity: {
-      specialty: [
-        {l:'Pediatrician',    v:54},
-        {l:'MD Medicine',     v:37},
-        {l:'Medical Officer', v:5},
-        {l:'Other',           v:4}
-      ],
-      pilotSplit: [54, 46],
-      flwCadre: [
-        {l:'ASHA Worker', v:77},
-        {l:'ANM',         v:7},
-        {l:'BCM',         v:6},
-        {l:'Other',       v:10}
-      ]
-    }
+    states:       buildStates(survivors, enrolled, csFac, ltSh, csFacSet, ltFacSet, tgtMap, cap, orient),
+    series:       buildSeries(survivors, csFac, ltSh),
+    followup:     buildFollowup(fupSh, survivors),
+    smbg:         SMBG_MOCK,
+    glycemia:     GLYCEMIA_MOCK,
+    clinicOps:    buildClinicOps(opsSh, offsSh),
+    trainedStaff: buildTrainedStaff(csFac),
+    hba1c:        HBA1C_MOCK,
+    demographics: buildDemographics(survivors),
+    insulin:      buildInsulin(survivors),
+    capacity:     buildCapacitySection(cap, orient)
   };
 }
 
-// ─── PHASE 2: real aggregation helpers (implement tab-by-tab) ───
-// Uncomment and complete these when replacing the hardcoded payload above.
+// ── Facility helpers ─────────────────────────────────────────
 
-/*
-function readTab(wb, tabName) {
-  var sh = wb.getSheetByName(tabName);
-  if (!sh) throw new Error('Missing tab: ' + tabName);
-  var rows = sh.getDataRange().getValues();
-  var headers = rows.shift().map(function(h){ return String(h).trim(); });
-  return rows.map(function(r){
-    return Object.fromEntries(headers.map(function(h,i){ return [h, r[i]]; }));
+function buildFacSet(rows, col) {
+  var s = {};
+  rows.forEach(function(r) { var n = norm(r[col] || ''); if (n) s[n] = true; });
+  return s;
+}
+
+function buildLtFacSet(ltSh) {
+  var data = ltSh.getRange(1, 1, ltSh.getLastRow(), ltSh.getLastColumn()).getValues();
+  var hdrs = data[1]; // row 2 = headers
+  var nameIdx = -1;
+  for (var i = 0; i < hdrs.length; i++) {
+    if (String(hdrs[i]).trim() === 'Facility name') { nameIdx = i; break; }
+  }
+  var s = {};
+  for (var r = 2; r < data.length; r++) {
+    var n = norm(data[r][nameIdx] || '');
+    if (n) s[n] = true;
+  }
+  return s;
+}
+
+function buildTargetMap(targets) {
+  var m = {};
+  targets.forEach(function(t) {
+    var s = norm(t['State']);
+    var v = Number(t['State-level targets']);
+    if (s && !isNaN(v) && s !== 'total' && s !== 'follow-up adherence') m[s] = v;
   });
+  m['all'] = Object.keys(m).reduce(function(sum, k) { return sum + (m[k] || 0); }, 0);
+  return m;
 }
 
-function norm(v) { return String(v == null ? '' : v).trim().toLowerCase(); }
-*/
-
-// ─── DIAGNOSTICS — run each function separately from the Apps Script editor ───
-// These are split into small functions to avoid log truncation.
-
-// RUN THIS FIRST — shows all tab names + row counts for both workbooks
-function diagnose_tabList() {
-  var out = { Sheet1: {}, Sheet2: {} };
-  var wb1 = SpreadsheetApp.openById(WB1_ID);
-  var wb2 = SpreadsheetApp.openById(WB2_ID);
-  wb1.getSheets().forEach(function(s){ out.Sheet1[s.getName()] = s.getLastRow(); });
-  wb2.getSheets().forEach(function(s){ out.Sheet2[s.getName()] = s.getLastRow(); });
-  Logger.log(JSON.stringify(out, null, 2));
-}
-
-// RUN 2 — ALL headers in Followup_adherence (this is the main patient sheet, 2236 rows)
-function diagnose_followup() {
-  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('Followup_adherence');
-  var totalCols = sh.getLastColumn();
-  // Row 1: headers. Row 2: first data row (mask IDs)
-  var r1 = sh.getRange(1, 1, 1, totalCols).getValues()[0].map(function(v){ return String(v).substring(0,35); });
-  var r2 = sh.getRange(2, 1, 1, totalCols).getValues()[0].map(function(v){
-    var s = String(v).trim();
-    return (s.length > 3 && /^[A-Za-z]{2,}\d+/.test(s)) ? '***ID***' : s.substring(0,25);
-  });
-  Logger.log('TOTAL COLS: ' + totalCols);
-  Logger.log('HEADERS: ' + JSON.stringify(r1));
-  Logger.log('SAMPLE:  ' + JSON.stringify(r2));
-}
-
-// RUN 3 — Enrolled List: show all rows (only 2 rows, shows what's there + #REF detail)
-function diagnose_enrolledList() {
-  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('Enrolled List');
-  Logger.log('Rows: ' + sh.getLastRow() + '  Cols: ' + sh.getLastColumn());
-  var rows = sh.getRange(1, 1, sh.getLastRow(), Math.min(sh.getLastColumn(), 40)).getValues();
-  rows.forEach(function(row, i) {
-    Logger.log('ROW'+(i+1)+': '+JSON.stringify(row.map(function(v){ return String(v).substring(0,25); })));
-  });
-}
-
-// RUN 4 — Targets tab (8 rows — need column names + all values)
-function diagnose_targets() {
-  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('Targets');
-  var rows = sh.getDataRange().getValues();
-  rows.forEach(function(row, i) {
-    Logger.log('ROW'+(i+1)+': '+JSON.stringify(row.map(function(v){ return String(v).substring(0,30); })));
-  });
-}
-
-// RUN 5 — Sheet2: Operations_Summary + # of offs (show rows 1-3 + last 3 col headers)
-function diagnose_sheet2() {
-  var wb2 = SpreadsheetApp.openById(WB2_ID);
-  ['Operations_Summary','# of offs'].forEach(function(name) {
-    var sh = wb2.getSheetByName(name);
-    if (!sh) { Logger.log(name + ': NOT FOUND'); return; }
-    var totalCols = sh.getLastColumn();
-    Logger.log('=== '+name+' ('+sh.getLastRow()+' rows, '+totalCols+' cols) ===');
-    var rows = sh.getRange(1, 1, Math.min(3, sh.getLastRow()), Math.min(totalCols, 8)).getValues();
-    rows.forEach(function(row, i){
-      Logger.log('ROW'+(i+1)+': '+JSON.stringify(row.map(function(v){ return String(v).substring(0,25); })));
+// Read LT facility monthly enrolment data
+// Returns { facCount, totalEnr, monthly: { 'Jan 25': N, ... } }
+function readLtData(ltSh, stateFilter) {
+  var data = ltSh.getRange(1, 1, ltSh.getLastRow(), ltSh.getLastColumn()).getValues();
+  var hdrs = data[1]; // row 2
+  var stateIdx = -1, nameIdx = -1, totalIdx = -1;
+  var monthCols = [];
+  for (var i = 0; i < hdrs.length; i++) {
+    var h = String(hdrs[i]).trim();
+    if (h === 'State')                               stateIdx = i;
+    if (h === 'Facility name')                        nameIdx  = i;
+    if (h === 'Total enrolments (autocalculated)')    totalIdx = i;
+    if (hdrs[i] instanceof Date && !isNaN(hdrs[i].getTime())) {
+      monthCols.push({ idx: i, label: fmtMonth(hdrs[i]) });
+    }
+  }
+  var facCount = 0, totalEnr = 0;
+  var monthly = {};
+  for (var r = 2; r < data.length; r++) {
+    var row = data[r];
+    if (stateFilter && norm(row[stateIdx]) !== norm(stateFilter)) continue;
+    var name = norm(row[nameIdx] || '');
+    if (!name) continue;
+    facCount++;
+    var te = Number(row[totalIdx]);
+    if (!isNaN(te)) totalEnr += te;
+    monthCols.forEach(function(mc) {
+      var v = Number(row[mc.idx]);
+      if (!isNaN(v) && mc.label) monthly[mc.label] = (monthly[mc.label] || 0) + v;
     });
-    // Also show last 3 column headers to see the date range
-    if (totalCols > 8) {
-      var lastCols = sh.getRange(1, totalCols-2, 1, 3).getValues()[0];
-      Logger.log('LAST 3 COL HEADERS: '+JSON.stringify(lastCols.map(function(v){ return String(v).substring(0,25); })));
+  }
+  return { facCount: facCount, totalEnr: totalEnr, monthly: monthly };
+}
+
+// ── States builder ───────────────────────────────────────────
+
+function buildStates(survivors, enrolled, csFac, ltSh, csFacSet, ltFacSet, tgtMap, cap, orient) {
+  var out = {};
+  ['all', 'RJ', 'MP', 'UK', 'CG'].forEach(function(k) {
+    var isAll = k === 'all';
+    var sk = norm(k);
+    var survs  = isAll ? survivors : survivors.filter(function(p) { return norm(p['State']) === sk; });
+    var enrAll = isAll ? enrolled  : enrolled.filter(function(p)  { return norm(p['State']) === sk; });
+    var csF    = isAll ? csFac     : csFac.filter(function(f)     { return norm(f['State']) === sk; });
+    var capF   = isAll ? cap       : cap.filter(function(r)       { return norm(r['State']) === sk; });
+    var oriF   = isAll ? orient    : orient.filter(function(r)    { return norm(r['State']) === sk; });
+    var ltD    = readLtData(ltSh, isAll ? null : k);
+
+    out[k] = buildStateObj(k, survs, enrAll, csF, ltD, tgtMap, capF, oriF);
+  });
+  return out;
+}
+
+function buildStateObj(key, survs, enrAll, csF, ltD, tgtMap, capF, oriF) {
+  var n       = survs.length;
+  var nonSurv = enrAll.filter(function(p) { return norm(p['Survival Status']) === 'no'; }).length;
+  var active  = survs.filter(function(p)  { return norm(p['Case Status (Active/Inactive)']) === 'active'; }).length;
+
+  // Facility footprint
+  var csOp  = csF.filter(function(f) { return norm(f['T1D Clinic Operational?']) === 'yes'; }).length;
+  var ltOp  = ltD.facCount;
+  var plan  = csF.length + ltD.facCount;
+
+  // Districts (from CS facilities)
+  var dists = {};
+  csF.forEach(function(f) { var d = norm(f['District']); if (d) dists[d] = true; });
+  var dist = Object.keys(dists).length;
+
+  // Enrolment (CS from Enrolled List, LT from LT sheet totals)
+  var csEnr = n;
+  var ltEnr = ltD.totalEnr;
+  var target = tgtMap[key === 'all' ? 'all' : norm(key)] || 0;
+
+  // New enrolments: last and previous calendar month
+  var now       = new Date();
+  var lastM     = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  var prevM     = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  var newLast   = survs.filter(function(p) {
+    var d = new Date(p['Date of enrolment']);
+    return !isNaN(d) && d.getFullYear() === lastM.getFullYear() && d.getMonth() === lastM.getMonth();
+  }).length;
+  var newPrev   = survs.filter(function(p) {
+    var d = new Date(p['Date of enrolment']);
+    return !isNaN(d) && d.getFullYear() === prevM.getFullYear() && d.getMonth() === prevM.getMonth();
+  }).length;
+  var avgClin   = csOp > 0 ? Math.round(newLast / csOp * 10) / 10 : 0;
+
+  // Insulin regimen
+  var insBase = pct(
+    survs.filter(function(p) { return norm(p['Previous treatment regimen']) === 'basal-bolus'; }).length, n);
+  var insLast = pct(
+    survs.filter(function(p) { return norm(p['Insulin regimen check']) === 'basal-bolus'; }).length, n);
+
+  // DKA / hypoglycaemia — denominator = those with follow-up visit in last 12 months
+  var fupDenom = survs.filter(function(p) {
+    return norm(p['Follow-up visit in the last 12 months?']) === 'yes';
+  });
+  var dka  = pct(fupDenom.filter(function(p) {
+    return Number(p['# of DKA episodes in the last 12 months']) > 0; }).length, fupDenom.length);
+  var hypo = pct(fupDenom.filter(function(p) {
+    return Number(p['# of severe hypoglycemia episodes in the last 12 months']) > 0; }).length, fupDenom.length);
+
+  // Training — doctors
+  var drs  = capF.filter(function(r) { return norm(r['Type of Service Provider']) === 'doctor'; });
+  var drBat = countDistinct(drs, 'Training Batch');
+  var drSet = {}; drs.forEach(function(r) { var nm = norm(r['Name of Service Provider']); if (nm) drSet[nm] = true; });
+  var drTr  = Object.keys(drSet).length;
+  var drSc  = calcPrePost(drs);
+
+  // Training — nurses
+  var nrs  = capF.filter(function(r) { var t = norm(r['Type of Service Provider']); return t === 'staff nurse' || t === 'nurse'; });
+  var nrBat = countDistinct(nrs, 'Training Batch');
+  var nrSet = {}; nrs.forEach(function(r) { var nm = norm(r['Name of Service Provider']); if (nm) nrSet[nm] = true; });
+  var nrTr  = Object.keys(nrSet).length;
+  var nrSc  = calcPrePost(nrs);
+
+  // FLW orientation
+  var flwSes  = countDistinct(oriF, 'Session #');
+  var flwHr   = oriF.reduce(function(s, r) { return s + (Number(r['# of Service Providers']) || 0); }, 0);
+  var pilotAll = {}, pilotWithSess = {};
+  oriF.forEach(function(r) {
+    var d = norm(r['District']);
+    if (!d) return;
+    if (norm(r['Pilot District? (Yes/No)']) === 'yes') pilotAll[d] = true;
+    pilotWithSess[d] = true;
+  });
+  // Use CS facility districts as total pilot district count if orientation data is sparse
+  var flwTotDist = dist > 0 ? dist : Object.keys(pilotAll).length;
+  var flwDist    = Object.keys(pilotWithSess).length;
+
+  return {
+    states:      key === 'all' ? 4 : 1,
+    dist:        dist,
+    plan:        plan,
+    op:          csOp + ltOp,
+    csOp:        csOp,
+    ltOp:        ltOp,
+    enr:         csEnr + ltEnr,
+    target:      target,
+    csEnr:       csEnr,
+    ltEnr:       ltEnr,
+    active:      active,
+    inactive:    n - active,
+    nonSurviving:nonSurv,
+    newLast:     newLast,
+    newPrev:     newPrev,
+    avgClin:     avgClin,
+    insBase:     insBase,
+    insLast:     insLast,
+    hbTest:      null,  // pending: Hba1c_Baseline/Latest sheet not yet populated
+    hbDec:       null,
+    hbDecN:      null,
+    dka:         dka,
+    hypo:        hypo,
+    drBat:       drBat,
+    drTr:        drTr,
+    drPre:       drSc.pre,
+    drPost:      drSc.post,
+    nrBat:       nrBat,
+    nrTr:        nrTr,
+    nrPre:       nrSc.pre,
+    nrPost:      nrSc.post,
+    flwSes:      flwSes,
+    flwHr:       flwHr,
+    flwDist:     flwDist,
+    flwTotDist:  flwTotDist
+  };
+}
+
+function calcPrePost(rows) {
+  var pre = [], post = [];
+  rows.forEach(function(r) {
+    var p = Number(r['Pre-test Score']), q = Number(r['Post-test Score']), m = Number(r['Maximum Score']);
+    if (!isNaN(p) && !isNaN(q) && m > 0) { pre.push(p/m*100); post.push(q/m*100); }
+  });
+  var mean = function(a) { return a.length ? Math.round(a.reduce(function(x,y){return x+y;},0)/a.length) : 0; };
+  return { pre: mean(pre), post: mean(post) };
+}
+
+// ── Series builder ───────────────────────────────────────────
+
+function buildSeries(survivors, csFac, ltSh) {
+  var now    = new Date();
+  var months = [];
+  var d      = new Date(2025, 0, 1);
+  while (d.getFullYear() < now.getFullYear() || (d.getFullYear() === now.getFullYear() && d.getMonth() <= now.getMonth())) {
+    months.push({ label: MON[d.getMonth()] + ' ' + String(d.getFullYear()).slice(2), year: d.getFullYear(), month: d.getMonth() });
+    d.setMonth(d.getMonth() + 1);
+  }
+
+  var ltMonthly = readLtData(ltSh, null).monthly;
+
+  var csCum = [], ltCum = [], clin = [], newEnrCs = [], newEnrLt = [], avgCl = [];
+  var cumLt  = 0;
+
+  months.forEach(function(m) {
+    var eom = new Date(m.year, m.month + 1, 0, 23, 59, 59);
+
+    // Cumulative CS enrolments
+    var cumCs = survivors.filter(function(p) {
+      var enrD = new Date(p['Date of enrolment']);
+      return !isNaN(enrD) && enrD <= eom;
+    }).length;
+    csCum.push(cumCs);
+
+    // New CS enrolments this month
+    var newCs = survivors.filter(function(p) {
+      var enrD = new Date(p['Date of enrolment']);
+      return !isNaN(enrD) && enrD.getFullYear() === m.year && enrD.getMonth() === m.month;
+    }).length;
+    newEnrCs.push(newCs);
+
+    // Operational CS clinics by end of month
+    var opClinics = csFac.filter(function(f) {
+      if (norm(f['T1D Clinic Operational?']) !== 'yes') return false;
+      var opD = new Date(f['Date of Operationalisation']);
+      return !isNaN(opD) && opD <= eom;
+    }).length;
+    clin.push(opClinics);
+
+    // LT monthly new enrolments
+    var newLt = ltMonthly[m.label] || 0;
+    newEnrLt.push(newLt);
+    cumLt += newLt;
+    ltCum.push(cumLt);
+
+    avgCl.push(opClinics > 0 ? Math.round(newCs / opClinics * 10) / 10 : 0);
+  });
+
+  return {
+    months:   months.map(function(m) { return m.label; }),
+    csCum:    csCum,
+    ltCum:    ltCum,
+    clin:     clin,
+    newEnrCs: newEnrCs,
+    newEnrLt: newEnrLt,
+    avgCl:    avgCl
+  };
+}
+
+// ── Follow-up builder ────────────────────────────────────────
+
+function buildFollowup(fupSh, survivors) {
+  var data  = fupSh.getRange(1, 1, fupSh.getLastRow(), fupSh.getLastColumn()).getValues();
+  var hdrs  = data[0];
+
+  // Survivor ID set
+  var survIds = {};
+  survivors.forEach(function(p) { survIds[norm(p['Claude_ID'])] = true; });
+
+  // Date columns: day-of-month encodes year (24→2024, 25→2025…), getMonth() = actual month
+  var dateCols = [];
+  for (var i = 2; i < hdrs.length; i++) {
+    var h = hdrs[i];
+    if (h instanceof Date && !isNaN(h.getTime())) {
+      var yearSuffix = h.getDate();
+      dateCols.push({ idx: i, label: MON[h.getMonth()] + ' ' + yearSuffix, year: 2000 + yearSuffix, month: h.getMonth() });
+    }
+  }
+
+  var stats = {};
+  dateCols.forEach(function(dc) { stats[dc.label] = { y: 0, n: 0 }; });
+
+  for (var r = 1; r < data.length; r++) {
+    if (!survIds[norm(data[r][0])]) continue;
+    dateCols.forEach(function(dc) {
+      var v = norm(data[r][dc.idx]);
+      if (v === 'y') stats[dc.label].y++;
+      else if (v === 'n') stats[dc.label].n++;
+    });
+  }
+
+  // Keep last 7 months that have Y+N > 0, most-recent first
+  var validCols = dateCols.filter(function(dc) {
+    return stats[dc.label].y + stats[dc.label].n > 0;
+  }).sort(function(a, b) {
+    return a.year !== b.year ? a.year - b.year : a.month - b.month;
+  }).slice(-7).reverse();
+
+  return {
+    mom: validCols.map(function(dc) {
+      var s = stats[dc.label], total = s.y + s.n;
+      return { m: dc.label, v: pct(s.y, total), n: total };
+    })
+  };
+}
+
+// ── Clinic ops builder ───────────────────────────────────────
+
+function buildClinicOps(opsSh, offsSh) {
+  var opsData  = parseOpsSheet(opsSh);
+  var offsData = parseOpsSheet(offsSh);
+
+  var months = [], funcPct = [], offDays = [];
+
+  opsData.months.forEach(function(om, mi) {
+    var opFacs = opsData.facilities.filter(function(f) { return f.operational; });
+    var denom  = 0, numFunc = 0;
+    opFacs.forEach(function(f) {
+      var v = Number(om.vals[f.name]);
+      if (!isNaN(v) && om.vals[f.name] !== '') { denom++; if (v >= 0.75) numFunc++; }
+    });
+    months.push(om.label);
+    funcPct.push(pct(numFunc, denom));
+
+    var om2 = offsData.months[mi];
+    if (om2) {
+      var b = [0,0,0,0], offDen = 0;
+      opFacs.forEach(function(f) {
+        var v = Number(om2.vals[f.name]);
+        if (!isNaN(v) && om2.vals[f.name] !== '') {
+          offDen++;
+          if (v === 1) b[0]++; else if (v === 2) b[1]++; else if (v === 3) b[2]++; else if (v >= 4) b[3]++;
+        }
+      });
+      offDays.push(b.map(function(x) { return pct(x, offDen); }));
+    } else {
+      offDays.push([0,0,0,0]);
     }
   });
+
+  var take = Math.min(8, months.length), s = months.length - take;
+  return { months: months.slice(s), functionalPct: funcPct.slice(s), offDays: offDays.slice(s) };
 }
 
-// RUN 6 — SMBG_Monthly: show rows 1-4 (all cols up to 30)
-function diagnose_smbgMonthly() {
-  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('SMBG_Monthly');
-  Logger.log('Rows: '+sh.getLastRow()+'  Cols: '+sh.getLastColumn());
-  var rows = sh.getRange(1, 1, sh.getLastRow(), Math.min(sh.getLastColumn(), 30)).getValues();
-  rows.forEach(function(row, i){
-    Logger.log('ROW'+(i+1)+': '+JSON.stringify(row.map(function(v){ return String(v).substring(0,25); })));
-  });
+// Sheet2 structure: row2=facility names (col5+), row3=operational, row7+=data (col3=month label)
+function parseOpsSheet(sh) {
+  var data = sh.getRange(1, 1, sh.getLastRow(), sh.getLastColumn()).getValues();
+  var facRow = data[1], opRow = data[2];
+  var facs = [];
+  for (var i = 4; i < facRow.length; i++) {
+    var nm = String(facRow[i]).trim();
+    if (nm) facs.push({ name: nm, idx: i, operational: norm(opRow[i]) === 'yes' });
+  }
+  var months = [];
+  for (var r = 6; r < data.length; r++) {
+    var lbl = String(data[r][2]).trim();
+    if (!lbl || lbl === 'Month/Year') continue;
+    var vals = {};
+    facs.forEach(function(f) { vals[f.name] = data[r][f.idx]; });
+    months.push({ label: lbl, vals: vals });
+  }
+  return { facilities: facs, months: months };
 }
 
-// RUN 7 — Hba1c_Baseline/Latest: show all rows
-function diagnose_hba1c() {
-  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('Hba1c_Baseline/Latest');
-  if (!sh) { Logger.log('NOT FOUND'); return; }
-  Logger.log('Rows: '+sh.getLastRow()+'  Cols: '+sh.getLastColumn());
-  var rows = sh.getRange(1, 1, sh.getLastRow(), Math.min(sh.getLastColumn(), 25)).getValues();
-  rows.forEach(function(row, i){
-    Logger.log('ROW'+(i+1)+': '+JSON.stringify(row.map(function(v){ return String(v).substring(0,30); })));
-  });
+// ── Trained staff builder ────────────────────────────────────
+
+function buildTrainedStaff(csFac) {
+  var op    = csFac.filter(function(f) { return norm(f['T1D Clinic Operational?']) === 'yes'; });
+  var total = op.length || 1;
+  return [
+    { lbl:'With trained Pediatrician',    v: pct(op.filter(function(f){ return norm(f['Trained pediatrician available?']) === 'yes'; }).length, total) },
+    { lbl:'With trained MD Medicine',     v: pct(op.filter(function(f){ return norm(f['Trained MD Medicine available?'])  === 'yes'; }).length, total) },
+    { lbl:'With trained MO',              v: pct(op.filter(function(f){ return norm(f['Trained Medical Officer available?']) === 'yes'; }).length, total) }
+  ];
 }
 
-// RUN 8 — SMBG_Hyper/Hypo: show all rows
-function diagnose_hyperHypo() {
-  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('SMBG_Hyper/Hypo');
-  if (!sh) { Logger.log('NOT FOUND'); return; }
-  Logger.log('Rows: '+sh.getLastRow()+'  Cols: '+sh.getLastColumn());
-  var rows = sh.getRange(1, 1, sh.getLastRow(), Math.min(sh.getLastColumn(), 15)).getValues();
-  rows.forEach(function(row, i){
-    Logger.log('ROW'+(i+1)+': '+JSON.stringify(row.map(function(v){ return String(v).substring(0,30); })));
+// ── Demographics builder ─────────────────────────────────────
+
+function buildDemographics(survivors) {
+  // Gender
+  var male = 0, female = 0;
+  survivors.forEach(function(p) {
+    var s = norm(p['Sex']);
+    if (s.charAt(0) === 'm') male++; else if (s.charAt(0) === 'f') female++;
   });
+  var gTot = (male + female) || 1;
+
+  // Age groups: compute from Age column (Age group only has 2 buckets in the sheet)
+  var ped = 0, pub = 0, adu = 0;
+  survivors.forEach(function(p) {
+    var a = Number(p['Age']);
+    if (isNaN(a)) return;
+    if (a < 13) ped++; else if (a < 18) pub++; else adu++;
+  });
+  var aTot = (ped + pub + adu) || 1;
+
+  // Previous treatment facility
+  var FAC_LABEL = {
+    'phc':'PHC','chc':'CHC','dh':'DH','state mc':'State MC','central mc':'Central MC',
+    'private hospital':'Pvt Hospital','private clinic':'Pvt Clinic',
+    'newly diagnosed':'Newly Dx','newly dx':'Newly Dx'
+  };
+  var facMap = {};
+  survivors.forEach(function(p) {
+    var cat;
+    if (norm(p['Previous treatment regimen']) === 'newly diagnosed') {
+      cat = 'Newly Dx';
+    } else {
+      var raw = norm(p['Previous treatment facility category']);
+      cat = FAC_LABEL[raw] || (raw ? raw.toUpperCase() : null);
+    }
+    if (cat) facMap[cat] = (facMap[cat] || 0) + 1;
+  });
+  var ptfTot = survivors.length || 1;
+  var ptf = Object.keys(facMap).map(function(l) {
+    return { l: l, v: pct(facMap[l], ptfTot) };
+  }).filter(function(d) { return d.v > 0; }).sort(function(a,b) { return b.v - a.v; });
+
+  // Inactive reasons
+  var inactMap = {};
+  survivors.filter(function(p) { return norm(p['Case Status (Active/Inactive)']) === 'inactive'; })
+    .forEach(function(p) {
+      var r = String(p['Reason for marking inactive']).trim();
+      if (r) inactMap[r] = (inactMap[r] || 0) + 1;
+    });
+  var inact = Object.keys(inactMap).map(function(r) {
+    return { l: r, v: inactMap[r] };
+  }).sort(function(a,b) { return b.v - a.v; });
+
+  return {
+    gender: [
+      { l:'Male',     v: pct(male, gTot) },
+      { l:'Female',   v: pct(female, gTot) },
+      { l:'Other/NS', v: Math.max(0, 100 - pct(male, gTot) - pct(female, gTot)) }
+    ],
+    age: [
+      { l:'Pediatric (<13)',  v: pct(ped, aTot) },
+      { l:'Pubertal (13–17)', v: pct(pub, aTot) },
+      { l:'Adults (≥18)',     v: pct(adu, aTot) }
+    ],
+    prevFacility:    ptf,
+    inactiveReasons: inact
+  };
 }
+
+// ── Insulin builder ──────────────────────────────────────────
+
+function buildInsulin(survivors) {
+  var AGE_GROUPS = [
+    { grp:'Pediatric <13',  test: function(p) { return Number(p['Age']) < 13; } },
+    { grp:'Pubertal 13–17', test: function(p) { var a=Number(p['Age']); return a>=13 && a<18; } },
+    { grp:'Adults ≥18',     test: function(p) { return Number(p['Age']) >= 18; } }
+  ];
+
+  var tdd = AGE_GROUPS.map(function(g) {
+    var rows = survivors.filter(g.test).filter(function(p) {
+      var ir = norm(p['In Range?']);
+      return ir === 'below' || ir === 'in range' || ir === 'above';
+    });
+    var tot = rows.length || 1;
+    return {
+      grp:     g.grp,
+      n:       rows.length,
+      below:   pct(rows.filter(function(p){ return norm(p['In Range?'])==='below';   }).length, tot),
+      inRange: pct(rows.filter(function(p){ return norm(p['In Range?'])==='in range';}).length, tot),
+      above:   pct(rows.filter(function(p){ return norm(p['In Range?'])==='above';   }).length, tot)
+    };
+  });
+
+  // Basal % stored as decimal (0.40 = 40%)
+  var bRows = survivors.filter(function(p) {
+    var b = Number(p['Basal %']); return !isNaN(b) && b > 0;
+  });
+  var bN = bRows.length || 1;
+  var basal = [
+    { l:'<20%',   v: pct(bRows.filter(function(p){ return Number(p['Basal %']) <  0.20; }).length, bN) },
+    { l:'20–30%', v: pct(bRows.filter(function(p){ var b=Number(p['Basal %']); return b>=0.20&&b<0.30; }).length, bN) },
+    { l:'30–50%', v: pct(bRows.filter(function(p){ var b=Number(p['Basal %']); return b>=0.30&&b<=0.50; }).length, bN), ideal:true },
+    { l:'50–60%', v: pct(bRows.filter(function(p){ var b=Number(p['Basal %']); return b>0.50&&b<=0.60; }).length, bN) },
+    { l:'> 60%',  v: pct(bRows.filter(function(p){ return Number(p['Basal %']) >  0.60; }).length, bN) }
+  ];
+
+  return { tdd: tdd, basal: basal };
+}
+
+// ── Capacity section builder ─────────────────────────────────
+
+function buildCapacitySection(cap, orient) {
+  var doctors = cap.filter(function(r) { return norm(r['Type of Service Provider']) === 'doctor'; });
+  var drTot   = doctors.length || 1;
+
+  // Specialty
+  var SPEC = { 'pediatrician':'Pediatrician','paediatrician':'Pediatrician','md medicine':'MD Medicine','medical officer':'Medical Officer','mo':'Medical Officer' };
+  var specMap = {};
+  doctors.forEach(function(r) {
+    var d = norm(r['Designation/ Department']);
+    var lbl = SPEC[d] || 'Other';
+    specMap[lbl] = (specMap[lbl] || 0) + 1;
+  });
+  var ORDER = ['Pediatrician','MD Medicine','Medical Officer','Other'];
+  var specialty = ORDER.map(function(l) {
+    return { l:l, v:pct(specMap[l]||0, drTot) };
+  }).filter(function(d) { return d.v > 0; });
+
+  // Pilot split
+  var pilotDr = doctors.filter(function(r) { return norm(r['Pilot facility? (Yes/No)']) === 'yes'; }).length;
+  var pilotSplit = [pct(pilotDr, drTot), 100 - pct(pilotDr, drTot)];
+
+  // FLW cadre from orientation sessions
+  var CADRE = { 'asha':'ASHA Worker','asha worker':'ASHA Worker','anm':'ANM','bcm':'BCM' };
+  var cadreMap = {};
+  orient.forEach(function(r) {
+    var t   = norm(r['Type of Service Provider']);
+    var lbl = CADRE[t] || 'Other';
+    var v   = Number(r['# of Service Providers']) || 0;
+    cadreMap[lbl] = (cadreMap[lbl] || 0) + v;
+  });
+  var cadTot = Object.keys(cadreMap).reduce(function(s,k){ return s+(cadreMap[k]||0); },0) || 1;
+  var CORD   = ['ASHA Worker','ANM','BCM','Other'];
+  var flwCadre = CORD.map(function(l) {
+    return { l:l, v:pct(cadreMap[l]||0, cadTot) };
+  }).filter(function(d){ return d.v > 0; });
+
+  return { specialty:specialty, pilotSplit:pilotSplit, flwCadre:flwCadre };
+}
+
+// ── Mock sections ────────────────────────────────────────────
+// SMBG_Monthly, SMBG_Hyper/Hypo, Hba1c_Baseline/Latest sheets are not yet
+// populated in the workbook. These return mock values until the sheets are filled.
+
+var SMBG_MOCK = {
+  mom: [
+    {m:'Apr 26',v:[25,54,12,9],n:1512},{m:'Mar 26',v:[25,43,18,14],n:1398},
+    {m:'Feb 26',v:[21,42,21,16],n:1244},{m:'Jan 26',v:[20,48,19,13],n:1108},
+    {m:'Dec 25',v:[27,51,17,5], n:1002},{m:'Nov 25',v:[30,43,19,8], n:889}
+  ],
+  last: {m:'May 26',v:[25,55,12,8],n:911}
+};
+
+var GLYCEMIA_MOCK = {
+  months:    [{m:'May 26',n:943},{m:'Apr 26',n:891},{m:'Mar 26',n:824}],
+  hyperDist: [[22,31,27,13,7],[20,29,28,15,8],[18,28,30,16,8]],
+  hypoDist:  [[63,20,10,5,2], [60,22,11,5,2], [62,21,10,5,2]]
+};
+
+var HBA1C_MOCK = {
+  changeLabels:[['Overall',''],['3–6 months',''],['6–9 months',''],['9–12 months',''],['12–15 months',''],['15–18 months',''],['>18 months','']],
+  changeN:   [0,0,0,0,0,0,0], improved4:[0,0,0,0,0,0,0], improved2:[0,0,0,0,0,0,0], improvedL:[0,0,0,0,0,0,0],
+  noChange:  [0,0,0,0,0,0,0], worsenedL:[0,0,0,0,0,0,0], worsened2:[0,0,0,0,0,0,0], worsened4:[0,0,0,0,0,0,0],
+  avgBaseline:[0,0,0,0,0,0,0], avgLatest:[0,0,0,0,0,0,0],
+  distLabels:[['3–6m',''],['6–9m',''],['9–12m',''],['12–15m',''],['15–18m',''],['>18m','']],
+  distLt7:[0,0,0,0,0,0], dist7_10:[0,0,0,0,0,0], dist10_13:[0,0,0,0,0,0],
+  dist13_16:[0,0,0,0,0,0], distGt16:[0,0,0,0,0,0], latestAvg:[0,0,0,0,0,0]
+};
