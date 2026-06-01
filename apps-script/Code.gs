@@ -89,8 +89,9 @@ function buildPayload() {
 
   // Read from static copy of Enrolled List (IMPORTRANGE doesn't work in Apps Script context).
   // If static copy doesn't exist yet, run refreshEnrolledListStatic() once from the editor.
+  // Enrolled List: title row removed — headers now in row 1, headerRow=0
   var enrolledTabName = wb1.getSheetByName('Enrolled_List_Static') ? 'Enrolled_List_Static' : 'Enrolled List';
-  var enrolled = readTab(wb1, enrolledTabName, 1);
+  var enrolled = readTab(wb1, enrolledTabName, 0);
   if (enrolled.length < 100) {
     throw new Error('Patient data unavailable (' + enrolled.length + ' rows from ' + enrolledTabName + '). ' +
       'Run refreshEnrolledListStatic() from the Apps Script editor, then retry.');
