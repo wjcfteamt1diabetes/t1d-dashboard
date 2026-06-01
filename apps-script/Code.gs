@@ -668,3 +668,72 @@ var HBA1C_MOCK = {
   distLt7:[0,0,0,0,0,0], dist7_10:[0,0,0,0,0,0], dist10_13:[0,0,0,0,0,0],
   dist13_16:[0,0,0,0,0,0], distGt16:[0,0,0,0,0,0], latestAvg:[0,0,0,0,0,0]
 };
+
+// ── Payload health check — run from editor to verify all sections ─────────────
+function testPayload() {
+  var p = buildPayload();
+  var ok = [], warn = [];
+
+  function chk(label, val) {
+    var ok_ = val !== null && val !== undefined && val !== 0 && !(Array.isArray(val) && val.every(function(v){return !v;}));
+    (ok_ ? ok : warn).push(label + ': ' + JSON.stringify(val).substring(0,60));
+  }
+  function arr(label, a) {
+    var nonZero = (a||[]).filter(function(v){return Number(v)>0;}).length;
+    (nonZero > 0 ? ok : warn).push(label + ' → ' + nonZero + '/' + (a||[]).length + ' non-zero');
+  }
+
+  // meta
+  chk('meta.n',           p.meta.n);
+  chk('meta.generatedAt', p.meta.generatedAt);
+
+  // states
+  var s = p.states.all;
+  chk('states.all.enr',     s.enr);
+  chk('states.all.csEnr',   s.csEnr);
+  chk('states.all.ltEnr',   s.ltEnr);
+  chk('states.all.active',  s.active);
+  chk('states.all.dka',     s.dka);
+  chk('states.all.hypo',    s.hypo);
+  chk('states.all.insBase', s.insBase);
+  chk('states.all.insLast', s.insLast);
+  chk('states.all.drTr',    s.drTr);
+  chk('states.all.flwHr',   s.flwHr);
+
+  // series
+  arr('series.months',   p.series.months);
+  arr('series.csCum',    p.series.csCum);
+  arr('series.ltCum',    p.series.ltCum);
+  arr('series.clin',     p.series.clin);
+  arr('series.newEnrCs', p.series.newEnrCs);
+  arr('series.newEnrLt', p.series.newEnrLt);
+
+  // followup
+  chk('followup.mom length', p.followup.mom.length);
+  if (p.followup.mom.length > 0) chk('followup.mom[0]', p.followup.mom[0]);
+
+  // clinicOps
+  arr('clinicOps.months',       p.clinicOps.months);
+  arr('clinicOps.functionalPct',p.clinicOps.functionalPct);
+
+  // demographics
+  chk('demographics.gender[0].v',        (p.demographics.gender[0]||{}).v);
+  chk('demographics.age[0].v',           (p.demographics.age[0]||{}).v);
+  chk('demographics.prevFacility length', p.demographics.prevFacility.length);
+
+  // insulin
+  chk('insulin.tdd[0].n',    (p.insulin.tdd[0]||{}).n);
+  chk('insulin.basal length', p.insulin.basal.length);
+
+  // trainedStaff
+  chk('trainedStaff[0].v', (p.trainedStaff[0]||{}).v);
+
+  // capacity
+  chk('capacity.specialty[0].v', (p.capacity.specialty[0]||{}).v);
+  chk('capacity.flwCadre[0].v',  (p.capacity.flwCadre[0]||{}).v);
+
+  Logger.log('=== OK (' + ok.length + ') ===');
+  ok.forEach(function(l){ Logger.log('  ✓ ' + l); });
+  Logger.log('=== WARN / ZERO (' + warn.length + ') ===');
+  warn.forEach(function(l){ Logger.log('  ✗ ' + l); });
+}
