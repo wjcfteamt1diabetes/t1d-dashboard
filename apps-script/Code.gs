@@ -228,43 +228,88 @@ function readTab(wb, tabName) {
 function norm(v) { return String(v == null ? '' : v).trim().toLowerCase(); }
 */
 
-// ─── DIAGNOSTIC — run once from the Apps Script editor ───
-// Select diagnoseTabs from the function dropdown and click Run.
-// Copy the output from the Execution Log and share it to proceed with Phase 2.
-function diagnoseTabs() {
-  var result = {};
+// ─── DIAGNOSTICS — run each function separately from the Apps Script editor ───
+// These are split into small functions to avoid log truncation.
 
-  [
-    { key: 'Sheet1', id: WB1_ID },
-    { key: 'Sheet2', id: WB2_ID }
-  ].forEach(function(wb) {
-    var workbook = SpreadsheetApp.openById(wb.id);
-    result[wb.key] = { name: workbook.getName(), tabs: {} };
+// RUN THIS FIRST — shows all tab names + row counts for both workbooks
+function diagnose_tabList() {
+  var out = { Sheet1: {}, Sheet2: {} };
+  var wb1 = SpreadsheetApp.openById(WB1_ID);
+  var wb2 = SpreadsheetApp.openById(WB2_ID);
+  wb1.getSheets().forEach(function(s){ out.Sheet1[s.getName()] = s.getLastRow(); });
+  wb2.getSheets().forEach(function(s){ out.Sheet2[s.getName()] = s.getLastRow(); });
+  Logger.log(JSON.stringify(out, null, 2));
+}
 
-    workbook.getSheets().forEach(function(sheet) {
-      var tabName = sheet.getName();
-      var data = sheet.getDataRange().getValues();
-      if (!data || data.length === 0) {
-        result[wb.key].tabs[tabName] = { headers: [], rowCount: 0, sampleRow: [] };
-        return;
-      }
-      var headers = data[0].map(function(h) { return String(h).trim(); });
-      var sampleRow = data.length > 1
-        ? data[1].map(function(v) {
-            // mask anything that looks like a patient ID or name
-            var s = String(v).trim();
-            if (s.length > 3 && /^[A-Z]{2,}\d+/i.test(s)) return '***ID***';
-            return s.substring(0, 40); // truncate long values
-          })
-        : [];
-      result[wb.key].tabs[tabName] = {
-        headers: headers,
-        rowCount: data.length - 1,
-        sampleRow: sampleRow
-      };
+// RUN THIS — inspects Enrolled List rows 1-5 to find real headers + spot #REF errors
+function diagnose_enrolledList() {
+  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('Enrolled List');
+  var rows = sh.getRange(1, 1, Math.min(5, sh.getLastRow()), sh.getLastColumn()).getValues();
+  rows.forEach(function(row, i) {
+    Logger.log('ROW ' + (i+1) + ': ' + JSON.stringify(
+      row.map(function(v){ return String(v).substring(0,30); })
+    ));
+  });
+}
+
+// RUN THIS — inspects SMBG_Monthly rows 1-4
+function diagnose_smbgMonthly() {
+  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('SMBG_Monthly');
+  var rows = sh.getRange(1, 1, Math.min(4, sh.getLastRow()), Math.min(sh.getLastColumn(), 20)).getValues();
+  rows.forEach(function(row, i) {
+    Logger.log('ROW ' + (i+1) + ': ' + JSON.stringify(
+      row.map(function(v){ return String(v).substring(0,30); })
+    ));
+  });
+}
+
+// RUN THIS — inspects Followup_adherence rows 1-3 (shows Claude_ID column + date columns)
+function diagnose_followup() {
+  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('Followup_adherence');
+  var cols = Math.min(sh.getLastColumn(), 25);
+  var rows = sh.getRange(1, 1, Math.min(3, sh.getLastRow()), cols).getValues();
+  rows.forEach(function(row, i) {
+    Logger.log('ROW ' + (i+1) + ': ' + JSON.stringify(
+      row.map(function(v){ return String(v).substring(0,30); })
+    ));
+  });
+}
+
+// RUN THIS — inspects Hba1c_Baseline/Latest rows 1-4
+function diagnose_hba1c() {
+  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('Hba1c_Baseline/Latest');
+  if (!sh) { Logger.log('Tab not found — check exact name'); return; }
+  var rows = sh.getRange(1, 1, Math.min(4, sh.getLastRow()), Math.min(sh.getLastColumn(), 20)).getValues();
+  rows.forEach(function(row, i) {
+    Logger.log('ROW ' + (i+1) + ': ' + JSON.stringify(
+      row.map(function(v){ return String(v).substring(0,30); })
+    ));
+  });
+}
+
+// RUN THIS — inspects SMBG_Hyper/Hypo rows 1-4
+function diagnose_hyperHypo() {
+  var sh = SpreadsheetApp.openById(WB1_ID).getSheetByName('SMBG_Hyper/Hypo');
+  if (!sh) { Logger.log('Tab not found — check exact name'); return; }
+  var rows = sh.getRange(1, 1, Math.min(4, sh.getLastRow()), Math.min(sh.getLastColumn(), 15)).getValues();
+  rows.forEach(function(row, i) {
+    Logger.log('ROW ' + (i+1) + ': ' + JSON.stringify(
+      row.map(function(v){ return String(v).substring(0,30); })
+    ));
+  });
+}
+
+// RUN THIS — inspects Sheet2 tabs (Operations_Summary + # of offs)
+function diagnose_sheet2() {
+  var wb2 = SpreadsheetApp.openById(WB2_ID);
+  wb2.getSheets().forEach(function(sheet) {
+    var cols = Math.min(sheet.getLastColumn(), 15);
+    var rowCount = sheet.getLastRow();
+    if (rowCount === 0) { Logger.log(sheet.getName() + ': EMPTY'); return; }
+    var rows = sheet.getRange(1, 1, Math.min(3, rowCount), cols).getValues();
+    Logger.log('=== ' + sheet.getName() + ' ('+rowCount+' rows) ===');
+    rows.forEach(function(row, i) {
+      Logger.log('ROW '+(i+1)+': '+JSON.stringify(row.map(function(v){ return String(v).substring(0,25); })));
     });
   });
-
-  Logger.log(JSON.stringify(result, null, 2));
-  return result;
 }
