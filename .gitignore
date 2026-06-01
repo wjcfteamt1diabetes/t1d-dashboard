@@ -1,0 +1,15 @@
+# Reference workbooks — large binaries, not for public repo
+*.xlsx
+*.xls
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor directories
+.vscode/
+.idea/
+
+# Logs
+*.log

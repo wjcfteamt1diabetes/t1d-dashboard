@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>T1D Program Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --b1:#0f3460;--b2:#1a5fa8;--b3:#2e86de;--b4:#7db8e8;--b5:#bfdbfe;--b6:#dbeafe;
+  --g1:#334155;--g2:#64748b;--g3:#94a3b8;--g4:#cbd5e1;--g5:#e2e8f0;
+  --rust:#c2410c;
+  --bg:#f0f4fa;--card:#fff;--bdr:#e2e8f0;--bdr2:#f1f5f9;
+  --t1:#0f172a;--t2:#475569;--tm:#94a3b8;
+  --fn:'DM Sans',sans-serif;
+  /* HbA1c colors */
+  --hI4:#14532d;--hI2:#16a34a;--hIL:#86efac;--hNC:#94a3b8;
+  --hWL:#fda4af;--hW2:#f87171;--hW4:#dc2626;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:13px}
+body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh}
+
+.hdr{background:var(--b1);padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
+.hdr-t{color:#fff;font-size:15px;font-weight:700}
+.hdr-s{color:#93c5fd;font-size:11px;margin-top:2px}
+.hdr-b{background:rgba(255,255,255,.1);color:#fbbf24;font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid rgba(251,191,36,.3)}
+
+.wrap{max-width:1380px;margin:0 auto}
+.fbar{background:#fff;border-bottom:1px solid var(--bdr);padding:7px 20px;position:sticky;top:0;z-index:120;box-shadow:0 1px 6px rgba(15,52,96,.08)}
+.fbar-inner{max-width:1380px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.flbl{font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.fsel{font-size:11px;font-family:var(--fn);padding:3px 20px 3px 6px;border:1px solid var(--bdr);border-radius:4px;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 5px center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--t1)}
+.fdiv{width:1px;height:20px;background:var(--bdr);margin:0 2px}
+.ftag{font-size:10px;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:3px 8px;font-weight:600}
+
+.tabs-bar{background:#fff;border-bottom:1px solid var(--bdr);position:sticky;top:44px;z-index:110;box-shadow:0 1px 4px rgba(15,52,96,.06)}
+.tabs-inner{max-width:1380px;margin:0 auto;padding:0 20px;display:flex}
+.tab{padding:9px 16px;font-size:12px;font-weight:600;color:var(--tm);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:var(--fn)}
+.tab:hover{color:var(--b2)}.tab.active{color:var(--b2);border-bottom-color:var(--b2)}
+
+.tc{display:none;padding:12px 20px 24px}.tc.active{display:block}
+.tc-wrap{max-width:1380px;margin:0 auto}
+
+.sl{font-size:10px;font-weight:700;color:var(--b2);text-transform:uppercase;letter-spacing:.7px;margin:12px 0 7px;padding-bottom:3px;border-bottom:2px solid var(--b6);display:flex;align-items:center;gap:5px}
+.sl::before{content:'';width:3px;height:12px;background:var(--b2);border-radius:2px;flex-shrink:0}
+
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:7px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:7px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:7px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:7px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.cs2{grid-column:span 2}.cs3{grid-column:span 3}.cs4{grid-column:span 4}
+
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:10px 12px}
+.cab{border-left:3px solid var(--b2)}.cao{border-left:3px solid var(--g2)}
+
+/* Typography — uniform DM Sans, no italics */
+.ct{font-size:11px;font-weight:700;color:var(--t1);margin-bottom:2px;line-height:1.3}
+.cs{font-size:9px;color:var(--tm);margin-bottom:7px;line-height:1.4}
+.kv{font-size:22px;font-weight:700;color:var(--t1);line-height:1;margin-bottom:2px}
+.kv.b{color:var(--b2)}.kv.g2c{color:var(--g2)}
+.ks{font-size:10px;color:var(--t2);margin-top:2px}
+.kn{font-size:9px;color:var(--tm);margin-top:2px}
+.ktr{display:inline-flex;align-items:center;gap:2px;font-size:10px;font-weight:600;margin-top:3px}
+.ktr.up{color:var(--b2)}.ktr.dn{color:var(--g2)}
+
+/* Horizontal bars */
+.pr{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.pl{font-size:10px;color:var(--t2);width:90px;flex-shrink:0}
+.pl-sm{font-size:10px;color:var(--t2);width:62px;flex-shrink:0;text-align:right}
+.pb{flex:1;height:15px;background:#f1f5f9;border-radius:3px;overflow:hidden;position:relative}
+.pf{height:100%;border-radius:3px;display:flex;align-items:center;padding-right:5px;justify-content:flex-end}
+.pv{font-size:9px;font-weight:700;color:#fff}
+
+/* Stacked HTML bars */
+.sbar{display:flex;height:20px;border-radius:3px;overflow:hidden;margin-bottom:3px}
+.ss{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+
+.lg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:7px;font-size:10px;color:var(--t2)}
+.lg span{display:flex;align-items:center;gap:3px}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.ldc{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+.gauge-row{display:flex;align-items:center;gap:7px;margin-top:4px}
+.gauge-tr{flex:1;height:7px;background:#f1f5f9;border-radius:4px;overflow:hidden}
+.gauge-fl{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--b2),var(--b3))}
+.gauge-pct{font-size:11px;font-weight:700;color:var(--b2);width:34px;text-align:right}
+
+.sp{display:flex;border-radius:5px;overflow:hidden;border:1px solid var(--bdr);margin-top:5px}
+.sps{flex:1;text-align:center;padding:4px 2px}
+.sv{font-size:13px;font-weight:700;display:block}
+.svl{font-size:9px;color:var(--tm)}
+
+.nr{display:flex;align-items:center;gap:5px;margin-bottom:5px}
+.nb{background:#f8fafc;border:1px solid var(--bdr);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--b2);font-weight:600;font-family:var(--fn)}
+.nb:hover{background:#eff6ff}.nb:disabled{opacity:.3;cursor:default}
+.nl{font-size:10px;color:var(--tm);flex:1;text-align:center}
+
+.row-div{border:none;border-top:1px solid var(--bdr2);margin:8px 0}
+
+/* MOM row shared style */
+.mom-row{display:flex;align-items:center;gap:4px;margin-bottom:8px}
+.mom-lbl{font-size:9px;color:var(--t2);width:48px;flex-shrink:0;font-weight:500}
+.mom-n{font-size:9px;color:var(--tm);width:56px;flex-shrink:0;text-align:right}
+.mom-bar{flex:1;height:14px;background:#f1f5f9;border-radius:2px;overflow:hidden;display:flex}
+.mom-seg{display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+
+/* Info tab table */
+.info-table{width:100%;border-collapse:collapse;font-size:10px}
+.info-table th{background:#1a5fa8;color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:10px;white-space:nowrap}
+.info-table td{padding:7px 10px;border-bottom:1px solid var(--bdr);vertical-align:top;line-height:1.5}
+.info-table tr:nth-child(even) td{background:#f8fafc}
+.info-table tr:hover td{background:#eff6ff}
+.sec-row td{background:#dbeafe!important;color:#1d4ed8;font-weight:700;font-size:10px}
+.badge-sm{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600}
+.b-t1{background:#dbeafe;color:#1d4ed8}
+.b-t2{background:#dcfce7;color:#15803d}
+.b-t3{background:#fef9c3;color:#854d0e}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div><div class="hdr-t">Type 1 Diabetes Program — India</div>
+  <div class="hdr-s">Rajasthan · Madhya Pradesh · Uttarakhand · Chhattisgarh</div></div>
+  <div class="hdr-b">⚠ Mock Data · Google Sheets API pending</div>
+</div>
+
+<div class="fbar">
+  <div class="fbar-inner">
+    <span class="flbl">State</span>
+    <select class="fsel" id="f-state" onchange="applyFilters()">
+      <option value="all">All states</option><option value="RJ">Rajasthan</option>
+      <option value="MP">Madhya Pradesh</option><option value="UK">Uttarakhand</option><option value="CG">Chhattisgarh</option>
+    </select>
+    <span class="flbl">Division</span><select class="fsel"><option>All divisions</option></select>
+    <span class="flbl">District</span><select class="fsel"><option>All districts</option></select>
+    <span class="flbl">Facility</span><select class="fsel"><option>All facilities</option></select>
+    <span class="flbl">DPC</span><select class="fsel"><option>All DPCs</option></select>
+    <div class="fdiv"></div>
+    <span class="flbl">Status</span>
+    <select class="fsel" id="f-status" onchange="applyFilters()">
+      <option value="all">All cases</option><option value="active">Active only</option>
+    </select>
+    <span class="flbl">Sex</span>
+    <select class="fsel" id="f-sex" onchange="applyFilters()">
+      <option value="all">All</option><option value="M">Male</option><option value="F">Female</option>
+    </select>
+    <span class="flbl">Age group</span>
+    <select class="fsel" id="f-age" onchange="applyFilters()">
+      <option value="all">All</option><option value="ped">Pediatric (&lt;13)</option>
+      <option value="pub">Pubertal (13–17)</option><option value="adu">Adults (≥18)</option>
+    </select>
+    <div class="fdiv"></div>
+    <span class="ftag" id="n-tag">n = 2,216 PLT1Ds</span>
+  </div>
+</div>
+
+<div class="tabs-bar">
+  <div class="tabs-inner">
+    <button class="tab active" onclick="switchTab(0)">Operations &amp; Basic Care Package</button>
+    <button class="tab" onclick="switchTab(1)">Clinical Outcomes</button>
+    <button class="tab" onclick="switchTab(2)">Capacity Building</button>
+    <button class="tab" onclick="switchTab(3)">Indicator Definitions</button>
+  </div>
+</div>
+
+<!-- ══════════ TAB 0 — OPERATIONS ══════════ -->
+<div class="tc active" id="tab-0">
+<div class="tc-wrap">
+
+<div class="sl">Program footprint</div>
+<div class="g6">
+  <div class="card">
+    <div class="ct">Implementation states</div>
+    <div class="cs">Count, among all program states</div>
+    <div class="kv b" id="k-states">4</div>
+    <div class="kn" id="k-states-n">RJ · MP · UK · CG</div>
+  </div>
+  <div class="card">
+    <div class="ct">Pilot districts</div>
+    <div class="cs">Count, among all pilot districts</div>
+    <div class="kv b" id="k-dist">46</div>
+    <div class="kn" id="k-dist-n">n = 46 districts</div>
+  </div>
+  <div class="card">
+    <div class="ct">Planned facilities</div>
+    <div class="cs">Count, complete support + light touch</div>
+    <div class="kv b" id="k-plan">58</div>
+    <div class="kn" id="k-plan-n">n = 58 facilities</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Operational clinics</div>
+    <div class="cs">% of planned, among all planned facilities</div>
+    <div class="kv b" id="k-op">56</div>
+    <div class="ks" id="k-op-pct" style="color:var(--b2)">96.6% of planned</div>
+    <div class="sp">
+      <div class="sps" style="background:#eff6ff"><span class="sv" id="k-cs-op" style="color:var(--b2)">38</span><span class="svl">Complete</span></div>
+      <div class="sps" style="background:#f8fafc"><span class="sv" id="k-lt-op" style="color:var(--g2)">18</span><span class="svl">Light touch</span></div>
+    </div>
+  </div>
+  <div class="card cab">
+    <div class="ct">PLT1Ds enrolled</div>
+    <div class="cs">% of target, among all PLT1Ds enrolled</div>
+    <div class="kv b" id="k-enr">2,216</div>
+    <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="k-gauge" style="width:72%"></div></div><div class="gauge-pct" id="k-gaugeN">72%</div></div>
+    <div class="kn" id="k-target">of target 3,080</div>
+  </div>
+  <div class="card">
+    <div class="ct">New enrolments — last month</div>
+    <div class="cs">Count, among all newly enrolled PLT1Ds</div>
+    <div class="kv g2c" id="k-new">51</div>
+    <div class="ks" id="k-avgclin">Avg/clinic: 0.9</div>
+    <div class="ktr dn" id="k-newtrend">↓ vs 96 prior month</div>
+  </div>
+</div>
+
+<div class="g3">
+  <div class="card">
+    <div class="ct">Total enrolled</div>
+    <div class="cs">Absolute count, all states · all support types</div>
+    <div class="kv" id="k-tot">2,216</div>
+    <div class="kn" id="k-tot-n">n = 2,216 PLT1Ds</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Complete support</div>
+    <div class="cs">% of enrolled, RJ complete + MP + UK + CG</div>
+    <div class="kv b" id="k-cs">1,647</div>
+    <div class="ks" id="k-cs-pct">74.3% of enrolled · 38 facilities</div>
+  </div>
+  <div class="card">
+    <div class="ct">Light touch</div>
+    <div class="cs">% of enrolled, RJ additional districts only</div>
+    <div class="kv g2c" id="k-lt">569</div>
+    <div class="ks" id="k-lt-pct">25.7% of enrolled · 18 facilities</div>
+  </div>
+</div>
+
+<div class="sl">Enrolment trends</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct">Cumulative enrolments vs operational clinics</div>
+    <div class="cs">Cumulative count stacked by age group · line = # operational clinics</div>
+    <div class="lg">
+      <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
+      <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
+      <span><span class="ldc" style="background:#d97706"></span>Clinics</span>
+    </div>
+    <div class="nr">
+      <button class="nb" id="p1" onclick="shift(0,-1)">← Back</button>
+      <span class="nl" id="nl1"></span>
+      <button class="nb" id="n1" onclick="shift(0,1)">Forward →</button>
+    </div>
+    <div style="height:170px;position:relative"><canvas id="c1"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="ct">New enrolments per month</div>
+    <div class="cs">New enrolments vs average per operational clinic</div>
+    <div class="lg">
+      <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
+      <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
+      <span><span class="ldc" style="background:#d97706"></span>Avg/clinic</span>
+    </div>
+    <div class="nr">
+      <button class="nb" id="p2" onclick="shift(1,-1)">← Back</button>
+      <span class="nl" id="nl2"></span>
+      <button class="nb" id="n2" onclick="shift(1,1)">Forward →</button>
+    </div>
+    <div style="height:170px;position:relative"><canvas id="c2"></canvas></div>
+  </div>
+</div>
+
+<div class="sl">PLT1D profile</div>
+<div class="g3">
+  <div class="card">
+    <div class="ct">Gender distribution</div>
+    <div class="cs">% PLT1Ds, among all PLT1Ds enrolled (CS only)</div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
+      <div style="position:relative;width:100px;height:100px;flex-shrink:0">
+        <canvas id="c-gender" width="100" height="100"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+          <div style="font-size:15px;font-weight:700;color:var(--t1)">58%</div>
+          <div style="font-size:8px;color:var(--tm)">Male</div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px" id="gender-legend"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Age distribution</div>
+    <div class="cs">% PLT1Ds by age group, among all PLT1Ds enrolled (CS only)</div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
+      <div style="position:relative;width:100px;height:100px;flex-shrink:0">
+        <canvas id="c-age" width="100" height="100"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+          <div style="font-size:14px;font-weight:700;color:var(--t1)" id="age-centre-val">69%</div>
+          <div style="font-size:8px;color:var(--tm)">Adults</div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px" id="age-legend"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Previous treatment facility</div>
+    <div class="cs">% PLT1Ds by facility type, among those with non-blank previous facility value</div>
+    <div class="lg" id="ptf-legend" style="margin-top:4px"></div>
+    <div id="ptf-bars" style="margin-top:4px"></div>
+  </div>
+</div>
+
+<div class="sl">Adherence to basic care package</div>
+<div class="g2" style="align-items:start">
+  <div class="card cab">
+    <div class="ct">Insulin regimen — basal-bolus</div>
+    <div class="cs">% PLT1Ds on basal-bolus regimen, among all PLT1Ds enrolled · Target: 100%</div>
+    <div style="margin-top:10px">
+      <div class="pr"><div class="pl">Baseline</div><div class="pb"><div class="pf" id="ins-base" style="width:44%;background:#7db8e8"><span class="pv" id="ins-base-v">44%</span></div></div></div>
+      <div class="pr"><div class="pl">Current</div><div class="pb"><div class="pf" id="ins-last" style="width:96%;background:var(--b1)"><span class="pv" id="ins-last-v">96%</span></div></div></div>
+      <div style="font-size:9px;color:var(--b2);font-weight:700;margin-top:4px" id="ins-delta">▲ +52pp improvement from baseline</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Follow-up attendance — month on month</div>
+    <div class="cs">% PLT1Ds attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots · Target: &gt;75%</div>
+    <div style="height:195px;position:relative;margin-top:6px"><canvas id="c-fup"></canvas></div>
+  </div>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <div class="ct">SMBG frequency per day</div>
+    <div class="cs">% PLT1Ds by monitoring frequency, among PLT1Ds with SMBG data · bottom row = enrolled &gt;3 months only</div>
+    <div class="lg" style="margin-top:4px">
+      <span><span class="ld" style="background:var(--g4)"></span>Not monitoring</span>
+      <span><span class="ld" style="background:var(--b4)"></span>&lt;3×/day</span>
+      <span><span class="ld" style="background:var(--b2)"></span>3–4×/day</span>
+      <span><span class="ld" style="background:var(--b1)"></span>&gt;4×/day</span>
+    </div>
+    <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:5px">All enrolled — month on month</div>
+    <div id="smbg-mom"></div>
+    <hr class="row-div">
+    <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:5px">Enrolled &gt;3 months — last month</div>
+    <div id="smbg-last"></div>
+  </div>
+  <div class="card">
+    <div class="ct">% Hyper &amp; Hypo readings — last 3 months</div>
+    <div class="cs">% follow-up visits by reading bucket, among visits with SMBG data in the month</div>
+    <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:4px">% Hyper readings</div>
+    <div class="lg" style="margin-bottom:4px">
+      <span><span class="ld" style="background:var(--b2)"></span>0–20%</span>
+      <span><span class="ld" style="background:var(--b4)"></span>20–40%</span>
+      <span><span class="ld" style="background:var(--g4)"></span>40–60%</span>
+      <span><span class="ld" style="background:var(--g2)"></span>60–80%</span>
+      <span><span class="ld" style="background:var(--g1)"></span>80–100%</span>
+    </div>
+    <div id="hyper-rows"></div>
+    <hr class="row-div">
+    <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:4px">% Hypo readings</div>
+    <div id="hypo-rows"></div>
+  </div>
+</div>
+
+<div class="sl">Clinic operations</div>
+<div class="g2" style="margin-bottom:7px;align-items:start">
+  <div class="card cab">
+    <div class="ct">In-house HbA1c testing facility</div>
+    <div class="cs">% operational clinics with on-site HbA1c testing, among all operational clinics</div>
+    <div class="kv b">68%</div>
+    <div class="ks">38 of 56 operational clinics</div>
+  </div>
+  <div class="card" style="align-self:start" id="trained-staff-card">
+    <div class="ct">Trained clinical staff at T1D clinics</div>
+    <div class="cs">% operational clinics with trained specialist on-site, among all operational clinics</div>
+    <div id="trained-bars" style="margin-top:10px"></div>
+  </div>
+</div>
+<div class="g2" style="align-items:start">
+  <div class="card">
+    <div class="ct">Clinic functionality — month on month</div>
+    <div class="cs">% clinics functional &gt;75% of designated days, among all operational clinics · Target: 100%</div>
+    <div style="height:155px;position:relative;margin-top:6px"><canvas id="c-clinops"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="ct">Clinic off days — month on month</div>
+    <div class="cs">% clinics by number of off days, among all operational clinics</div>
+    <div class="lg" style="margin-top:4px">
+      <span><span class="ld" style="background:var(--b3)"></span>1 off</span>
+      <span><span class="ld" style="background:var(--g3)"></span>2 offs</span>
+      <span><span class="ld" style="background:var(--g2)"></span>3 offs</span>
+      <span><span class="ld" style="background:var(--g1)"></span>4 offs</span>
+    </div>
+    <div style="height:135px;position:relative"><canvas id="c-offdays"></canvas></div>
+  </div>
+</div>
+
+</div></div><!-- /tab-0 -->
+
+<!-- ══════════ TAB 1 — CLINICAL OUTCOMES ══════════ -->
+<div class="tc" id="tab-1">
+<div class="tc-wrap">
+
+<div class="sl">Glycaemic control — overview</div>
+<div class="g4">
+  <div class="card cab">
+    <div class="ct">HbA1c tests done — last 3 months</div>
+    <div class="cs">% PLT1Ds tested for HbA1c in the last 3 months, among enrolled PLT1Ds</div>
+    <div class="kv b" id="hb-test">38%</div>
+    <div class="ks" id="hb-test-n">n = 2,216 enrolled</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Improving HbA1c trend</div>
+    <div class="cs">% PLT1Ds improved vs baseline, among those with ≥2 readings enrolled &gt;3 months</div>
+    <div class="kv b" id="hb-dec">61%</div>
+    <div class="ks" id="hb-dec-n">n = 843 with ≥2 readings</div>
+  </div>
+  <div class="card cao">
+    <div class="ct">DKA — last 12 months</div>
+    <div class="cs">% PLT1Ds with ≥1 DKA episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
+    <div class="kv g2c" id="dka">8%</div>
+    <div class="ks" id="dka-n">n = 2,216 · ✓ on target</div>
+  </div>
+  <div class="card cao">
+    <div class="ct">Hypoglycaemia — last 12 months</div>
+    <div class="cs">% PLT1Ds with ≥1 hypoglycaemia episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
+    <div class="kv g2c" id="hypo">11%</div>
+    <div class="ks" id="hypo-n">n = 2,216 · ⚠ above target</div>
+  </div>
+</div>
+
+<div class="sl">HbA1c change from baseline</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct">Change in HbA1c — first test to most recent test</div>
+    <div class="cs">% PLT1Ds by change category, among those enrolled &gt;3 months with both baseline and latest reading · n-sizes shown below each bucket</div>
+    <div class="lg" style="margin-top:4px">
+      <span><span class="ld" style="background:var(--hI4)"></span>Improved ≥4%</span>
+      <span><span class="ld" style="background:var(--hI2)"></span>Improved 2–4%</span>
+      <span><span class="ld" style="background:var(--hIL)"></span>Improved &lt;2%</span>
+      <span><span class="ld" style="background:var(--hNC)"></span>No change</span>
+      <span><span class="ld" style="background:var(--hWL)"></span>Worsened &lt;2%</span>
+      <span><span class="ld" style="background:var(--hW2)"></span>Worsened 2–4%</span>
+      <span><span class="ld" style="background:var(--hW4)"></span>Worsened ≥4%</span>
+    </div>
+    <div style="height:260px;position:relative"><canvas id="c-hba-change"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="ct">Average HbA1c — baseline vs last available</div>
+    <div class="cs">Average HbA1c value, among PLT1Ds enrolled &gt;3 months with both baseline and latest values · Target: &lt;8.5</div>
+    <div class="lg" style="margin-top:4px">
+      <span><span class="ld" style="background:#7db8e8"></span>Baseline</span>
+      <span><span class="ld" style="background:#0f3460"></span>Last available</span>
+    </div>
+    <div style="height:260px;position:relative"><canvas id="c-hba-avg"></canvas></div>
+  </div>
+</div>
+
+<div class="sl">HbA1c distribution &amp; latest values</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct">HbA1c distribution — last test (≥3 months post enrolment)</div>
+    <div class="cs">% PLT1Ds by HbA1c bucket at last test, among PLT1Ds enrolled ≥3 months with HbA1c done post enrolment · by time bucket</div>
+    <div class="lg" style="margin-top:4px">
+      <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
+      <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
+      <span><span class="ld" style="background:#7db8e8"></span>10–13%</span>
+      <span><span class="ld" style="background:#94a3b8"></span>13–16%</span>
+      <span><span class="ld" style="background:#e2e8f0"></span>&gt;16%</span>
+    </div>
+    <div style="height:200px;position:relative"><canvas id="c-hba-dist"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="ct">Average HbA1c — latest test (enrolled ≥3 months)</div>
+    <div class="cs">Average HbA1c at most recent test, among PLT1Ds enrolled ≥3 months with at least one HbA1c recorded · by time since enrolment</div>
+    <div style="height:200px;position:relative;margin-top:28px"><canvas id="c-hba-latest"></canvas></div>
+  </div>
+</div>
+
+<div class="sl">Insulin dose</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct">TDD ranges — last visit</div>
+    <div class="cs">% PLT1Ds by range, among those with TDD recorded · Pediatric &lt;13: 0.7–1.0 u/kg · Pubertal+Adults: 1.0–1.5 u/kg</div>
+    <div class="lg" style="margin-top:6px">
+      <span><span class="ld" style="background:var(--g2)"></span>Below range</span>
+      <span><span class="ld" style="background:var(--b2)"></span>In range</span>
+      <span><span class="ld" style="background:var(--g4)"></span>Above range</span>
+    </div>
+    <div id="tdd-groups" style="margin-top:6px;display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Basal dose as % of TDD — last visit</div>
+    <div class="cs">% PLT1Ds by bucket, among those with TDD data at last visit · Ideal: 30–50%</div>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:0" id="basal-bars"></div>
+    <div style="margin-top:6px;font-size:9px;color:var(--tm)">★ Ideal range: 30–50% of TDD as basal</div>
+  </div>
+</div>
+
+</div></div><!-- /tab-1 -->
+
+<!-- ══════════ TAB 2 — CAPACITY BUILDING ══════════ -->
+<div class="tc" id="tab-2">
+<div class="tc-wrap">
+
+<div class="sl">Training — doctors</div>
+<div class="g4">
+  <div class="card">
+    <div class="ct">Batches held</div>
+    <div class="cs">Count, among all doctor training batches</div>
+    <div class="kv b" id="dr-bat">11</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Doctors trained</div>
+    <div class="cs">Distinct count, among doctors attending ≥1 session</div>
+    <div class="kv b" id="dr-tr">387</div>
+    <div class="kn" id="dr-tr-n">across all states</div>
+  </div>
+  <div class="card" style="grid-column:span 2">
+    <div class="ct">Facility type — pilot vs non-pilot</div>
+    <div class="cs">% doctors, among all doctors trained</div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
+      <div style="position:relative;width:80px;height:80px;flex-shrink:0">
+        <canvas id="c-pilot" width="80" height="80"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+          <div style="font-size:13px;font-weight:700">54%</div><div style="font-size:8px;color:var(--tm)">Pilot</div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px;font-size:10px">
+        <div style="display:flex;justify-content:space-between"><span><span class="ld" style="background:var(--b1);display:inline-block;margin-right:4px"></span>Pilot site</span><strong>54%</strong></div>
+        <div style="display:flex;justify-content:space-between"><span><span class="ld" style="background:var(--g4);display:inline-block;margin-right:4px"></span>Non-pilot</span><strong>46%</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <div class="ct">Specialty of doctors trained</div>
+    <div class="cs">% doctors, among all doctors trained</div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
+      <div style="position:relative;width:100px;height:100px;flex-shrink:0">
+        <canvas id="c-spec" width="100" height="100"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+          <div style="font-size:13px;font-weight:700">387</div><div style="font-size:8px;color:var(--tm)">Doctors</div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px" id="spec-legend"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Pre vs post-test scores — doctors</div>
+    <div class="cs">Average score, among doctors with test scores recorded</div>
+    <div style="margin-top:10px">
+      <div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:6px" id="ppdr-lbl">Doctors (n=387)</div>
+      <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-dr-pre" style="width:62%;background:var(--g3)"><span class="pv" id="ppdr-pre">62%</span></div></div></div>
+      <div class="pr"><div class="pl">Post-test</div><div class="pb"><div class="pf" id="pf-dr-post" style="width:81%;background:var(--b1)"><span class="pv" id="ppdr-post">81%</span></div></div></div>
+      <div style="font-size:9px;color:var(--b2);font-weight:700;margin-top:4px" id="ppdr-imp">+19pp improvement</div>
+    </div>
+  </div>
+</div>
+
+<div class="sl">Training — staff nurses</div>
+<div class="g4">
+  <div class="card">
+    <div class="ct">Batches held</div>
+    <div class="cs">Count, among all nurse training batches</div>
+    <div class="kv b" id="nr-bat">4</div>
+  </div>
+  <div class="card">
+    <div class="ct">Nurses trained</div>
+    <div class="cs">Distinct count, among nurses attending ≥1 session</div>
+    <div class="kv b" id="nr-tr">60</div>
+    <div class="kn" id="nr-tr-n">across all states</div>
+  </div>
+  <div class="card cs2">
+    <div class="ct">Pre vs post-test scores — staff nurses</div>
+    <div class="cs">Average score, among nurses with test scores recorded</div>
+    <div style="margin-top:8px">
+      <div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:6px" id="ppnr-lbl">Staff nurses (n=60)</div>
+      <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-nr-pre" style="width:79%;background:var(--g3)"><span class="pv" id="ppnr-pre">79%</span></div></div></div>
+      <div class="pr"><div class="pl">Post-test</div><div class="pb"><div class="pf" id="pf-nr-post" style="width:87%;background:var(--b1)"><span class="pv" id="ppnr-post">87%</span></div></div></div>
+      <div style="font-size:9px;color:var(--b2);font-weight:700;margin-top:4px" id="ppnr-imp">+8pp improvement</div>
+    </div>
+  </div>
+</div>
+
+<div class="sl">Mentoring &amp; clinical experts</div>
+<div class="g3">
+  <div class="card">
+    <div class="ct">Clinical experts engaged</div>
+    <div class="cs">Count, among all experts in pool</div>
+    <div class="kv b">12</div><div class="ks">Expert pool identified &amp; engaged</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Doctor mentoring sessions</div>
+    <div class="cs">Count, among all doctor mentoring sessions held</div>
+    <div class="kv b" id="men-dr">6</div>
+    <div class="ks" id="men-dr-att">95 doctors attended</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Nurse mentoring sessions</div>
+    <div class="cs">Count, among all nurse mentoring sessions held</div>
+    <div class="kv b" id="men-nr">1</div>
+    <div class="ks" id="men-nr-att">17 nurses attended</div>
+  </div>
+</div>
+<div style="margin-bottom:7px">
+  <div class="card" style="max-width:50%">
+    <div class="ct">Mentoring sessions by month</div>
+    <div class="cs">Count of sessions by cadre</div>
+    <div class="lg" style="margin-top:4px">
+      <span><span class="ld" style="background:var(--b2)"></span>Doctor</span>
+      <span><span class="ld" style="background:var(--g3)"></span>Staff nurse</span>
+    </div>
+    <div style="height:140px;position:relative"><canvas id="c-men"></canvas></div>
+  </div>
+</div>
+
+<div class="sl">FLW orientation</div>
+<div class="g3">
+  <div class="card">
+    <div class="ct">Orientation sessions held</div>
+    <div class="cs">Count, among all FLW orientation sessions</div>
+    <div class="kv b" id="flw-ses">73</div>
+  </div>
+  <div class="card">
+    <div class="ct">Health workers oriented</div>
+    <div class="cs">Count, among all FLW health workers attending</div>
+    <div class="kv b" id="flw-hr">12,817</div>
+    <div class="ks">ANM · ASHA · BCM · BPM · CHO…</div>
+  </div>
+  <div class="card">
+    <div class="ct">Pilot districts with ≥1 session</div>
+    <div class="cs">% of pilot districts, among all pilot districts</div>
+    <div class="kv b" id="flw-dist">15</div>
+    <div class="ks" id="flw-dist-s">of 46 pilot districts</div>
+    <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="flw-gauge" style="width:33%"></div></div><div class="gauge-pct" id="flw-pct">33%</div></div>
+  </div>
+</div>
+<div style="margin-bottom:7px">
+  <div class="card" style="max-width:50%">
+    <div class="ct">Type of service providers oriented</div>
+    <div class="cs">% service providers by cadre, among all health workers oriented</div>
+    <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
+      <div style="position:relative;width:100px;height:100px;flex-shrink:0">
+        <canvas id="c-flw" width="100" height="100"></canvas>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center">
+          <div style="font-size:13px;font-weight:700">77%</div><div style="font-size:8px;color:var(--tm)">ASHA</div>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:5px" id="flw-legend"></div>
+    </div>
+  </div>
+</div>
+
+</div></div><!-- /tab-2 -->
+
+<!-- ══════════ TAB 3 — INFO ══════════ -->
+<div class="tc" id="tab-3">
+<div class="tc-wrap">
+<div class="sl">Indicator Definitions &amp; Calculation Methodology</div>
+<div class="card" style="padding:0;overflow:hidden">
+<table class="info-table">
+<thead>
+<tr>
+  <th style="width:40px">#</th>
+  <th style="width:180px">Indicator</th>
+  <th style="width:60px">Tab</th>
+  <th style="width:80px">Type</th>
+  <th>Numerator</th>
+  <th>Denominator</th>
+  <th style="width:160px">Sheet (tab name)</th>
+  <th style="width:160px">Columns used</th>
+</tr>
+</thead>
+<tbody id="info-tbody"></tbody>
+</table>
+</div>
+</div></div><!-- /tab-3 -->
+
+
+<script>
+Chart.defaults.font.family = 'DM Sans';
+
+// Inline bar label plugin — draws value text in centre of each bar segment
+Chart.register({
+  id:'barLabels',
+  afterDatasetsDraw(chart){
+    try{
+      const ctx=chart.ctx;
+      chart.data.datasets.forEach((ds,i)=>{
+        if(ds.type==='line'||ds._noLabel) return;
+        const meta=chart.getDatasetMeta(i);
+        if(!meta||meta.hidden) return;
+        meta.data.forEach((bar,j)=>{
+          const v=ds.data[j];
+          if(!v&&v!==0) return;
+          const bh=Math.abs((bar.base!=null?bar.base:bar.y)-bar.y);
+          if(bh<(ds._minH||14)) return;
+          if(v<(ds._minVal!==undefined?ds._minVal:3)) return;
+          const lbl=ds._pct===false?String(v):v+'%';
+          const midY=bar.y+bh/2;
+          ctx.save();
+          ctx.font=`bold ${ds._fs||8.5}px DM Sans,sans-serif`;
+          ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillStyle=ds._lc||'rgba(255,255,255,0.92)';
+          ctx.fillText(lbl,bar.x,midY);
+          ctx.restore();
+        });
+      });
+      // Sum-on-top for charts that opt in
+      if(!chart._sumOnTop) return;
+      const n=chart.data.labels.length;
+      const sums=Array(n).fill(0);
+      chart.data.datasets.forEach(ds=>{
+        if(ds.type==='line') return;
+        ds.data.forEach((v,j)=>{sums[j]+=(v||0);});
+      });
+      const lastDs=chart.data.datasets.filter(d=>d.type!=='line');
+      if(!lastDs.length) return;
+      const lastMeta=chart.getDatasetMeta(chart.data.datasets.indexOf(lastDs[lastDs.length-1]));
+      sums.forEach((s,j)=>{
+        if(!s) return;
+        const bar=lastMeta.data[j];
+        ctx.save();ctx.font='bold 9px DM Sans,sans-serif';
+        ctx.textAlign='center';ctx.textBaseline='bottom';
+        ctx.fillStyle='#0f172a';ctx.fillText(s+'%',bar.x,bar.y-3);ctx.restore();
+      });
+    }catch(e){/* silent */}
+  }
+});
+
+
+// ═══ MOCK DATA ═══
+const STATE = {
+  all:{states:4,dist:46,plan:58,op:56,csOp:38,ltOp:18,enr:2216,target:3080,csEnr:1647,ltEnr:569,newLast:51,newPrev:96,avgClin:0.9,insBase:44,insLast:96,hbTest:38,hbDec:61,hbDecN:843,dka:8,hypo:11,drBat:11,drTr:387,drPre:62,drPost:81,nrBat:4,nrTr:60,nrPre:79,nrPost:87,menDr:6,menDrAtt:95,menNr:1,menNrAtt:17,flwSes:73,flwHr:12817,flwDist:15,flwTotDist:46},
+  RJ:{states:1,dist:18,plan:24,op:23,csOp:14,ltOp:9,enr:810,target:1100,csEnr:520,ltEnr:290,newLast:18,newPrev:38,avgClin:0.8,insBase:41,insLast:94,hbTest:35,hbDec:58,hbDecN:312,dka:9,hypo:12,drBat:4,drTr:142,drPre:60,drPost:79,nrBat:2,nrTr:22,nrPre:77,nrPost:85,menDr:2,menDrAtt:35,menNr:1,menNrAtt:8,flwSes:28,flwHr:4820,flwDist:6,flwTotDist:18},
+  MP:{states:1,dist:14,plan:18,op:17,csOp:17,ltOp:0,enr:712,target:980,csEnr:712,ltEnr:0,newLast:16,newPrev:31,avgClin:0.9,insBase:46,insLast:97,hbTest:40,hbDec:63,hbDecN:268,dka:7,hypo:10,drBat:3,drTr:118,drPre:64,drPost:82,nrBat:1,nrTr:20,nrPre:81,nrPost:89,menDr:2,menDrAtt:30,menNr:0,menNrAtt:0,flwSes:22,flwHr:3800,flwDist:5,flwTotDist:14},
+  UK:{states:1,dist:8,plan:10,op:10,csOp:5,ltOp:5,enr:380,target:520,csEnr:210,ltEnr:170,newLast:10,newPrev:16,avgClin:1.0,insBase:43,insLast:96,hbTest:37,hbDec:60,hbDecN:148,dka:8,hypo:11,drBat:2,drTr:74,drPre:61,drPost:80,nrBat:1,nrTr:10,nrPre:78,nrPost:86,menDr:1,menDrAtt:18,menNr:0,menNrAtt:0,flwSes:14,flwHr:2200,flwDist:3,flwTotDist:8},
+  CG:{states:1,dist:6,plan:6,op:6,csOp:6,ltOp:0,enr:314,target:480,csEnr:314,ltEnr:0,newLast:7,newPrev:11,avgClin:1.2,insBase:47,insLast:97,hbTest:42,hbDec:66,hbDecN:115,dka:6,hypo:9,drBat:2,drTr:53,drPre:65,drPost:83,nrBat:1,nrTr:8,nrPre:80,nrPost:90,menDr:1,menDrAtt:12,menNr:0,menNrAtt:0,flwSes:9,flwHr:1997,flwDist:1,flwTotDist:6}
+};
+const SX={all:1,M:.58,F:.42}, AG={all:1,ped:.19,pub:.12,adu:.69}, ST={all:1,active:.88};
+const SC={all:1,RJ:.366,MP:.321,UK:.172,CG:.142};
+
+const MONTHS=['Jan 25','Feb 25','Mar 25','Apr 25','May 25','Jun 25','Jul 25','Aug 25','Sep 25','Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26'];
+// Cumulative enrolments: complete support vs light touch
+const CS_CUM=[152,216,318,370,540,638,704,762,804,862,914,980,1034,1090,1140,1186,1221];
+const LT_CUM=[65,79,95,107,146,160,174,176,179,185,190,196,200,206,214,232,237];
+const CLIN=[17,19,22,26,32,35,42,44,47,49,50,52,52,54,55,56,56];
+// New enrolments per month: CS + LT
+const NEWENR_CS=[58,45,102,80,134,107,100,118,86,108,68,80,72,61,72,34,0];
+const NEWENR_LT=[26,21,48,34,57,43,46,61,47,57,31,33,39,35,37,17,0];
+const NEWENR=NEWENR_CS.map((v,i)=>v+NEWENR_LT[i]);
+const AVGCL=[4.9,3.5,6.8,4.4,5.9,4.3,3.5,4.1,2.8,3.4,2.0,2.2,2.1,1.8,2.0,0.9,0];
+
+const FUP_MOM=[
+  {m:'May 26',v:25,n:1843},{m:'Apr 26',v:49,n:1987},{m:'Mar 26',v:42,n:1893},
+  {m:'Feb 26',v:48,n:1764},{m:'Jan 26',v:50,n:1580},{m:'Dec 25',v:46,n:1469},{m:'Nov 25',v:40,n:1372}
+];
+const SMBG_MOM=[
+  {m:'Apr 26',v:[25,54,12,9],n:1512},{m:'Mar 26',v:[25,43,18,14],n:1398},
+  {m:'Feb 26',v:[21,42,21,16],n:1244},{m:'Jan 26',v:[20,48,19,13],n:1108},
+  {m:'Dec 25',v:[27,51,17,5],n:1002},{m:'Nov 25',v:[30,43,19,8],n:889}
+];
+const SMBG_LAST={m:'May 26',v:[25,55,12,8],n:911};
+
+const HYPER_M=[{m:'May 26',n:943},{m:'Apr 26',n:891},{m:'Mar 26',n:824}];
+const HYPER_D=[[22,31,27,13,7],[20,29,28,15,8],[18,28,30,16,8]];
+const HYPO_D=[[63,20,10,5,2],[60,22,11,5,2],[62,21,10,5,2]];
+
+const CLINOPS_M=['Oct 25','Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26'];
+const CLINOPS_V=[75,78,72,80,78,82,84,82];
+const OFFDAYS_D=[[35,25,20,10],[38,28,18,8],[32,30,20,10],[40,27,18,8],[38,29,19,7],[42,28,17,6],[44,27,16,6],[43,27,17,6]];
+
+const TRAINED_STAFF=[
+  {lbl:'With trained Pediatrician',v:72},{lbl:'With trained MD Medicine',v:65},
+  {lbl:'With trained MO',v:45},{lbl:'With Paed + MD Medicine both',v:58}
+];
+
+// HbA1c change (stacked bottom-to-top: I≥4, I2-4, I<2, NC, W<2, W2-4, W≥4)
+const HBA_N=[77,27,24,21,14,10,5];
+const HBA_LBLS=[['Overall','(n=77)'],['3–6 months','(n=27)'],['6–9 months','(n=24)'],
+  ['9–12 months','(n=21)'],['12–15 months','(n=14)'],['15–18 months','(n=10)'],['>18 months','(n=5)']];
+const HBA_I4=[14,0,4,5,8,12,18], HBA_I2=[3,19,13,14,18,22,26], HBA_IL=[38,41,33,38,34,30,26];
+const HBA_NC=[5,7,4,5,5,4,4], HBA_WL=[35,26,42,33,28,24,20], HBA_W2=[3,4,0,0,4,5,4], HBA_W4=[3,4,4,5,3,3,2];
+const HBA_AVG_BASE=[9.2,9.2,9.3,9.2,9.1,9.0,8.9], HBA_AVG_LAST=[8.8,8.8,9.1,8.6,8.3,7.9,7.7];
+// New HbA1c distribution (≥3m post enrolment, last test)
+const HBA_DIST_LBLS=[['3–6m','(n=27)'],['6–9m','(n=24)'],['9–12m','(n=21)'],['12–15m','(n=14)'],['15–18m','(n=10)'],['>18m','(n=5)']];
+const HBA_D_LT7=[4,8,14,22,30,40], HBA_D_7_10=[30,34,36,38,40,36];
+const HBA_D_10_13=[38,33,30,26,22,18], HBA_D_13_16=[19,17,14,10,6,4], HBA_D_GT16=[9,8,6,4,2,2];
+const HBA_LATEST=[9.1,8.7,8.5,8.2,7.9,7.7];
+
+const WIN=6, MAX=MONTHS.length-WIN;
+let off=[MAX,MAX];
+let _c1,_c2,_cg,_cp,_cs2,_cfl,_cmen,_chc,_cha,_cco,_cod,_cfup;
+
+function getF(){return{state:document.getElementById('f-state').value,status:document.getElementById('f-status').value,sex:document.getElementById('f-sex').value,age:document.getElementById('f-age').value};}
+function getD(){
+  const f=getF(), b=STATE[f.state]||STATE.all;
+  const em=SX[f.sex]*AG[f.age]*ST[f.status];
+  const adj=f.age==='ped'?-5:f.age==='pub'?-2:0;
+  return{...b,enr:Math.round(b.enr*em),em,csEnr:Math.round(b.csEnr*em),ltEnr:Math.round(b.ltEnr*em),insBase:b.insBase+adj,insLast:b.insLast+(adj>>1),hbDecN:Math.round(b.hbDecN*em)};
+}
+function sv(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+function sw(id,w){const e=document.getElementById(id);if(e)e.style.width=w+'%';}
+function fmt(n){return n.toLocaleString();}
+function sln(s){return{all:'All states',RJ:'Rajasthan',MP:'Madhya Pradesh',UK:'Uttarakhand',CG:'Chhattisgarh'}[s]||s;}
+
+function renderKPIs(d,f){
+  const b=STATE[f.state]||STATE.all;
+  sv('k-states',b.states); sv('k-states-n',f.state==='all'?'RJ · MP · UK · CG':sln(f.state));
+  sv('k-dist',b.dist); sv('k-dist-n','n = '+b.dist+' districts');
+  sv('k-plan',b.plan); sv('k-plan-n','n = '+b.plan+' facilities');
+  sv('k-op',b.op);
+  const op=Math.round(b.op/b.plan*100);
+  const opEl=document.getElementById('k-op-pct'); if(opEl){opEl.textContent=op+'% of planned';opEl.style.color=op>=90?'var(--b2)':'var(--g2)';}
+  sv('k-cs-op',b.csOp); sv('k-lt-op',b.ltOp);
+  sv('k-enr',fmt(d.enr)); sv('k-tot',fmt(d.enr)); sv('k-tot-n','n = '+fmt(d.enr)+' PLT1Ds');
+  const gp=Math.round(d.enr/b.target*100); sw('k-gauge',Math.min(gp,100)); sv('k-gaugeN',gp+'%'); sv('k-target','of target '+fmt(b.target));
+  sv('n-tag','n = '+fmt(d.enr)+' PLT1Ds');
+  sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',Math.round(d.csEnr/d.enr*100)+'% of enrolled · '+b.csOp+' facilities');
+  sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',Math.round(d.ltEnr/d.enr*100)+'% of enrolled · '+b.ltOp+' facilities');
+  const nL=Math.round(b.newLast*d.em), nP=Math.round(b.newPrev*d.em);
+  sv('k-new',nL); sv('k-avgclin','Avg/clinic: '+b.avgClin.toFixed(1));
+  const nt=document.getElementById('k-newtrend'); nt.textContent=(nL<nP?'↓':'↑')+' vs '+nP+' prior month'; nt.className='ktr '+(nL<nP?'dn':'up');
+  sv('ins-base-v',d.insBase+'%'); sw('ins-base',d.insBase); sv('ins-last-v',d.insLast+'%'); sw('ins-last',d.insLast);
+  sv('ins-delta','▲ +'+(d.insLast-d.insBase)+'pp improvement from baseline');
+  sv('hb-test',d.hbTest+'%'); sv('hb-test-n','n = '+fmt(d.enr)+' enrolled');
+  sv('hb-dec',d.hbDec+'%'); sv('hb-dec-n','n = '+fmt(d.hbDecN)+' with ≥2 readings');
+  sv('dka',d.dka+'%'); sv('dka-n','n = '+fmt(d.enr)+' · '+(d.dka<10?'✓ on target':'⚠ above target'));
+  sv('hypo',d.hypo+'%'); sv('hypo-n','n = '+fmt(d.enr)+' · '+(d.hypo<10?'✓ on target':'⚠ above target'));
+  sv('dr-bat',b.drBat); sv('dr-tr',b.drTr); sv('dr-tr-n','across '+sln(f.state));
+  sv('ppdr-lbl','Doctors (n='+b.drTr+')'); sv('ppdr-pre',b.drPre+'%'); sv('ppdr-post',b.drPost+'%');
+  const pdrPre=document.getElementById('pf-dr-pre'); if(pdrPre)pdrPre.style.width=b.drPre+'%'; const pdrPost=document.getElementById('pf-dr-post'); if(pdrPost)pdrPost.style.width=b.drPost+'%';
+  sv('ppdr-imp','+'+(b.drPost-b.drPre)+'pp improvement');
+  sv('nr-bat',b.nrBat); sv('nr-tr',b.nrTr); sv('nr-tr-n','across '+sln(f.state));
+  sv('ppnr-lbl','Staff nurses (n='+b.nrTr+')'); sv('ppnr-pre',b.nrPre+'%'); sv('ppnr-post',b.nrPost+'%');
+  const pnrPre=document.getElementById('pf-nr-pre'); if(pnrPre)pnrPre.style.width=b.nrPre+'%'; const pnrPost=document.getElementById('pf-nr-post'); if(pnrPost)pnrPost.style.width=b.nrPost+'%';
+  sv('ppnr-imp','+'+(b.nrPost-b.nrPre)+'pp improvement');
+  sv('men-dr',b.menDr); sv('men-dr-att',b.menDrAtt+' doctors attended');
+  sv('men-nr',b.menNr); sv('men-nr-att',b.menNrAtt+' nurses attended');
+  sv('flw-ses',b.flwSes); sv('flw-hr',fmt(b.flwHr));
+  sv('flw-dist',b.flwDist); sv('flw-dist-s','of '+b.flwTotDist+' pilot districts');
+  const fp=Math.round(b.flwDist/b.flwTotDist*100); sw('flw-gauge',fp); sv('flw-pct',fp+'%');
+}
+
+
+function renderSmbg(){
+  // MoM
+  const el=document.getElementById('smbg-mom'); el.innerHTML='';
+  const cols=['#e2e8f0','#7db8e8','#1a5fa8','#0f3460'], txts=['#64748b','#fff','#fff','#fff'];
+  SMBG_MOM.forEach(r=>{
+    const d=document.createElement('div'); d.className='mom-row';
+    let segs='';
+    r.v.forEach((v,i)=>{segs+=`<div class="mom-seg" style="width:${v}%;background:${cols[i]};color:${txts[i]}">${v>8?v+'%':''}</div>`;});
+    d.innerHTML=`<span class="mom-lbl">${r.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${r.n.toLocaleString()}</span>`;
+    el.appendChild(d);
+  });
+  // Last month (enrolled >3m) — same format as MoM rows
+  const el2=document.getElementById('smbg-last'); el2.innerHTML='';
+  const d=document.createElement('div'); d.className='mom-row';
+  let segs='';
+  SMBG_LAST.v.forEach((v,i)=>{segs+=`<div class="mom-seg" style="width:${v}%;background:${cols[i]};color:${txts[i]};font-weight:700">${v>8?v+'%':''}</div>`;});
+  d.innerHTML=`<span class="mom-lbl" style="font-weight:700">${SMBG_LAST.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${SMBG_LAST.n.toLocaleString()}</span>`;
+  el2.appendChild(d);
+}
+
+function renderHyperHypo(){
+  const cols=['#1a5fa8','#7db8e8','#e2e8f0','#64748b','#334155'];
+  const txts=['#fff','#fff','#64748b','#fff','#fff'];
+  ['hyper-rows','hypo-rows'].forEach((elId,isHypo)=>{
+    const el=document.getElementById(elId); el.innerHTML='';
+    const data=isHypo?HYPO_D:HYPER_D;
+    HYPER_M.forEach((m,i)=>{
+      const d=document.createElement('div'); d.className='mom-row';
+      let segs='';
+      data[i].forEach((v,j)=>{segs+=`<div class="mom-seg" style="width:${v}%;background:${cols[j]};color:${txts[j]}">${v>8?v+'%':''}</div>`;});
+      d.innerHTML=`<span class="mom-lbl">${m.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${m.n.toLocaleString()}</span>`;
+      el.appendChild(d);
+    });
+  });
+}
+
+function renderPTF(){
+  const ptf=[{l:'PHC',v:22,c:'#bfdbfe'},{l:'CHC',v:31,c:'#7db8e8'},{l:'DH',v:18,c:'#2e86de'},{l:'State MC',v:8,c:'#1a5fa8'},{l:'Central MC',v:3,c:'#0f3460'},{l:'Pvt Hospital',v:10,c:'#94a3b8'},{l:'Pvt Clinic',v:4,c:'#cbd5e1'},{l:'Newly Dx',v:4,c:'#64748b'}];
+  document.getElementById('ptf-legend').innerHTML=ptf.map(d=>`<span><span class="ld" style="background:${d.c}"></span>${d.l}</span>`).join('');
+  let h='<div class="sbar">';
+  ptf.forEach(d=>{h+=`<div class="ss" style="width:${d.v}%;background:${d.c};color:${d.v>10?'#fff':d.v>5?'#334155':'transparent'};font-size:9px">${d.v>5?d.v+'%':''}</div>`;});
+  document.getElementById('ptf-bars').innerHTML=h+'</div>';
+}
+
+function renderGender(){
+  if(_cg)_cg.destroy();
+  const gd=[{l:'Male',v:58,c:'#0f3460'},{l:'Female',v:40,c:'#2e86de'},{l:'Other/NS',v:2,c:'#94a3b8'}];
+  _cg=new Chart(document.getElementById('c-gender'),{type:'doughnut',data:{datasets:[{data:gd.map(g=>g.v),backgroundColor:gd.map(g=>g.c),borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  document.getElementById('gender-legend').innerHTML=gd.map(g=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${g.c};display:inline-block;margin-right:4px"></span>${g.l}</span><strong>${g.v}%</strong></div>`).join('');
+}
+
+function renderTDD(){
+  const f=getF();
+  const el=document.getElementById('tdd-groups'); el.innerHTML='';
+  const grps=f.age==='ped'?[['Pediatric <13','#eff6ff',423,24,58,18]]:f.age==='pub'?[['Pubertal 13–17','#dbeafe',264,20,62,18]]:f.age==='adu'?[['Adults ≥18','#f0f9ff',1529,18,67,15]]:[['Pediatric <13','#eff6ff',423,24,58,18],['Pubertal 13–17','#dbeafe',264,20,62,18],['Adults ≥18','#f0f9ff',1529,18,67,15]];
+  grps.forEach(([lbl,bg,n,bl,ir,ab])=>{
+    const div=document.createElement('div');
+    div.innerHTML=`<div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:3px;background:${bg};padding:2px 6px;border-radius:3px">${lbl} <span style="font-weight:400;color:var(--tm)">(n=${fmt(n)})</span></div>
+    <div class="sbar"><div class="ss" style="width:${bl}%;background:#64748b">${bl}%</div><div class="ss" style="width:${ir}%;background:var(--b2)">${ir}%</div><div class="ss" style="width:${ab}%;background:var(--g4);color:#334155">${ab}%</div></div>`;
+    el.appendChild(div);
+  });
+}
+
+function renderBasal(){
+  const el=document.getElementById('basal-bars'); el.innerHTML='';
+  const b=[['<20%',8,'#64748b'],['20–30%',14,'#94a3b8'],['30–50%',38,'#1a5fa8',true],['50–60%',28,'#7db8e8'],['> 60%',12,'#94a3b8']];
+  b.forEach(([l,v,c,ideal])=>{
+    const d=document.createElement('div'); d.className='pr';
+    if(ideal)d.style.cssText='border-left:2px solid var(--b2);padding-left:4px;margin-bottom:9px';
+    d.innerHTML=`<div class="pl-sm">${l}${ideal?' ★':''}</div><div class="pb"><div class="pf" style="width:${v}%;background:${c};min-width:24px"><span class="pv">${v}%</span></div></div>`;
+    el.appendChild(d);
+  });
+}
+
+function renderTrainedStaff(){
+  const el=document.getElementById('trained-bars'); el.innerHTML='';
+  TRAINED_STAFF.forEach(r=>{
+    const d=document.createElement('div'); d.className='pr';
+    d.innerHTML=`<div class="pl" style="width:170px;white-space:normal;font-size:9px;line-height:1.3">${r.lbl}</div><div class="pb"><div class="pf" style="width:${r.v}%;background:var(--b2)"><span class="pv">${r.v}%</span></div></div>`;
+    el.appendChild(d);
+  });
+}
+
+// ═══ CHARTS ═══
+function sc2(arr,o,scale){return arr.slice(o,o+WIN).map(v=>Math.round(v*(scale||1)));}
+
+function buildC1(o){
+  if(_c1)_c1.destroy();
+  const f=getF(), sc=SC[f.state]||1;
+  const lb=MONTHS.slice(o,o+WIN);
+  const cs=CS_CUM.slice(o,o+WIN).map(v=>Math.round(v*sc));
+  const lt=LT_CUM.slice(o,o+WIN).map(v=>Math.round(v*sc));
+  const cl=CLIN.slice(o,o+WIN);
+  const tots=cs.map((v,i)=>v+lt[i]);
+  _c1=new Chart(document.getElementById('c1'),{
+    type:'bar',
+    data:{labels:lb,datasets:[
+      {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16},
+      {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:16},
+      {label:'Clinics',data:cl,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
+       borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{padding:{top:22}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label(ctx){
+          if(ctx.dataset.label==='Clinics') return ' Clinics: '+ctx.parsed.y;
+          const p=tots[ctx.dataIndex]>0?Math.round(ctx.parsed.y/tots[ctx.dataIndex]*100):0;
+          return ' '+ctx.dataset.label+': '+ctx.parsed.y+' ('+p+'%)';
+        },
+        afterBody(items){return['Total: '+tots[items[0].dataIndex].toLocaleString()];}
+      }}},
+      scales:{
+        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
+        y:{stacked:true, display:false, suggestedMax:Math.max(...tots)*1.2},
+        y2:{position:'right', display:false}
+      }
+    }
+  });
+  // Draw totals on top of bars
+  _c1._tots=tots;
+  document.getElementById('nl1').textContent=MONTHS[o]+' – '+MONTHS[o+WIN-1];
+  document.getElementById('p1').disabled=o<=0;
+  document.getElementById('n1').disabled=o>=MAX;
+}
+
+function buildC2(o){
+  if(_c2)_c2.destroy();
+  const f=getF(), sc=SC[f.state]||1;
+  const lb=MONTHS.slice(o,o+WIN);
+  const cs=NEWENR_CS.slice(o,o+WIN).map(v=>Math.round(v*sc));
+  const lt=NEWENR_LT.slice(o,o+WIN).map(v=>Math.round(v*sc));
+  const tot=cs.map((v,i)=>v+lt[i]);
+  const av=AVGCL.slice(o,o+WIN);
+  _c2=new Chart(document.getElementById('c2'),{
+    type:'bar',
+    data:{labels:lb,datasets:[
+      {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_fs:8,_minVal:1,_minH:12},
+      {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:12},
+      {label:'Avg/clinic',data:av,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
+       borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{padding:{top:20}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label(ctx){
+          if(ctx.dataset.label==='Avg/clinic') return ' Avg/clinic: '+ctx.parsed.y.toFixed(1);
+          const p=tot[ctx.dataIndex]>0?Math.round(ctx.parsed.y/tot[ctx.dataIndex]*100):0;
+          return ' '+ctx.dataset.label+': '+ctx.parsed.y+' ('+p+'%)';
+        }
+      }}},
+      scales:{
+        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
+        y:{stacked:true, display:false, suggestedMax:Math.max(...tot)*1.2},
+        y2:{position:'right', display:false}
+      }
+    }
+  });
+  _c2._tots=tot;
+  document.getElementById('nl2').textContent=MONTHS[o]+' – '+MONTHS[o+WIN-1];
+  document.getElementById('p2').disabled=o<=0;
+  document.getElementById('n2').disabled=o>=MAX;
+}
+
+function buildClinOps(){
+  if(_cco)_cco.destroy();
+  _cco=new Chart(document.getElementById('c-clinops'),{
+    type:'bar',
+    data:{labels:CLINOPS_M, datasets:[
+      {label:'% functional', data:CLINOPS_V,
+       backgroundColor:CLINOPS_V.map(v=>v>=75?'#1a5fa8':'#94a3b8'),
+       borderRadius:3, _minVal:1, _minH:6}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
+        y:{display:false, min:0, max:100}
+      }
+    }
+  });
+}
+
+function buildOffDays(){
+  if(_cod)_cod.destroy();
+  const cols=['#2e86de','#94a3b8','#64748b','#334155'];
+  const lbls=['1 off','2 offs','3 offs','4 offs'];
+  _cod=new Chart(document.getElementById('c-offdays'),{
+    type:'bar',
+    data:{labels:CLINOPS_M, datasets:lbls.map((l,i)=>({
+      label:l, data:OFFDAYS_D.map(r=>r[i]),
+      backgroundColor:cols[i], stack:'s', _minVal:8, _minH:12, _fs:8
+    }))},
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{padding:{top:16}},
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
+        y:{stacked:true, display:false}
+      }
+    }
+  });
+  _cod._sumOnTop=true;
+}
+
+function buildHbaChange(){
+  if(_chc)_chc.destroy();
+  const defs=[
+    {l:'Improved ≥4%', d:HBA_I4, c:'#276749', lc:'#fff'},
+    {l:'Improved 2–4%', d:HBA_I2, c:'#52a87a', lc:'#fff'},
+    {l:'Improved <2%',  d:HBA_IL, c:'#a8d5b5', lc:'#0f172a'},
+    {l:'No change',     d:HBA_NC, c:'#b0bac9', lc:'#0f172a'},
+    {l:'Worsened <2%',  d:HBA_WL, c:'#f0b8b8', lc:'#0f172a'},
+    {l:'Worsened 2–4%',d:HBA_W2,c:'#d97070', lc:'#fff'},
+    {l:'Worsened ≥4%',d:HBA_W4,c:'#b33a3a', lc:'#fff'},
+  ];
+  _chc=new Chart(document.getElementById('c-hba-change'),{
+    type:'bar',
+    data:{labels:HBA_LBLS, datasets:defs.map(d=>({
+      label:d.l, data:d.d, backgroundColor:d.c, stack:'s',
+      _lc:d.lc, _minVal:3, _minH:14
+    }))},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true, grid:{display:false}, border:{display:false},
+           ticks:{font:{size:9}, maxRotation:0},
+           categoryPercentage:0.5, barPercentage:0.28},
+        y:{stacked:true, display:false, min:0, max:100}
+      }
+    }
+  });
+}
+
+function buildHbaAvg(){
+  if(_cha)_cha.destroy();
+  _cha=new Chart(document.getElementById('c-hba-avg'),{
+    type:'bar',
+    data:{labels:HBA_LBLS, datasets:[
+      {label:'Baseline',     data:HBA_AVG_BASE, backgroundColor:'#7db8e8',
+       _pct:false, _lc:'#0f172a', _minVal:0, _minH:6, _fs:9},
+      {label:'Last available',data:HBA_AVG_LAST, backgroundColor:'#0f3460',
+       _pct:false, _lc:'#fff',    _minVal:0, _minH:6, _fs:9}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom', labels:{font:{size:10}, boxWidth:12}}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false},
+           ticks:{font:{size:9}, maxRotation:0},
+           categoryPercentage:0.5, barPercentage:0.28},
+        y:{display:false, min:5, max:12}
+      }
+    }
+  });
+}
+
+function buildHbaDist(){
+  if(window._chdist)window._chdist.destroy();
+  window._chdist=new Chart(document.getElementById('c-hba-dist'),{
+    type:'bar',
+    data:{labels:HBA_DIST_LBLS, datasets:[
+      {label:'<7%',  data:HBA_D_LT7,   backgroundColor:'#0f3460', stack:'s', _minVal:3, _minH:14},
+      {label:'7–10%', data:HBA_D_7_10, backgroundColor:'#1a5fa8', stack:'s', _minVal:3, _minH:14},
+      {label:'10–13%',data:HBA_D_10_13,backgroundColor:'#7db8e8', stack:'s', _minVal:3, _minH:14, _lc:'#0f172a'},
+      {label:'13–16%',data:HBA_D_13_16,backgroundColor:'#94a3b8', stack:'s', _minVal:3, _minH:14},
+      {label:'>16%', data:HBA_D_GT16,  backgroundColor:'#e2e8f0', stack:'s', _minVal:3, _minH:14, _lc:'#334155'},
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{stacked:true, grid:{display:false}, border:{display:false},
+           ticks:{font:{size:9}, maxRotation:0},
+           categoryPercentage:0.5, barPercentage:0.28},
+        y:{stacked:true, display:false, min:0, max:100}
+      }
+    }
+  });
+}
+
+function buildHbaLatest(){
+  if(window._chlatest)window._chlatest.destroy();
+  window._chlatest=new Chart(document.getElementById('c-hba-latest'),{
+    type:'bar',
+    data:{labels:HBA_DIST_LBLS, datasets:[
+      {label:'Avg HbA1c', data:HBA_LATEST, backgroundColor:'#1a5fa8',
+       borderRadius:3, _pct:false, _lc:'#fff', _minVal:0, _minH:6, _fs:9}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:9}, maxRotation:0},
+           categoryPercentage:0.5, barPercentage:0.5},
+        y:{display:false, min:5, max:12}
+      }
+    }
+  });
+}
+
+function buildStaticCharts(){
+  if(_cp)_cp.destroy();
+  _cp=new Chart(document.getElementById('c-pilot'),{type:'doughnut',data:{datasets:[{data:[54,46],backgroundColor:['#0f3460','#e2e8f0'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  if(_cs2)_cs2.destroy();
+  _cs2=new Chart(document.getElementById('c-spec'),{type:'doughnut',data:{datasets:[{data:[54,37,5,4],backgroundColor:['#0f3460','#1a5fa8','#7db8e8','#bfdbfe'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  if(_cfl)_cfl.destroy();
+  _cfl=new Chart(document.getElementById('c-flw'),{type:'doughnut',data:{datasets:[{data:[77,7,6,10],backgroundColor:['#0f3460','#1a5fa8','#7db8e8','#94a3b8'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  if(_cmen)_cmen.destroy();
+  _cmen=new Chart(document.getElementById('c-men'),{
+    type:'bar',
+    data:{labels:['Aug 25','Sep 25','Oct 25','Nov 25','Dec 25'],datasets:[
+      {label:'Doctor',     data:[1,0,1,2,1],backgroundColor:'#1a5fa8',borderRadius:3,_minVal:0,_minH:0},
+      {label:'Staff nurse',data:[0,0,0,1,0],backgroundColor:'#94a3b8',borderRadius:3,_minVal:0,_minH:0}
+    ]},
+    options:{responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
+        y:{display:false, min:0, suggestedMax:3}
+      }
+    }
+  });
+  document.getElementById('spec-legend').innerHTML=[['Pediatrician',54,'#0f3460'],['MD Medicine',37,'#1a5fa8'],['MO',5,'#7db8e8'],['Other',4,'#bfdbfe']].map(([l,v,col])=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${col};display:inline-block;margin-right:4px"></span>${l}</span><strong>${v}%</strong></div>`).join('');
+  document.getElementById('flw-legend').innerHTML=[['ASHA Worker',77,'#0f3460'],['ANM',7,'#1a5fa8'],['BCM',6,'#7db8e8'],['Other',10,'#94a3b8']].map(([l,v,col])=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${col};display:inline-block;margin-right:3px"></span>${l}</span><strong>${v}%</strong></div>`).join('');
+}
+
+function shift(c,d){off[c]=Math.max(0,Math.min(MAX,off[c]+d));c===0?buildC1(off[0]):buildC2(off[1]);}
+function switchTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',i===j));}
+
+// ═══ INFO TABLE ═══
+function buildInfoTable(){
+  const rows=[
+    {sec:'TAB 1 — Operations & Basic Care Package'},
+    {n:'1',ind:'Implementation states',tab:'T1',type:'Absolute #',num:'Count of distinct state values',den:'—',sheet:'CompleteSupport_Facilities',cols:'State'},
+    {n:'2',ind:'Pilot districts',tab:'T1',type:'Absolute #',num:'Count of distinct district values',den:'—',sheet:'CompleteSupport_Facilities',cols:'District'},
+    {n:'3',ind:'Planned facilities',tab:'T1',type:'Absolute #',num:'Count of distinct facilities across complete support + light touch lists',den:'—',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name'},
+    {n:'4',ind:'Operational clinics',tab:'T1',type:'Absolute # + %',num:'Facilities where Operational Status = Yes (complete) + all in light touch list',den:'Total planned facilities',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name, Operational Status'},
+    {n:'5',ind:'PLT1Ds enrolled (total / CS / LT)',tab:'T1',type:'Absolute #',num:'Count of rows in enrolled_list · CS = facilities not in LT sheet · LT = sum of enrolments in LT sheet',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Patient ID, Facility Name'},
+    {n:'6',ind:'Enrolled vs target (%)',tab:'T1',type:'%',num:'Count of all enrolled PLT1Ds (LT + CS)',den:'Committed target (hardcoded 3,080 until targets sheet available)',sheet:'enrolled_list',cols:'Patient ID'},
+    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1Ds by age group up to each month',den:'—',sheet:'enrolled_list',cols:'Date of enrolment, Age'},
+    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1Ds with enrolment date in that month',den:'—',sheet:'enrolled_list, CompleteSupport_Facilities',cols:'Date of enrolment, Date of operationalisation'},
+    {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1Ds by Sex column value',den:'All PLT1Ds enrolled',sheet:'enrolled_list',cols:'Sex'},
+    {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1Ds with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
+    {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Total PLT1Ds enrolled',sheet:'enrolled_list',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
+    {n:'11',ind:'Follow-up attendance (MoM)',tab:'T1',type:'%',num:'PLT1Ds marked Y in the given month',den:'PLT1Ds marked Y + N in that month (excludes dots = not due/inactive)',sheet:'Followup_adherence',cols:'All columns (each month is a column)'},
+    {n:'12a',ind:'SMBG frequency (all enrolled, MoM)',tab:'T1',type:'%',num:'Count by SMBG category: Not monitoring / <3x / 3-4x / >4x per day',den:'PLT1Ds with non-dot value in that month',sheet:'SMBG_Monthly',cols:'All (each column = a month)'},
+    {n:'12b',ind:'SMBG frequency (>3m enrolled, last month)',tab:'T1',type:'%',num:'Same as 12a but restricted to PLT1Ds enrolled for >3 months',den:'PLT1Ds enrolled >3 months with non-dot value in last month',sheet:'SMBG_Monthly',cols:'All'},
+    {n:'13a/b',ind:'% Hyper / Hypo readings (last 3 months)',tab:'T1',type:'%',num:'Visits by bucket: 0-20% / 20-40% / 40-60% / 60-80% / 80-100% hyper or hypo readings',den:'Visits with SMBG reading in that month',sheet:'SMBG_Hyper/Hypo',cols:'% Hyper readings, % Hypo readings, Date of visit'},
+    {n:'14a',ind:'Clinic functionality (MoM)',tab:'T1',type:'%',num:'Clinics functional >75% of designated days in the month',den:'Operational clinics with non-blank values in that month',sheet:'Operations_Summary',cols:'All'},
+    {n:'14b',ind:'Clinic off days',tab:'T1',type:'%',num:'Clinics with exactly 1/2/3/4+ off days in the month',den:'Operational clinics in that month',sheet:'Operations_Summary',cols:'# of offs column'},
+    {n:'14c',ind:'Trained clinical staff at clinic',tab:'T1',type:'%',num:'Clinics with a trained Pediatrician / MD Medicine / MO on-site',den:'Total operational clinics',sheet:'CompleteSupport_Facilities, Capacity_Building',cols:'Facility Name, Designation/Department, Trained = Yes'},
+    {sec:'TAB 2 — Clinical Outcomes'},
+    {n:'15',ind:'HbA1c testing rate',tab:'T2',type:'%',num:'PLT1Ds with HbA1c test in last 3 months OR due for HbA1c',den:'Total PLT1Ds enrolled',sheet:'visit_records',cols:'Patient ID, HbA1c test date'},
+    {n:'16',ind:'Improving HbA1c trend',tab:'T2',type:'%',num:'PLT1Ds enrolled >3m with latest HbA1c lower than baseline',den:'PLT1Ds enrolled >3m with both baseline and latest reading',sheet:'HbA1c baseline/latest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket'},
+    {n:'17',ind:'DKA episode — last 12 months',tab:'T2',type:'%',num:'PLT1Ds with ≥1 DKA episode in last 12 months',den:'PLT1Ds enrolled with ≥1 follow-up visit in last 12 months',sheet:'visit_records',cols:'Patient ID, DKA episode (Y/N), Visit Date'},
+    {n:'18',ind:'Hypoglycaemia — last 12 months',tab:'T2',type:'%',num:'PLT1Ds with ≥1 hypoglycaemia episode in last 12 months',den:'PLT1Ds enrolled with ≥1 follow-up visit in last 12 months',sheet:'visit_records',cols:'Patient ID, Hypoglycaemia episode (Y/N), Visit Date'},
+    {n:'19',ind:'HbA1c change (stacked bar)',tab:'T2',type:'%',num:'PLT1Ds by change bucket: Worsened ≥4% / 2-4% / <2% / No change / Improved <2% / 2-4% / ≥4%',den:'PLT1Ds enrolled >3m with both baseline and latest HbA1c (min 2 month gap)',sheet:'HbA1c baseline/latest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket since enrolment'},
+    {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1Ds enrolled >3m with both values. Target: <8.5',sheet:'HbA1c baseline/latest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
+    {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1Ds by TDD/kg range: below/in/above · Pediatric <13: 0.7-1.0 u/kg · Pubertal+Adults: 1.0-1.5 u/kg',den:'PLT1Ds with TDD recorded at last visit',sheet:'visit_records',cols:'Patient ID, Total Daily Dose, Weight (kg), Visit Date, DOB'},
+    {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1Ds by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1Ds with both basal dose and TDD at last visit',sheet:'visit_records',cols:'Patient ID, Basal dose, Total Daily Dose, Visit Date'},
+    {sec:'TAB 3 — Capacity Building'},
+    {n:'23',ind:'Batches held — doctors / nurses',tab:'T3',type:'Absolute #',num:'Count of distinct training batches by date and state',den:'—',sheet:'Capacity_Building',cols:'Training start date, State, Type of Service Provider'},
+    {n:'24',ind:'Doctors / nurses trained',tab:'T3',type:'Absolute #',num:'Count of distinct participants attending ≥1 session',den:'—',sheet:'Capacity_Building',cols:'Name of Service Provider, Type of Service Provider'},
+    {n:'25',ind:'Pre/post-test scores',tab:'T3',type:'Average %',num:'Mean pre-test score · Mean post-test score',den:'Participants with both scores recorded',sheet:'Capacity_Building',cols:'Name, Type of Service Provider, Pre-test score (%), Post-test score (%)'},
+    {n:'26',ind:'Specialty of doctors trained',tab:'T3',type:'%',num:'Count by Designation/Department',den:'Total doctors trained',sheet:'Capacity_Building',cols:'Name of Service, Designation/Department'},
+    {n:'27',ind:'Pilot vs non-pilot facility',tab:'T3',type:'%',num:'Doctors from pilot site facilities vs non-pilot',den:'Total doctors trained',sheet:'Capacity_Building',cols:'Name, Pilot facility (Yes/No)'},
+    {n:'28',ind:'Mentoring sessions',tab:'T3',type:'Absolute #',num:'Count of session events by cadre (Doctor / Nurse)',den:'—',sheet:'Mentoring records (TBC)',cols:'Session ID, Cadre, Session Date'},
+    {n:'29',ind:'FLW orientation sessions',tab:'T3',type:'Absolute #',num:'Count of sessions by session ID and state',den:'—',sheet:'Orientation_T1D signs',cols:'Session ID, Session Date, State'},
+    {n:'30',ind:'Health workers oriented',tab:'T3',type:'Absolute #',num:'Sum of # of Service Providers column',den:'—',sheet:'Orientation_T1D signs',cols:'# of Service Providers'},
+    {n:'31',ind:'Pilot districts with ≥1 FLW session',tab:'T3',type:'% + #',num:'Distinct pilot districts with ≥1 session held',den:'Total pilot districts',sheet:'Orientation_T1D signs',cols:'District, Pilot district (Yes/No)'},
+    {n:'32',ind:'Type of service providers oriented',tab:'T3',type:'%',num:'Count by cadre type (ANM/ASHA/BCM/BPM/CHO…)',den:'Total health workers oriented',sheet:'Orientation_T1D signs',cols:'Participant ID, Cadre'},
+  ];
+  const tbody=document.getElementById('info-tbody');
+  const tabCol={T1:'b-t1',T2:'b-t2',T3:'b-t3'};
+  const tabLbl={T1:'Tab 1',T2:'Tab 2',T3:'Tab 3'};
+  tbody.innerHTML=rows.map(r=>{
+    if(r.sec) return`<tr class="sec-row"><td colspan="8">${r.sec}</td></tr>`;
+    return`<tr><td style="font-weight:700;color:var(--b2)">${r.n}</td><td style="font-weight:600">${r.ind}</td><td><span class="badge-sm ${tabCol[r.tab]}">${tabLbl[r.tab]}</span></td><td style="color:var(--tm)">${r.type}</td><td>${r.num}</td><td>${r.den}</td><td style="font-size:9px;color:var(--b1)">${r.sheet}</td><td style="font-size:9px;color:var(--t2)">${r.cols}</td></tr>`;
+  }).join('');
+}
+
+
+function buildFupChart(){
+  if(_cfup)_cfup.destroy();
+  const rev=[...FUP_MOM].reverse();
+  const labs=rev.map(r=>[r.m,'n='+r.n.toLocaleString()]);
+  const vals=rev.map(r=>r.v);
+  _cfup=new Chart(document.getElementById('c-fup'),{
+    type:'bar',
+    data:{labels:labs, datasets:[
+      {label:'% Follow-up', data:vals,
+       backgroundColor:vals.map(v=>v>=75?'#0f3460':'#1a5fa8'),
+       borderRadius:3, _minVal:1, _minH:14},
+      {label:'Target', data:rev.map(()=>75), type:'line',
+       borderColor:'#d97706', borderDash:[5,5], borderWidth:1.5,
+       pointRadius:0, backgroundColor:'transparent', _noLabel:true}
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{padding:{top:8}},
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        title:items=>[items[0].label].flat().join(' '),
+        label:ctx=>ctx.dataset.label==='Target'?' Target: 75%':' Follow-up: '+ctx.parsed.y+'%'
+      }}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:8.5}}},
+        y:{display:false, min:0, max:100}
+      }
+    }
+  });
+}
+
+function buildAge(){
+  if(window._cage) window._cage.destroy();
+  window._cage=new Chart(document.getElementById('c-age'),{type:'doughnut',
+    data:{datasets:[{data:[19,12,69],backgroundColor:['#7db8e8','#1a5fa8','#0f3460'],borderWidth:0}]},
+    options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  document.getElementById('age-legend').innerHTML=
+    [['Pediatric (<13)',19,'#7db8e8'],['Pubertal (13–17)',12,'#1a5fa8'],['Adults (≥18)',69,'#0f3460']]
+    .map(([l,v,c])=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${c};display:inline-block;margin-right:4px"></span>${l}</span><strong>${v}%</strong></div>`)
+    .join('');
+}
+
+function safe(name, fn){
+  try{ fn(); } catch(e){ console.warn('[Dashboard] '+name+':', e.message); }
+}
+
+function applyFilters(){
+  const f=getF(), d=getD();
+  safe('renderKPIs',    ()=>renderKPIs(d,f));
+  safe('buildFupChart', buildFupChart);
+  safe('renderSmbg',    renderSmbg);
+  safe('renderHyperHypo', renderHyperHypo);
+  safe('renderPTF',     renderPTF);
+  safe('renderTDD',     renderTDD);
+  safe('renderBasal',   renderBasal);
+  safe('renderTrainedStaff', renderTrainedStaff);
+  safe('buildC1',       ()=>buildC1(off[0]));
+  safe('buildC2',       ()=>buildC2(off[1]));
+  safe('buildTDD',       renderTDD);
+}
+
+// INIT
+off=[MAX,MAX];
+const _inits=[['renderGender',renderGender],['buildStaticCharts',buildStaticCharts],
+ ['buildClinOps',buildClinOps],['buildOffDays',buildOffDays],
+ ['buildHbaChange',buildHbaChange],['buildHbaAvg',buildHbaAvg],
+ ['buildInfoTable',buildInfoTable],['buildFupChart',buildFupChart],['buildAge',buildAge],['buildHbaDist',buildHbaDist],['buildHbaLatest',buildHbaLatest]];
+_inits.forEach(([name,fn])=>{try{fn();}catch(e){console.warn('Dashboard init error ['+name+']:',e);}});
+// applyFilters always runs — this populates all HTML-rendered sections
+try{applyFilters();}catch(e){console.error('applyFilters failed:',e);}
+</script>
+</body>
+</html>
