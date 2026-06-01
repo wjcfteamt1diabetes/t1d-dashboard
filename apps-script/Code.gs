@@ -51,25 +51,49 @@ function countDistinct(rows, col) {
 
 // ── Main payload ─────────────────────────────────────────────
 
+// ── Static copy of Enrolled List ────────────────────────────
+// IMPORTRANGE in Enrolled List never evaluates in Apps Script server context.
+// This function copies the live sheet to a static tab Apps Script can read reliably.
+// Run once manually, then the trigger keeps it fresh every 6 hours.
+
+function refreshEnrolledListStatic() {
+  var wb1  = SpreadsheetApp.openById(WB1_ID);
+  var src  = wb1.getSheetByName('Enrolled List');
+  var rows = src.getLastRow();
+  var cols = src.getLastColumn();
+  if (rows < 100) {
+    throw new Error('Enrolled List only has ' + rows + ' rows — cannot refresh static copy. ' +
+      'Open the sheet in a browser first so IMPORTRANGE can evaluate, then run this again.');
+  }
+  var dst = wb1.getSheetByName('Enrolled_List_Static');
+  if (!dst) dst = wb1.insertSheet('Enrolled_List_Static');
+  dst.clearContents();
+  var data = src.getRange(1, 1, rows, cols).getValues();
+  dst.getRange(1, 1, data.length, data[0].length).setValues(data);
+  Logger.log('Enrolled_List_Static refreshed: ' + rows + ' rows, ' + cols + ' cols');
+}
+
+// Run once to set up automatic refresh every 6 hours
+function createEnrolledListTrigger() {
+  // Remove existing triggers for this function first
+  ScriptApp.getProjectTriggers().forEach(function(t) {
+    if (t.getHandlerFunction() === 'refreshEnrolledListStatic') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('refreshEnrolledListStatic').timeBased().everyHours(6).create();
+  Logger.log('Trigger created — refreshEnrolledListStatic will run every 6 hours');
+}
+
 function buildPayload() {
   var wb1 = SpreadsheetApp.openById(WB1_ID);
   var wb2 = SpreadsheetApp.openById(WB2_ID);
 
-  // Enrolled List uses IMPORTRANGE/dynamic formulas.
-  // On cold script runs getLastRow() returns 2 (formulas not yet evaluated).
-  // Peek at the sheet to trigger evaluation, wait, then retry once.
-  var enrolledSh = wb1.getSheetByName('Enrolled List');
-  enrolledSh.getRange(3, 1).getValue(); // peek triggers IMPORTRANGE load
-  if (enrolledSh.getLastRow() < 100) {
-    Utilities.sleep(6000);
-  }
-
-  // Load all tabs (headerRow=1 for sheets with a title row, 0 for clean headers)
-  var enrolled = readTab(wb1, 'Enrolled List',             1);
+  // Read from static copy of Enrolled List (IMPORTRANGE doesn't work in Apps Script context).
+  // If static copy doesn't exist yet, run refreshEnrolledListStatic() once from the editor.
+  var enrolledTabName = wb1.getSheetByName('Enrolled_List_Static') ? 'Enrolled_List_Static' : 'Enrolled List';
+  var enrolled = readTab(wb1, enrolledTabName, 1);
   if (enrolled.length < 100) {
-    throw new Error('Enrolled List loaded only ' + enrolled.length + ' rows — ' +
-      'IMPORTRANGE may need re-authorisation. Open the sheet in a browser, accept any ' +
-      'permission prompt, then hit Refresh Data on the dashboard.');
+    throw new Error('Patient data unavailable (' + enrolled.length + ' rows from ' + enrolledTabName + '). ' +
+      'Run refreshEnrolledListStatic() from the Apps Script editor, then retry.');
   }
   var csFac    = readTab(wb1, 'CompleteSupport_Facilities', 1);
   var cap      = readTab(wb1, 'Capacity_Building',          0);
