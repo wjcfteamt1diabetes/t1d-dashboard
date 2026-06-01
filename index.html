@@ -784,10 +784,14 @@ function renderKPIs(d,f){
   const nt=document.getElementById('k-newtrend'); nt.textContent=(nL<nP?'↓':'↑')+' vs '+nP+' prior month'; nt.className='ktr '+(nL<nP?'dn':'up');
   sv('ins-base-v',d.insBase+'%'); sw('ins-base',d.insBase); sv('ins-last-v',d.insLast+'%'); sw('ins-last',d.insLast);
   sv('ins-delta','▲ +'+(d.insLast-d.insBase)+'pp improvement from baseline');
-  sv('hb-test',d.hbTest+'%'); sv('hb-test-n','n = '+fmt(d.enr)+' enrolled');
-  sv('hb-dec',d.hbDec+'%'); sv('hb-dec-n','n = '+fmt(d.hbDecN)+' with ≥2 readings');
-  sv('dka',d.dka+'%'); sv('dka-n','n = '+fmt(d.enr)+' · '+(d.dka<10?'✓ on target':'⚠ above target'));
-  sv('hypo',d.hypo+'%'); sv('hypo-n','n = '+fmt(d.enr)+' · '+(d.hypo<10?'✓ on target':'⚠ above target'));
+  sv('hb-test',   d.hbTest!=null ? d.hbTest+'%'  : '—');
+  sv('hb-test-n', d.hbTest!=null ? 'n = '+fmt(d.enr)+' enrolled' : 'Data pending — HbA1c sheet not yet populated');
+  sv('hb-dec',    d.hbDec!=null  ? d.hbDec+'%'   : '—');
+  sv('hb-dec-n',  d.hbDec!=null  ? 'n = '+fmt(d.hbDecN||0)+' with ≥2 readings' : 'Data pending — HbA1c sheet not yet populated');
+  sv('dka',  d.dka!=null  ? d.dka+'%'  : '—');
+  sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.enr)+' · '+(d.dka<10?'✓ on target':'⚠ above target') : '');
+  sv('hypo', d.hypo!=null ? d.hypo+'%' : '—');
+  sv('hypo-n',d.hypo!=null ? 'n = '+fmt(d.enr)+' · '+(d.hypo<10?'✓ on target':'⚠ above target') : '');
   sv('dr-bat',b.drBat); sv('dr-tr',b.drTr); sv('dr-tr-n','across '+sln(f.state));
   sv('ppdr-lbl','Doctors (n='+b.drTr+')'); sv('ppdr-pre',b.drPre+'%'); sv('ppdr-post',b.drPost+'%');
   const pdrPre=document.getElementById('pf-dr-pre'); if(pdrPre)pdrPre.style.width=b.drPre+'%'; const pdrPost=document.getElementById('pf-dr-post'); if(pdrPost)pdrPost.style.width=b.drPost+'%';
@@ -1013,8 +1017,31 @@ function buildOffDays(){
   _cod._sumOnTop=true;
 }
 
+function hbaPending(canvasId){
+  // Returns true and shows a pending overlay when HbA1c data is all zeros (sheet not yet populated)
+  var hasData=(HBA_N||[]).some(function(v){return v>0;});
+  var el=document.getElementById(canvasId);
+  if(!el) return !hasData;
+  var wrap=el.parentElement;
+  var existingMsg=wrap.querySelector('.hba-pending');
+  if(!hasData){
+    el.style.display='none';
+    if(!existingMsg){
+      var msg=document.createElement('div');
+      msg.className='hba-pending data-pending';
+      msg.textContent='HbA1c data pending — Hba1c_Baseline/Latest sheet not yet populated';
+      wrap.appendChild(msg);
+    }
+  } else {
+    el.style.display='';
+    if(existingMsg) existingMsg.remove();
+  }
+  return !hasData;
+}
+
 function buildHbaChange(){
   if(_chc)_chc.destroy();
+  if(hbaPending('c-hba-change')) return;
   const defs=[
     {l:'Improved ≥4%', d:HBA_I4, c:'#276749', lc:'#fff'},
     {l:'Improved 2–4%', d:HBA_I2, c:'#52a87a', lc:'#fff'},
@@ -1045,6 +1072,7 @@ function buildHbaChange(){
 
 function buildHbaAvg(){
   if(_cha)_cha.destroy();
+  if(hbaPending('c-hba-avg')) return;
   _cha=new Chart(document.getElementById('c-hba-avg'),{
     type:'bar',
     data:{labels:HBA_LBLS, datasets:[
@@ -1094,6 +1122,7 @@ function buildHbaAvg(){
 
 function buildHbaDist(){
   if(window._chdist)window._chdist.destroy();
+  if(hbaPending('c-hba-dist')) return;
   window._chdist=new Chart(document.getElementById('c-hba-dist'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
@@ -1118,6 +1147,7 @@ function buildHbaDist(){
 
 function buildHbaLatest(){
   if(window._chlatest)window._chlatest.destroy();
+  if(hbaPending('c-hba-latest')) return;
   window._chlatest=new Chart(document.getElementById('c-hba-latest'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
