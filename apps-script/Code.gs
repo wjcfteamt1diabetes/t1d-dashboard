@@ -459,20 +459,27 @@ function buildFollowup(fupSh, survivors) {
 function buildClinicOps(opsSh, offsSh) {
   var opsData  = parseOpsSheet(opsSh);
   var offsData = parseOpsSheet(offsSh);
+  var opFacs   = opsData.facilities.filter(function(f) { return f.operational; });
+
+  // Build a label→offsMonth map for O(1) lookup
+  var offsMap = {};
+  offsData.months.forEach(function(m) { offsMap[m.label] = m; });
 
   var months = [], funcPct = [], offDays = [];
 
-  opsData.months.forEach(function(om, mi) {
-    var opFacs = opsData.facilities.filter(function(f) { return f.operational; });
-    var denom  = 0, numFunc = 0;
+  opsData.months.forEach(function(om) {
+    // Skip future/empty rows — only include months with ≥1 facility value
+    var denom = 0, numFunc = 0;
     opFacs.forEach(function(f) {
       var v = Number(om.vals[f.name]);
       if (!isNaN(v) && om.vals[f.name] !== '') { denom++; if (v >= 0.75) numFunc++; }
     });
+    if (denom === 0) return;
+
     months.push(om.label);
     funcPct.push(pct(numFunc, denom));
 
-    var om2 = offsData.months[mi];
+    var om2 = offsMap[om.label];
     if (om2) {
       var b = [0,0,0,0], offDen = 0;
       opFacs.forEach(function(f) {
@@ -488,6 +495,7 @@ function buildClinicOps(opsSh, offsSh) {
     }
   });
 
+  // Take last 8 months that have actual data
   var take = Math.min(8, months.length), s = months.length - take;
   return { months: months.slice(s), functionalPct: funcPct.slice(s), offDays: offDays.slice(s) };
 }
