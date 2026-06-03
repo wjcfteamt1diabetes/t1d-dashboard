@@ -1,3 +1,7 @@
+// Direct Google Sheets connection (no Apps Script).
+// Both workbooks must be shared "Anyone with the link → Viewer" so the
+// browser can read them via the gviz CSV endpoint.
 window.DASHBOARD_CONFIG = {
-  endpoint: 'https://script.google.com/macros/s/AKfycbwLPgbBgVVvLT9PePHbJnxiR-rVQjQXx5K7Iq0cCJjFek7teppS68qsT02Lskv4r8B4RA/exec'
+  wb1: '1cgMB5RIomWGSw_cQfmFkxx3qfBXlXxIL9fR4FzFuwIg', // T1D_Data_Claude_Sheet1_v1
+  wb2: '1zObGfUcDOszt82v9V65OAK7yV5McXzeusFx5XqU_d6M'  // T1D_Data_Claude_Sheet2_v1
 };

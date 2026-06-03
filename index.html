@@ -738,35 +738,32 @@ Chart.register({
   }
 });
 
-// ── Live data globals (populated by hydrateGlobals after fetch) ──
-let DATA=null,STATE,MONTHS,CS_CUM,LT_CUM,CLIN,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL;
+// ── Live data globals (recomputed from RAW on every filter change) ──
+let RAW=null;          // parsed sheets: {enrolled, csFac, ltGrid, cap, orient, targets, opsGrid, offsGrid}
+let DATA=null;         // {demographics, insulin, capacity} for the active filter
+let CURD=null;         // merged geo+patient object consumed by renderKPIs
+let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL;
 let FUP_MOM,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
 let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
 let HBA_N,HBA_LBLS,HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4;
 let HBA_AVG_BASE,HBA_AVG_LAST,HBA_DIST_LBLS,HBA_D_LT7,HBA_D_7_10,HBA_D_10_13,HBA_D_13_16,HBA_D_GT16,HBA_LATEST;
 
-// Segment multipliers kept for Phase 1 filtering; replaced by real segments in Phase 3
-const SX={all:1,M:.58,F:.42}, AG={all:1,ped:.19,pub:.12,adu:.69}, ST={all:1,active:.88};
-const SC={all:1,RJ:.366,MP:.321,UK:.172,CG:.142};
-
 const WIN=6;
 let MAX=0, off=[0,0];
 let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
+const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const TARGETS={RJ:4000,MP:1082,UK:602,CG:270,all:5954};
+
 function getF(){return{state:document.getElementById('f-state').value,status:document.getElementById('f-status').value,sex:document.getElementById('f-sex').value,age:document.getElementById('f-age').value};}
-function getD(){
-  const f=getF(), b=STATE[f.state]||STATE.all;
-  const em=SX[f.sex]*AG[f.age]*ST[f.status];
-  const adj=f.age==='ped'?-5:f.age==='pub'?-2:0;
-  return{...b,enr:Math.round(b.enr*em),em,csEnr:Math.round(b.csEnr*em),ltEnr:Math.round(b.ltEnr*em),insBase:b.insBase+adj,insLast:b.insLast+(adj>>1),hbDecN:Math.round(b.hbDecN*em)};
-}
+function getD(){ return CURD; }
 function sv(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function sw(id,w){const e=document.getElementById(id);if(e)e.style.width=w+'%';}
 function fmt(n){return n.toLocaleString();}
 function sln(s){return{all:'All states',RJ:'Rajasthan',MP:'Madhya Pradesh',UK:'Uttarakhand',CG:'Chhattisgarh'}[s]||s;}
 
 function renderKPIs(d,f){
-  const b=STATE[f.state]||STATE.all;
+  const b=d;  // d is a merged geo+patient object
   sv('k-states',b.states); sv('k-states-n',f.state==='all'?'RJ · MP · UK · CG':sln(f.state));
   sv('k-dist',b.dist); sv('k-dist-n','n = '+b.dist+' districts');
   sv('k-plan',b.plan); sv('k-plan-n','n = '+b.plan+' facilities');
@@ -779,8 +776,8 @@ function renderKPIs(d,f){
   sv('n-tag','n = '+fmt(d.enr)+' PLT1Ds');
   sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',Math.round(d.csEnr/d.enr*100)+'% of enrolled · '+b.csOp+' facilities');
   sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',Math.round(d.ltEnr/d.enr*100)+'% of enrolled · '+b.ltOp+' facilities');
-  const nL=Math.round(b.newLast*d.em), nP=Math.round(b.newPrev*d.em);
-  sv('k-new',nL); sv('k-avgclin','Avg/clinic: '+b.avgClin.toFixed(1));
+  const nL=d.newLast, nP=d.newPrev;
+  sv('k-new',nL); sv('k-avgclin','Avg/clinic: '+(d.avgClin||0).toFixed(1));
   const nt=document.getElementById('k-newtrend'); nt.textContent=(nL<nP?'↓':'↑')+' vs '+nP+' prior month'; nt.className='ktr '+(nL<nP?'dn':'up');
   sv('ins-base-v',d.insBase+'%'); sw('ins-base',d.insBase); sv('ins-last-v',d.insLast+'%'); sw('ins-last',d.insLast);
   sv('ins-delta','▲ +'+(d.insLast-d.insBase)+'pp improvement from baseline');
@@ -900,10 +897,9 @@ function sc2(arr,o,scale){return arr.slice(o,o+WIN).map(v=>Math.round(v*(scale||
 
 function buildC1(o){
   if(_c1)_c1.destroy();
-  const f=getF(), sc=SC[f.state]||1;
   const lb=MONTHS.slice(o,o+WIN);
-  const cs=CS_CUM.slice(o,o+WIN).map(v=>Math.round(v*sc));
-  const lt=LT_CUM.slice(o,o+WIN).map(v=>Math.round(v*sc));
+  const cs=CS_CUM.slice(o,o+WIN);
+  const lt=LT_CUM.slice(o,o+WIN);
   const cl=CLIN.slice(o,o+WIN);
   const tots=cs.map((v,i)=>v+lt[i]);
   _c1=new Chart(document.getElementById('c1'),{
@@ -939,10 +935,9 @@ function buildC1(o){
 
 function buildC2(o){
   if(_c2)_c2.destroy();
-  const f=getF(), sc=SC[f.state]||1;
   const lb=MONTHS.slice(o,o+WIN);
-  const cs=NEWENR_CS.slice(o,o+WIN).map(v=>Math.round(v*sc));
-  const lt=NEWENR_LT.slice(o,o+WIN).map(v=>Math.round(v*sc));
+  const cs=NEWENR_CS.slice(o,o+WIN);
+  const lt=NEWENR_LT.slice(o,o+WIN);
   const tot=cs.map((v,i)=>v+lt[i]);
   const av=AVGCL.slice(o,o+WIN);
   _c2=new Chart(document.getElementById('c2'),{
@@ -1302,102 +1297,348 @@ function safe(name, fn){
 }
 
 function applyFilters(){
+  recompute();
   const f=getF(), d=getD();
   safe('renderKPIs',      ()=>renderKPIs(d,f));
-  safe('buildFupChart',   buildFupChart);
-  safe('renderSmbg',      renderSmbg);
-  safe('renderHyperHypo', renderHyperHypo);
+  safe('buildC1',         ()=>buildC1(off[0]));
+  safe('buildC2',         ()=>buildC2(off[1]));
+  safe('renderGender',    renderGender);
+  safe('buildAge',        buildAge);
   safe('renderPTF',       renderPTF);
   safe('renderTDD',       renderTDD);
   safe('renderBasal',     renderBasal);
   safe('renderTrainedStaff', renderTrainedStaff);
-  safe('buildC1',         ()=>buildC1(off[0]));
-  safe('buildC2',         ()=>buildC2(off[1]));
+  safe('buildStaticCharts',  buildStaticCharts);
+  safe('buildFupChart',   buildFupChart);
+  safe('renderSmbg',      renderSmbg);
+  safe('renderHyperHypo', renderHyperHypo);
+  safe('buildClinOps',    buildClinOps);
+  safe('buildOffDays',    buildOffDays);
 }
 
-// ── Data loading infrastructure ──
-async function loadData(fresh){
-  const url=window.DASHBOARD_CONFIG.endpoint+(fresh?'?fresh=1':'');
+// ═══════════ DIRECT GOOGLE SHEETS DATA LAYER ═══════════
+// No backend — sheets are fetched and aggregated entirely in the browser.
+
+function normv(v){return String(v==null?'':v).trim().toLowerCase();}
+function isYes(v){const s=normv(v);return s==='yes'||s==='y'||s==='true'||s==='1';}
+function num(v){const s=String(v).trim();if(s==='')return null;const n=Number(s.replace(/,/g,''));return isNaN(n)?null:n;}
+function stUp(p){return String(p['State']||'').trim().toUpperCase();}
+function sexTok(p){const s=normv(p['Sex']);return s.charAt(0)==='m'?'M':s.charAt(0)==='f'?'F':'O';}
+function ageTok(p){const a=num(p['Age']);return a==null?'unk':a<13?'ped':a<18?'pub':'adu';}
+function statusTok(p){return normv(p['Case Status (Active/Inactive)'])==='inactive'?'inactive':'active';}
+
+// Flexible date parser for gviz CSV strings (handles native, dd/mm/yyyy, gviz Date())
+function parseDate(v){
+  if(v instanceof Date) return isNaN(v)?null:v;
+  const s=String(v).trim(); if(!s) return null;
+  let m=s.match(/^Date\((\d+),(\d+),(\d+)/);            // gviz Date(y,m,d)
+  if(m) return new Date(+m[1],+m[2],+m[3]);
+  m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/); // slash/dash dates
+  if(m){let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;
+    if(a>12&&b<=12) return new Date(y,b-1,a);            // dd/mm
+    if(b>12&&a<=12) return new Date(y,a-1,b);            // mm/dd
+    return new Date(y,b-1,a);                            // ambiguous → dd/mm (India)
+  }
+  const d=new Date(s); return isNaN(d)?null:d;          // "Oct 15 2025", ISO, etc.
+}
+
+// Minimal RFC-4180 CSV parser → 2D array of strings
+function parseCSV(text){
+  const rows=[];let row=[],cur='',q=false;
+  for(let i=0;i<text.length;i++){const c=text[i];
+    if(q){ if(c==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else { if(c==='"')q=true; else if(c===','){row.push(cur);cur='';}
+      else if(c==='\n'){row.push(cur);rows.push(row);row=[];cur='';}
+      else if(c!=='\r')cur+=c; }
+  }
+  if(cur!==''||row.length){row.push(cur);rows.push(row);}
+  return rows;
+}
+
+async function fetchTab(wbId,tabName){
+  const url='https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
   const res=await fetch(url,{cache:'no-store'});
-  if(!res.ok) throw new Error('HTTP '+res.status);
-  const p=await res.json();
-  if(p.meta?.schemaVersion!=='1.1') throw new Error('Schema mismatch: '+(p.meta?.schemaVersion||'unknown'));
-  return p;
+  if(!res.ok) throw new Error('HTTP '+res.status+' for "'+tabName+'"');
+  const text=await res.text();
+  if(/^\s*</.test(text)) throw new Error('Sheet "'+tabName+'" is not public. Set the workbook sharing to "Anyone with the link → Viewer".');
+  return parseCSV(text);
 }
 
-function refreshData(){
-  boot(true);
+// 2D grid → array of row objects using grid[headerRow] as keys
+function toObjects(grid,headerRow){
+  if(!grid||!grid.length) return [];
+  const hdrs=grid[headerRow].map(h=>String(h).trim());
+  return grid.slice(headerRow+1).map(r=>{const o={};hdrs.forEach((h,i)=>o[h]=r[i]!==undefined?r[i]:'');return o;});
 }
 
-function hydrateGlobals(d){
-  STATE=d.states;
-  MONTHS=d.series.months;
-  CS_CUM=d.series.csCum; LT_CUM=d.series.ltCum; CLIN=d.series.clin;
-  NEWENR_CS=d.series.newEnrCs; NEWENR_LT=d.series.newEnrLt;
-  NEWENR=NEWENR_CS.map((v,i)=>v+NEWENR_LT[i]); AVGCL=d.series.avgCl;
-  FUP_MOM=d.followup.mom; SMBG_MOM=d.smbg.mom; SMBG_LAST=d.smbg.last;
-  HYPER_M=d.glycemia.months; HYPER_D=d.glycemia.hyperDist; HYPO_D=d.glycemia.hypoDist;
-  CLINOPS_M=d.clinicOps.months; CLINOPS_V=d.clinicOps.functionalPct; OFFDAYS_D=d.clinicOps.offDays;
-  TRAINED_STAFF=d.trainedStaff;
-  HBA_LBLS=d.hba1c.changeLabels; HBA_N=d.hba1c.changeN;
-  HBA_I4=d.hba1c.improved4; HBA_I2=d.hba1c.improved2; HBA_IL=d.hba1c.improvedL;
-  HBA_NC=d.hba1c.noChange; HBA_WL=d.hba1c.worsenedL; HBA_W2=d.hba1c.worsened2; HBA_W4=d.hba1c.worsened4;
-  HBA_AVG_BASE=d.hba1c.avgBaseline; HBA_AVG_LAST=d.hba1c.avgLatest;
-  HBA_DIST_LBLS=d.hba1c.distLabels;
-  HBA_D_LT7=d.hba1c.distLt7; HBA_D_7_10=d.hba1c.dist7_10; HBA_D_10_13=d.hba1c.dist10_13;
-  HBA_D_13_16=d.hba1c.dist13_16; HBA_D_GT16=d.hba1c.distGt16; HBA_LATEST=d.hba1c.latestAvg;
-  MAX=MONTHS.length-WIN; off=[MAX,MAX];
+function pctC(n,d){return d>0?Math.round(n/d*100):0;}
+
+// ── Light-touch facility data for a state (null = all) ──
+function ltData(stateUp){
+  const g=RAW.ltGrid; if(!g||g.length<2) return {facCount:0,totalEnr:0,monthly:{}};
+  const hdr=g[1];
+  let si=-1,ni=-1,ti=-1; const monthCols=[];
+  for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
+    if(h==='State')si=i; if(h==='Facility name')ni=i;
+    if(h==='Total enrolments (autocalculated)')ti=i;
+    const d=parseDate(hdr[i]); if(d&&h&&!/enrolment|facility|state|category|s no|^total/i.test(h)) monthCols.push({i:i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2)});
+  }
+  let facCount=0,totalEnr=0;const monthly={};
+  for(let r=2;r<g.length;r++){const row=g[r];
+    if(stateUp&&String(row[si]||'').trim().toUpperCase()!==stateUp) continue;
+    if(!normv(row[ni])) continue;
+    facCount++; const te=num(row[ti]); if(te!=null)totalEnr+=te;
+    monthCols.forEach(mc=>{const v=num(row[mc.i]); if(v!=null)monthly[mc.label]=(monthly[mc.label]||0)+v;});
+  }
+  return {facCount,totalEnr,monthly};
 }
 
-function stampLastUpdated(iso){
-  const el=document.getElementById('hdr-badge');
-  if(!el) return;
-  try{
-    const d=new Date(iso);
-    el.textContent='Updated '+d.toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-  }catch(e){el.textContent='Live data';}
+// ── Clinic ops (program-wide; transposed sheet) ──
+function parseOps(grid){
+  if(!grid||grid.length<7) return {facs:[],months:[]};
+  const facRow=grid[1],opRow=grid[2],facs=[];
+  for(let i=4;i<facRow.length;i++){const nm=String(facRow[i]).trim(); if(nm)facs.push({name:nm,idx:i,op:isYes(opRow[i])});}
+  const months=[];
+  for(let r=6;r<grid.length;r++){const lbl=String(grid[r][2]||'').trim();
+    if(!lbl||lbl==='Month/Year')continue;
+    const vals={};facs.forEach(f=>vals[f.name]=grid[r][f.idx]);months.push({label:lbl,vals});}
+  return {facs,months};
 }
+function computeClinicOps(){
+  const ops=parseOps(RAW.opsGrid),offs=parseOps(RAW.offsGrid);
+  const opFacs=ops.facs.filter(f=>f.op);
+  const offsMap={};offs.months.forEach(m=>offsMap[m.label]=m);
+  const M=[],FP=[],OD=[];
+  ops.months.forEach(om=>{
+    let den=0,nf=0;
+    opFacs.forEach(f=>{const v=num(om.vals[f.name]);if(v!=null){den++;if(v>=0.75)nf++;}});
+    if(den===0)return;
+    M.push(om.label);FP.push(pctC(nf,den));
+    const o2=offsMap[om.label];const b=[0,0,0,0];let od=0;
+    if(o2)opFacs.forEach(f=>{const v=num(o2.vals[f.name]);if(v!=null){od++;if(v===1)b[0]++;else if(v===2)b[1]++;else if(v===3)b[2]++;else if(v>=4)b[3]++;}});
+    OD.push(b.map(x=>pctC(x,od)));
+  });
+  const take=Math.min(8,M.length),s=M.length-take;
+  CLINOPS_M=M.slice(s);CLINOPS_V=FP.slice(s);OFFDAYS_D=OD.slice(s);
+}
+
+// ── Recompute everything for the current filter ──
+function recompute(){
+  const f=getF();
+  const stateUp=f.state==='all'?null:f.state;
+  const survAll=RAW.enrolled.filter(p=>normv(p['Survival Status'])!=='no');
+  const stSurv=stateUp?survAll.filter(p=>stUp(p)===stateUp):survAll;            // state only
+  const P=survAll.filter(p=>
+    (!stateUp||stUp(p)===stateUp)&&
+    (f.sex==='all'||sexTok(p)===f.sex)&&
+    (f.age==='all'||ageTok(p)===f.age)&&
+    (f.status==='all'||statusTok(p)===f.status));                              // all filters
+
+  const csF =stateUp?RAW.csFac.filter(x=>String(x['State']).trim().toUpperCase()===stateUp):RAW.csFac;
+  const capF=stateUp?RAW.cap.filter(x=>String(x['State']).trim().toUpperCase()===stateUp):RAW.cap;
+  const oriF=stateUp?RAW.orient.filter(x=>String(x['State']).trim().toUpperCase()===stateUp):RAW.orient;
+  const lt  =ltData(stateUp);
+
+  // ── Geography (state-scoped) ──
+  const csOp=csF.filter(x=>isYes(x['T1D Clinic Operational?'])).length;
+  const dists={};csF.forEach(x=>{const d=normv(x['District']);if(d)dists[d]=true;});
+  const dist=Object.keys(dists).length;
+  const drs=capF.filter(r=>normv(r['Type of Service Provider'])==='doctor');
+  const drNames={};drs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)drNames[n]=true;});
+  const nrs=capF.filter(r=>{const t=normv(r['Type of Service Provider']);return t==='staff nurse'||t==='nurse';});
+  const nrNames={};nrs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)nrNames[n]=true;});
+  const distinct=(rows,col)=>{const s={};rows.forEach(r=>{const v=normv(r[col]);if(v)s[v]=true;});return Object.keys(s).length;};
+  const prePost=rows=>{const pr=[],po=[];rows.forEach(r=>{const a=num(r['Pre-test Score']),b=num(r['Post-test Score']),m=num(r['Maximum Score']);if(a!=null&&b!=null&&m>0){pr.push(a/m*100);po.push(b/m*100);}});const mean=x=>x.length?Math.round(x.reduce((s,y)=>s+y,0)/x.length):0;return{pre:mean(pr),post:mean(po)};};
+  const drSc=prePost(drs),nrSc=prePost(nrs);
+  const flwHr=oriF.reduce((s,r)=>s+(num(r['# of Service Providers'])||0),0);
+  const pilotSess={};oriF.forEach(r=>{const d=normv(r['District']);if(d)pilotSess[d]=true;});
+
+  // ── Patient metrics (all-filter-scoped) ──
+  const n=P.length||1;
+  const now=new Date();
+  const lastM=new Date(now.getFullYear(),now.getMonth()-1,1), prevM=new Date(now.getFullYear(),now.getMonth()-2,1);
+  let male=0,female=0,oth=0,ped=0,pub=0,adu=0,active=0,newLast=0,newPrev=0,insB=0,insL=0,fupDen=0,dkaN=0,hypoN=0;
+  const facMap={},inactMap={};
+  const tdd={ped:{b:0,i:0,a:0,n:0},pub:{b:0,i:0,a:0,n:0},adu:{b:0,i:0,a:0,n:0}};
+  const bas=[0,0,0,0,0];let basN=0;
+  const FAC={'phc':'PHC','chc':'CHC','dh':'DH','state mc':'State MC','central mc':'Central MC','private hospital':'Pvt Hospital','private clinic':'Pvt Clinic','newly diagnosed':'Newly Dx'};
+  P.forEach(p=>{
+    const sc=normv(p['Sex']).charAt(0); if(sc==='m')male++;else if(sc==='f')female++;else oth++;
+    const ag=num(p['Age']); if(ag!=null){if(ag<13)ped++;else if(ag<18)pub++;else adu++;}
+    if(statusTok(p)==='active')active++;
+    const reg=normv(p['Previous treatment regimen']);
+    let cat=reg==='newly diagnosed'?'Newly Dx':(FAC[normv(p['Previous treatment facility category'])]||(normv(p['Previous treatment facility category'])?normv(p['Previous treatment facility category']).toUpperCase():null));
+    if(cat)facMap[cat]=(facMap[cat]||0)+1;
+    if(reg==='basal-bolus')insB++;
+    if(normv(p['Insulin regimen check'])==='basal-bolus')insL++;
+    if(isYes(p['Follow-up visit in the last 12 months?'])){fupDen++;if(num(p['# of DKA episodes in the last 12 months'])>0)dkaN++;if(num(p['# of severe hypoglycemia episodes in the last 12 months'])>0)hypoN++;}
+    const ir=normv(p['In Range?']);const grp=ag==null?null:ag<13?'ped':ag<18?'pub':'adu';
+    if(grp&&(ir==='below'||ir==='in range'||ir==='above')){tdd[grp].n++;if(ir==='below')tdd[grp].b++;else if(ir==='in range')tdd[grp].i++;else tdd[grp].a++;}
+    const bp=num(p['Basal %']);if(bp!=null&&bp>0){basN++;if(bp<0.20)bas[0]++;else if(bp<0.30)bas[1]++;else if(bp<=0.50)bas[2]++;else if(bp<=0.60)bas[3]++;else bas[4]++;}
+    if(statusTok(p)==='inactive'){const rs=String(p['Reason for marking inactive']).trim();if(rs)inactMap[rs]=(inactMap[rs]||0)+1;}
+    const ed=parseDate(p['Date of enrolment']);
+    if(ed&&ed.getFullYear()===lastM.getFullYear()&&ed.getMonth()===lastM.getMonth())newLast++;
+    if(ed&&ed.getFullYear()===prevM.getFullYear()&&ed.getMonth()===prevM.getMonth())newPrev++;
+  });
+  const gTot=(male+female+oth)||1,aTot=(ped+pub+adu)||1;
+
+  // ── Series (responds to all filters; LT aggregate by state) ──
+  const months=[];let dcur=new Date(2025,0,1);
+  while(dcur.getFullYear()<now.getFullYear()||(dcur.getFullYear()===now.getFullYear()&&dcur.getMonth()<=now.getMonth())){
+    months.push({label:MON[dcur.getMonth()]+' '+String(dcur.getFullYear()).slice(2),y:dcur.getFullYear(),m:dcur.getMonth()});
+    dcur.setMonth(dcur.getMonth()+1);
+  }
+  const csCum=[],ltCum=[],clin=[],neCs=[],neLt=[],avg=[];let cumLt=0;
+  const enrDates=P.map(p=>parseDate(p['Date of enrolment']));
+  months.forEach(mo=>{
+    const eom=new Date(mo.y,mo.m+1,0,23,59,59);
+    let cum=0,nw=0;enrDates.forEach(e=>{if(e&&e<=eom)cum++;if(e&&e.getFullYear()===mo.y&&e.getMonth()===mo.m)nw++;});
+    csCum.push(cum);neCs.push(nw);
+    const op=csF.filter(x=>{if(!isYes(x['T1D Clinic Operational?']))return false;const o=parseDate(x['Date of Operationalisation']);return o&&o<=eom;}).length;
+    clin.push(op);
+    const nl=lt.monthly[mo.label]||0;neLt.push(nl);cumLt+=nl;ltCum.push(cumLt);
+    avg.push(op>0?Math.round(nw/op*10)/10:0);
+  });
+
+  // ── Follow-up MoM (join followup sheet to filtered survivor IDs) ──
+  const idSet={};P.forEach(p=>idSet[normv(p['Claude_ID'])]=true);
+  const fmom=computeFollowup(idSet);
+
+  // ── Assign globals ──
+  MONTHS=months.map(m=>m.label);
+  CS_CUM=csCum;LT_CUM=ltCum;CLIN=clin;NEWENR_CS=neCs;NEWENR_LT=neLt;NEWENR=neCs.map((v,i)=>v+neLt[i]);AVGCL=avg;
+  MAX=Math.max(0,MONTHS.length-WIN);
+  if(off[0]>MAX||off[0]==null)off=[MAX,MAX];
+  FUP_MOM=fmom;
+
+  TRAINED_STAFF=[
+    {lbl:'With trained Pediatrician',v:pctC(csF.filter(x=>isYes(x['Trained pediatrician available?'])).length,csOp||1)},
+    {lbl:'With trained MD Medicine', v:pctC(csF.filter(x=>isYes(x['Trained MD Medicine available?'])).length,csOp||1)},
+    {lbl:'With trained MO',          v:pctC(csF.filter(x=>isYes(x['Trained Medical Officer available?'])).length,csOp||1)}
+  ];
+
+  DATA={
+    demographics:{
+      gender:[{l:'Male',v:pctC(male,gTot)},{l:'Female',v:pctC(female,gTot)},{l:'Other/NS',v:Math.max(0,100-pctC(male,gTot)-pctC(female,gTot))}],
+      age:[{l:'Pediatric (<13)',v:pctC(ped,aTot)},{l:'Pubertal (13–17)',v:pctC(pub,aTot)},{l:'Adults (≥18)',v:pctC(adu,aTot)}],
+      prevFacility:Object.keys(facMap).map(l=>({l,v:pctC(facMap[l],P.length||1)})).filter(d=>d.v>0).sort((x,y)=>y.v-x.v),
+      inactiveReasons:Object.keys(inactMap).map(l=>({l,v:inactMap[l]})).sort((x,y)=>y.v-x.v)
+    },
+    insulin:{
+      tdd:['ped','pub','adu'].map(g=>{const t=tdd[g].n||1;return{grp:g==='ped'?'Pediatric <13':g==='pub'?'Pubertal 13–17':'Adults ≥18',n:tdd[g].n,below:pctC(tdd[g].b,t),inRange:pctC(tdd[g].i,t),above:pctC(tdd[g].a,t)};}),
+      basal:[{l:'<20%',v:pctC(bas[0],basN||1)},{l:'20–30%',v:pctC(bas[1],basN||1)},{l:'30–50%',v:pctC(bas[2],basN||1),ideal:true},{l:'50–60%',v:pctC(bas[3],basN||1)},{l:'> 60%',v:pctC(bas[4],basN||1)}]
+    },
+    capacity:computeCapacity(capF,oriF)
+  };
+
+  // mock sections (sheets not yet populated)
+  SMBG_MOM=MOCK.smbg.mom;SMBG_LAST=MOCK.smbg.last;
+  HYPER_M=MOCK.gly.months;HYPER_D=MOCK.gly.hyper;HYPO_D=MOCK.gly.hypo;
+  HBA_LBLS=MOCK.hba.changeLabels;HBA_N=MOCK.hba.changeN;HBA_I4=MOCK.hba.i4;HBA_I2=MOCK.hba.i2;HBA_IL=MOCK.hba.iL;
+  HBA_NC=MOCK.hba.nc;HBA_WL=MOCK.hba.wL;HBA_W2=MOCK.hba.w2;HBA_W4=MOCK.hba.w4;
+  HBA_AVG_BASE=MOCK.hba.avgB;HBA_AVG_LAST=MOCK.hba.avgL;HBA_DIST_LBLS=MOCK.hba.distLabels;
+  HBA_D_LT7=MOCK.hba.lt7;HBA_D_7_10=MOCK.hba.d710;HBA_D_10_13=MOCK.hba.d1013;HBA_D_13_16=MOCK.hba.d1316;HBA_D_GT16=MOCK.hba.gt16;HBA_LATEST=MOCK.hba.latest;
+
+  // merged object for renderKPIs (geo + patient)
+  const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]||0;
+  CURD={
+    states:f.state==='all'?4:1, dist, plan:csF.length+lt.facCount, op:csOp+lt.facCount, csOp, ltOp:lt.facCount,
+    enr:csEnr+ltEnr, csEnr, ltEnr, target,
+    newLast, newPrev, avgClin:csOp>0?Math.round(newLast/csOp*10)/10:0,
+    insBase:pctC(insB,n), insLast:pctC(insL,n),
+    hbTest:null, hbDec:null, hbDecN:null,
+    dka:pctC(dkaN,fupDen), hypo:pctC(hypoN,fupDen),
+    drBat:distinct(drs,'Training Batch'), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
+    nrBat:distinct(nrs,'Training Batch'), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
+    flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
+  };
+}
+
+function computeFollowup(idSet){
+  const g=RAW.fupGrid; if(!g||g.length<2) return [];
+  const hdr=g[0];const cols=[];
+  for(let i=2;i<hdr.length;i++){const d=parseDate(hdr[i]);if(d){const ys=d.getDate();cols.push({i:i,label:MON[d.getMonth()]+' '+ys,year:2000+ys,month:d.getMonth()});}}
+  const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
+  for(let r=1;r<g.length;r++){if(!idSet[normv(g[r][0])])continue;
+    cols.forEach(c=>{const v=normv(g[r][c.i]);if(v==='y')stat[c.label].y++;else if(v==='n')stat[c.label].n++;});}
+  return cols.filter(c=>stat[c.label].y+stat[c.label].n>0)
+    .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month).slice(-7).reverse()
+    .map(c=>{const s=stat[c.label],t=s.y+s.n;return{m:c.label,v:pctC(s.y,t),n:t};});
+}
+
+function computeCapacity(capF,oriF){
+  const docs=capF.filter(r=>normv(r['Type of Service Provider'])==='doctor');const dT=docs.length||1;
+  const SPEC={'pediatrician':'Pediatrician','paediatrician':'Pediatrician','md medicine':'MD Medicine','medical officer':'Medical Officer','mo':'Medical Officer'};
+  const sm={};docs.forEach(r=>{const l=SPEC[normv(r['Designation/ Department'])]||'Other';sm[l]=(sm[l]||0)+1;});
+  const specialty=['Pediatrician','MD Medicine','Medical Officer','Other'].map(l=>({l,v:pctC(sm[l]||0,dT)})).filter(d=>d.v>0);
+  const pilot=docs.filter(r=>isYes(r['Pilot facility? (Yes/No)'])).length;
+  const CAD={'asha':'ASHA Worker','asha worker':'ASHA Worker','anm':'ANM','bcm':'BCM'};
+  const cm={};oriF.forEach(r=>{const l=CAD[normv(r['Type of Service Provider'])]||'Other';cm[l]=(cm[l]||0)+(num(r['# of Service Providers'])||0);});
+  const cT=Object.keys(cm).reduce((s,k)=>s+(cm[k]||0),0)||1;
+  const flwCadre=['ASHA Worker','ANM','BCM','Other'].map(l=>({l,v:pctC(cm[l]||0,cT)})).filter(d=>d.v>0);
+  return{specialty,pilotSplit:[pctC(pilot,dT),100-pctC(pilot,dT)],flwCadre};
+}
+
+const MOCK={
+  smbg:{mom:[{m:'Apr 26',v:[25,54,12,9],n:1512},{m:'Mar 26',v:[25,43,18,14],n:1398},{m:'Feb 26',v:[21,42,21,16],n:1244},{m:'Jan 26',v:[20,48,19,13],n:1108},{m:'Dec 25',v:[27,51,17,5],n:1002},{m:'Nov 25',v:[30,43,19,8],n:889}],last:{m:'May 26',v:[25,55,12,8],n:911}},
+  gly:{months:[{m:'May 26',n:943},{m:'Apr 26',n:891},{m:'Mar 26',n:824}],hyper:[[22,31,27,13,7],[20,29,28,15,8],[18,28,30,16,8]],hypo:[[63,20,10,5,2],[60,22,11,5,2],[62,21,10,5,2]]},
+  hba:{changeLabels:[['Overall',''],['3–6 months',''],['6–9 months',''],['9–12 months',''],['12–15 months',''],['15–18 months',''],['>18 months','']],changeN:[0,0,0,0,0,0,0],i4:[0,0,0,0,0,0,0],i2:[0,0,0,0,0,0,0],iL:[0,0,0,0,0,0,0],nc:[0,0,0,0,0,0,0],wL:[0,0,0,0,0,0,0],w2:[0,0,0,0,0,0,0],w4:[0,0,0,0,0,0,0],avgB:[0,0,0,0,0,0,0],avgL:[0,0,0,0,0,0,0],distLabels:[['3–6m',''],['6–9m',''],['9–12m',''],['12–15m',''],['15–18m',''],['>18m','']],lt7:[0,0,0,0,0,0],d710:[0,0,0,0,0,0],d1013:[0,0,0,0,0,0],d1316:[0,0,0,0,0,0],gt16:[0,0,0,0,0,0],latest:[0,0,0,0,0,0]}
+};
 
 function showError(err){
   const ov=document.getElementById('overlay');
   if(ov){
     document.getElementById('ov-title').textContent='Could not load data';
-    document.getElementById('ov-msg').textContent=(err&&err.message)||'Check the endpoint URL in config.js and try again.';
+    document.getElementById('ov-msg').textContent=(err&&err.message)||'Could not read the Google Sheets.';
     document.getElementById('ov-retry').style.display='inline-block';
   }
   console.error('[Dashboard]', err);
 }
 
-async function boot(fresh){
+function refreshData(){ boot(); }
+
+async function boot(){
   const ov=document.getElementById('overlay');
   const btn=document.getElementById('refresh-btn');
-  const isRefresh=fresh&&DATA!==null;
-  if(!isRefresh&&ov){ov.style.display='flex'; document.getElementById('ov-retry').style.display='none'; document.getElementById('ov-title').textContent='Loading dashboard…'; document.getElementById('ov-msg').textContent='Fetching data from Google Sheets';}
-  if(btn){btn.disabled=true; btn.textContent='Refreshing…'; btn.style.opacity='.5';}
+  if(ov){ov.style.display='flex';document.getElementById('ov-retry').style.display='none';document.getElementById('ov-title').textContent='Loading dashboard…';document.getElementById('ov-msg').textContent='Fetching data from Google Sheets';}
+  if(btn){btn.disabled=true;btn.textContent='Refreshing…';btn.style.opacity='.5';}
   try{
-    DATA=await loadData(fresh);
-    hydrateGlobals(DATA);
-    const inits=[
-      ['renderGender',    renderGender],
-      ['buildStaticCharts',buildStaticCharts],
-      ['buildClinOps',    buildClinOps],
-      ['buildOffDays',    buildOffDays],
-      ['buildHbaChange',  buildHbaChange],
-      ['buildHbaAvg',     buildHbaAvg],
-      ['buildInfoTable',  buildInfoTable],
-      ['buildFupChart',   buildFupChart],
-      ['buildAge',        buildAge],
-      ['buildHbaDist',    buildHbaDist],
-      ['buildHbaLatest',  buildHbaLatest]
-    ];
-    inits.forEach(([name,fn])=>{try{fn();}catch(e){console.warn('Dashboard init ['+name+']:', e);}});
-    try{applyFilters();}catch(e){console.error('applyFilters failed:', e);}
-    stampLastUpdated(DATA.meta.generatedAt);
-    if(ov) ov.style.display='none';
-    if(btn){btn.disabled=false; btn.textContent='↺ Refresh Data'; btn.style.opacity='1';}
+    const C=window.DASHBOARD_CONFIG;
+    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid]=await Promise.all([
+      fetchTab(C.wb1,'Enrolled List'),
+      fetchTab(C.wb1,'CompleteSupport_Facilities'),
+      fetchTab(C.wb1,'Light_touch_facilities'),
+      fetchTab(C.wb1,'Capacity_Building'),
+      fetchTab(C.wb1,'Orientation_T1D signs'),
+      fetchTab(C.wb1,'Followup_adherence'),
+      fetchTab(C.wb2,'Operations_Summary'),
+      fetchTab(C.wb2,'# of offs')
+    ]);
+    RAW={
+      enrolled:toObjects(enr,0),                  // title row already removed → headers row 1
+      csFac:toObjects(csFac,1),                   // title row 1, headers row 2
+      ltGrid:ltGrid,                              // kept as grid (date headers in row 2)
+      cap:toObjects(cap,0),
+      orient:toObjects(orient,1),
+      fupGrid:fupGrid,                            // kept as grid (date headers in row 1)
+      opsGrid:opsGrid, offsGrid:offsGrid          // transposed sheets
+    };
+    if(RAW.enrolled.length<50) throw new Error('Enrolled List returned '+RAW.enrolled.length+' rows. Check the tab name / sharing.');
+    computeClinicOps();
+    applyFilters();                 // recompute() populates all globals, then renders
+    // one-time chart inits (read globals set by recompute; mock data unaffected by filters)
+    safe('buildInfoTable', buildInfoTable);
+    safe('buildHbaChange', buildHbaChange);
+    safe('buildHbaAvg',    buildHbaAvg);
+    safe('buildHbaDist',   buildHbaDist);
+    safe('buildHbaLatest', buildHbaLatest);
+    const el=document.getElementById('hdr-badge');
+    if(el)el.textContent='Updated '+new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    if(ov)ov.style.display='none';
   }catch(err){
     showError(err);
-    if(btn){btn.disabled=false; btn.textContent='↺ Refresh Data'; btn.style.opacity='1';}
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='↺ Refresh Data';btn.style.opacity='1';}
   }
 }
 

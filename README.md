@@ -9,27 +9,33 @@ A live program-monitoring dashboard for India's Type 1 Diabetes programme across
 ## Architecture
 
 ```
-Google Sheets (private, patient-level data)
+Google Sheets (shared "Anyone with link → Viewer", synthetic/sample data)
         │
-        ▼  reads & aggregates
-Google Apps Script web app   ←── executes as your Google account
-        │  returns aggregated JSON only (no raw rows)
-        ▼
+        ▼  fetched directly via gviz CSV endpoint
 GitHub Pages (public, static)
-  index.html  →  fetch(endpoint)  →  render charts
+  index.html → fetch each tab → parse + aggregate in browser → render charts
 ```
 
-Raw patient data never leaves Google. The Apps Script is the privacy boundary — only aggregated numbers reach the browser. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full spec.
+The dashboard talks to Google Sheets **directly** — no backend, no Apps Script.
+Every sheet is fetched as CSV, parsed, and aggregated client-side. Because all the
+data lives in the browser, **every filter (State / Sex / Age / Status) recomputes all
+charts instantly.**
+
+> This direct-connection design is appropriate because the data is **synthetic/sample
+> data** (safe to expose publicly). If real patient data were ever used, this approach
+> would expose raw rows publicly and must NOT be used — a private/aggregating backend
+> would be required instead. The previous Apps Script approach is kept in
+> `apps-script/Code.gs` for reference but is no longer used.
 
 ---
 
 ## File structure
 
 ```
-├── index.html              # The dashboard — all UI, charts, and rendering logic
-├── config.js               # Endpoint URL (only file that changes between environments)
+├── index.html              # The dashboard — fetch, parse, aggregate, render (all client-side)
+├── config.js               # Google Sheet IDs (wb1, wb2)
 ├── apps-script/
-│   └── Code.gs             # Apps Script source — version-controlled here, deployed manually
+│   └── Code.gs             # Deprecated backend — kept for reference, no longer used
 ├── docs/
 │   └── ARCHITECTURE.md     # Full build spec and data contract
 ├── .gitignore
