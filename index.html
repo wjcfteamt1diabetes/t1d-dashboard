@@ -800,9 +800,14 @@ function renderKPIs(d,f){
   sv('ppnr-imp','+'+(b.nrPost-b.nrPre)+'pp improvement');
   if(d.hba1cFacPct!=null){sv('hba1c-fac',d.hba1cFacPct+'%'); sv('hba1c-fac-n',d.hba1cFacCount+' of '+d.hba1cFacDen+' operational clinics');}
   else{sv('hba1c-fac','—'); sv('hba1c-fac-n','HbA1c-availability column not found');}
-  sv('flw-ses',b.flwSes); sv('flw-hr',fmt(b.flwHr));
-  sv('flw-dist',b.flwDist); sv('flw-dist-s','of '+b.flwTotDist+' pilot districts');
-  const fp=Math.round(b.flwDist/b.flwTotDist*100); sw('flw-gauge',fp); sv('flw-pct',fp+'%');
+  if(b.flwOk){
+    sv('flw-ses',b.flwSes); sv('flw-hr',fmt(b.flwHr));
+    sv('flw-dist',b.flwDist); sv('flw-dist-s','of '+b.flwTotDist+' pilot districts');
+    const fp=Math.round(b.flwDist/b.flwTotDist*100); sw('flw-gauge',fp); sv('flw-pct',fp+'%');
+  }else{
+    sv('flw-ses','—'); sv('flw-hr','—'); sv('flw-dist','—');
+    sv('flw-dist-s','Data pending — Orientation tab returns formula errors'); sw('flw-gauge',0); sv('flw-pct','');
+  }
   sv('spec-total',b.drTr);
 }
 
@@ -1191,6 +1196,11 @@ function buildStaticCharts(){
   const flw=DATA.capacity.flwCadre||[];
   const flwCols=['#0f3460','#1a5fa8','#7db8e8','#94a3b8'];
   if(_cfl)_cfl.destroy();
+  if(!flw.length){  // Orientation tab unreadable (formula errors) → show pending
+    sv('flw-donut-pct','—'); sv('flw-donut-lbl','');
+    document.getElementById('flw-legend').innerHTML='<div class="data-pending" style="font-size:9px">Data pending — convert the Orientation_T1D signs tab to static values</div>';
+    return;
+  }
   _cfl=new Chart(document.getElementById('c-flw'),{type:'doughnut',data:{datasets:[{data:flw.map(f=>f.v),backgroundColor:flwCols,borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   if(flw[0]){sv('flw-donut-pct',flw[0].v+'%'); sv('flw-donut-lbl',flw[0].l);}
   document.getElementById('flw-legend').innerHTML=flw.map((f,i)=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${flwCols[i]};display:inline-block;margin-right:3px"></span>${f.l}</span><strong>${f.v}%</strong></div>`).join('');
@@ -1603,7 +1613,7 @@ function recompute(){
     dka:pctC(dkaN,fupDen), hypo:pctC(hypoN,fupDen),
     drBat:distinctCombo(drs,['State','Training Batch']), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
     nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
-    flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
+    flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
   };
 }
 
