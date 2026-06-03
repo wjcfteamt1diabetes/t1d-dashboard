@@ -402,6 +402,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">Clinic off days — month on month</div>
     <div class="cs">% clinics by number of off days, among all operational clinics</div>
     <div class="lg" style="margin-top:4px">
+      <span><span class="ld" style="background:#dbeafe"></span>0 offs</span>
       <span><span class="ld" style="background:var(--b3)"></span>1 off</span>
       <span><span class="ld" style="background:var(--g3)"></span>2 offs</span>
       <span><span class="ld" style="background:var(--g2)"></span>3 offs</span>
@@ -994,13 +995,13 @@ function buildClinOps(){
 
 function buildOffDays(){
   if(_cod)_cod.destroy();
-  const cols=['#2e86de','#94a3b8','#64748b','#334155'];
-  const lbls=['1 off','2 offs','3 offs','4 offs'];
+  const cols=['#dbeafe','#2e86de','#94a3b8','#64748b','#334155'];
+  const lbls=['0 offs','1 off','2 offs','3 offs','4 offs'];
   _cod=new Chart(document.getElementById('c-offdays'),{
     type:'bar',
     data:{labels:CLINOPS_M, datasets:lbls.map((l,i)=>({
       label:l, data:OFFDAYS_D.map(r=>r[i]),
-      backgroundColor:cols[i], stack:'s', _minVal:8, _minH:12, _fs:8
+      backgroundColor:cols[i], stack:'s', _minVal:8, _minH:12, _fs:8, _lc:i===0?'#334155':'#fff'
     }))},
     options:{
       responsive:true, maintainAspectRatio:false, layout:{padding:{top:16}},
@@ -1446,8 +1447,8 @@ function computeClinicOps(){
     let den=0,nf=0; om.vals.forEach(v=>{const x=opNum(v);if(x!=null){den++;if(x>=0.75)nf++;}});
     if(den===0)return;
     M.push(om.label);FP.push(pctC(nf,den));
-    const o2=offsMap[om.label];const b=[0,0,0,0];let od=0;
-    if(o2)o2.vals.forEach(v=>{const x=opNum(v);if(x!=null){od++;if(x===1)b[0]++;else if(x===2)b[1]++;else if(x===3)b[2]++;else if(x>=4)b[3]++;}});
+    const o2=offsMap[om.label];const b=[0,0,0,0,0];let od=0;
+    if(o2)o2.vals.forEach(v=>{const x=opNum(v);if(x!=null){od++;if(x===0)b[0]++;else if(x===1)b[1]++;else if(x===2)b[2]++;else if(x===3)b[3]++;else b[4]++;}});
     OD.push(b.map(x=>pctC(x,od)));
   });
   const take=Math.min(8,M.length),s=M.length-take;
