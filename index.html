@@ -1394,6 +1394,19 @@ function pctC(n,d){return d>0?Math.round(n/d*100):0;}
 // Fuzzy column lookup: first key on the row matching ALL regexes
 function colKey(row,regexes){return Object.keys(row).find(k=>regexes.every(re=>re.test(k)));}
 
+// Capacity_Building: gviz returns BLANK headers for Training Batch / Maximum Score /
+// Pre-test / Post-test (values are present). Recover them by anchoring off known headers.
+function parseCapacity(grid){
+  const hr=headerRowOf(grid,['Type of Service Provider','Name of Service Provider']);
+  const hdr=grid[hr].map(h=>String(h).trim());
+  const at=name=>hdr.indexOf(name);
+  const eI=at('Email ID');            if(eI>=0&&!hdr[eI+1]) hdr[eI+1]='Training Batch';
+  const dI=at('Attended on Day 2');
+  if(dI>=0){ if(!hdr[dI+1])hdr[dI+1]='Maximum Score'; if(!hdr[dI+2])hdr[dI+2]='Pre-test Score'; if(!hdr[dI+3])hdr[dI+3]='Post-test Score'; }
+  return grid.slice(hr+1).map(r=>{const o={};hdr.forEach((h,i)=>{if(h)o[h]=r[i]!==undefined?r[i]:'';});return o;})
+    .filter(o=>String(o['Name of Service Provider']||'').trim()!=='');
+}
+
 // ── Light-touch facility data for a state (null = all) ──
 function ltData(stateUp){
   const g=RAW.ltGrid; if(!g||g.length<2) return {facCount:0,totalEnr:0,monthly:{}};
@@ -1756,7 +1769,7 @@ async function boot(){
       enrolled:toObjects(enr,    ['Claude_ID','State','Sex','Age']),
       csFac:   toObjects(csFac,  ['Facility name','T1D Clinic Operational?','State']),
       ltGrid:  ltGrid,                            // kept as grid (date headers)
-      cap:     toObjects(cap,    ['Type of Service Provider','Name of Service Provider']),
+      cap:     parseCapacity(cap),
       orient:  toObjects(orient, ['Type of Service Provider','# of Service Providers','Session #']),
       fupGrid: fupGrid,                           // kept as grid (date headers)
       opsGrid: opsGrid, offsGrid: offsGrid,       // transposed sheets
