@@ -9,10 +9,10 @@
 <script src="config.js"></script>
 <style>
 :root{
-  --b1:#0f3460;--b2:#1a5fa8;--b3:#2e86de;--b4:#7db8e8;--b5:#bfdbfe;--b6:#dbeafe;
+  --b1:#2b3648;--b2:#4b5b6e;--b3:#6b7a8c;--b4:#9aa7b4;--b5:#c9d2db;--b6:#e5e9ee;
   --g1:#334155;--g2:#64748b;--g3:#94a3b8;--g4:#cbd5e1;--g5:#e2e8f0;
   --rust:#c2410c;
-  --bg:#f0f4fa;--card:#fff;--bdr:#e2e8f0;--bdr2:#f1f5f9;
+  --bg:#f1f3f5;--card:#fff;--bdr:#e2e8f0;--bdr2:#f1f5f9;
   --t1:#0f172a;--t2:#475569;--tm:#94a3b8;
   --fn:'DM Sans',sans-serif;
   /* HbA1c colors */
@@ -25,7 +25,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 .hdr{background:var(--b1);padding:10px 20px;display:flex;align-items:center;justify-content:space-between}
 .hdr-t{color:#fff;font-size:15px;font-weight:700}
-.hdr-s{color:#93c5fd;font-size:11px;margin-top:2px}
+.hdr-s{color:#c9d2db;font-size:11px;margin-top:2px}
 .hdr-b{background:rgba(255,255,255,.1);color:#fbbf24;font-size:10px;padding:3px 10px;border-radius:20px;border:1px solid rgba(251,191,36,.3)}
 
 .wrap{max-width:1380px;margin:0 auto}
@@ -34,7 +34,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .flbl{font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .fsel{font-size:11px;font-family:var(--fn);padding:3px 20px 3px 6px;border:1px solid var(--bdr);border-radius:4px;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 5px center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--t1)}
 .fdiv{width:1px;height:20px;background:var(--bdr);margin:0 2px}
-.ftag{font-size:10px;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:3px 8px;font-weight:600}
+.ftag{font-size:10px;color:var(--b2);background:#eef1f4;border:1px solid var(--b5);border-radius:4px;padding:3px 8px;font-weight:600}
 
 .tabs-bar{background:#fff;border-bottom:1px solid var(--bdr);position:sticky;top:44px;z-index:110;box-shadow:0 1px 4px rgba(15,52,96,.06)}
 .tabs-inner{max-width:1380px;margin:0 auto;padding:0 20px;display:flex}
@@ -96,7 +96,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 .nr{display:flex;align-items:center;gap:5px;margin-bottom:5px}
 .nb{background:#f8fafc;border:1px solid var(--bdr);border-radius:4px;padding:2px 8px;font-size:10px;cursor:pointer;color:var(--b2);font-weight:600;font-family:var(--fn)}
-.nb:hover{background:#eff6ff}.nb:disabled{opacity:.3;cursor:default}
+.nb:hover{background:#eef1f4}.nb:disabled{opacity:.3;cursor:default}
 .nl{font-size:10px;color:var(--tm);flex:1;text-align:center}
 
 .row-div{border:none;border-top:1px solid var(--bdr2);margin:8px 0}
@@ -110,13 +110,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 /* Info tab table */
 .info-table{width:100%;border-collapse:collapse;font-size:10px}
-.info-table th{background:#1a5fa8;color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:10px;white-space:nowrap}
+.info-table th{background:#4b5b6e;color:#fff;padding:8px 10px;text-align:left;font-weight:600;font-size:10px;white-space:nowrap}
 .info-table td{padding:7px 10px;border-bottom:1px solid var(--bdr);vertical-align:top;line-height:1.5}
 .info-table tr:nth-child(even) td{background:#f8fafc}
-.info-table tr:hover td{background:#eff6ff}
-.sec-row td{background:#dbeafe!important;color:#1d4ed8;font-weight:700;font-size:10px}
+.info-table tr:hover td{background:#eef1f4}
+.sec-row td{background:#e5e9ee!important;color:#1d4ed8;font-weight:700;font-size:10px}
 .badge-sm{display:inline-block;padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600}
-.b-t1{background:#dbeafe;color:#1d4ed8}
+.b-t1{background:#e5e9ee;color:#1d4ed8}
 .b-t2{background:#dcfce7;color:#15803d}
 .b-t3{background:#fef9c3;color:#854d0e}
 
@@ -129,9 +129,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <!-- Loading overlay -->
 <div id="overlay" style="position:fixed;inset:0;z-index:9999;background:rgba(240,244,250,.97);display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif">
   <div style="text-align:center;max-width:340px;padding:24px">
-    <div style="font-size:16px;font-weight:700;color:#1a5fa8;margin-bottom:8px" id="ov-title">Loading dashboard…</div>
+    <div style="font-size:16px;font-weight:700;color:#4b5b6e;margin-bottom:8px" id="ov-title">Loading dashboard…</div>
     <div style="font-size:12px;color:#64748b" id="ov-msg">Fetching data from Google Sheets</div>
-    <button id="ov-retry" onclick="boot()" style="display:none;margin-top:16px;padding:8px 20px;background:#1a5fa8;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Retry</button>
+    <button id="ov-retry" onclick="boot()" style="display:none;margin-top:16px;padding:8px 20px;background:#4b5b6e;color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Retry</button>
   </div>
 </div>
 
@@ -213,7 +213,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="kv b" id="k-op">56</div>
     <div class="ks" id="k-op-pct" style="color:var(--b2)">96.6% of planned</div>
     <div class="sp">
-      <div class="sps" style="background:#eff6ff"><span class="sv" id="k-cs-op" style="color:var(--b2)">38</span><span class="svl">Complete</span></div>
+      <div class="sps" style="background:#eef1f4"><span class="sv" id="k-cs-op" style="color:var(--b2)">38</span><span class="svl">Complete</span></div>
       <div class="sps" style="background:#f8fafc"><span class="sv" id="k-lt-op" style="color:var(--g2)">18</span><span class="svl">Light touch</span></div>
     </div>
   </div>
@@ -332,7 +332,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">Insulin regimen — basal-bolus</div>
     <div class="cs">% PLT1Ds on basal-bolus regimen, among all PLT1Ds enrolled · Target: 100%</div>
     <div style="margin-top:10px">
-      <div class="pr"><div class="pl">Baseline</div><div class="pb"><div class="pf" id="ins-base" style="width:44%;background:#7db8e8"><span class="pv" id="ins-base-v">44%</span></div></div></div>
+      <div class="pr"><div class="pl">Baseline</div><div class="pb"><div class="pf" id="ins-base" style="width:44%;background:#9aa7b4"><span class="pv" id="ins-base-v">44%</span></div></div></div>
       <div class="pr"><div class="pl">Current</div><div class="pb"><div class="pf" id="ins-last" style="width:96%;background:var(--b1)"><span class="pv" id="ins-last-v">96%</span></div></div></div>
       <div style="font-size:9px;color:var(--b2);font-weight:700;margin-top:4px" id="ins-delta">▲ +52pp improvement from baseline</div>
     </div>
@@ -402,7 +402,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">Clinic off days — month on month</div>
     <div class="cs">% clinics by number of off days, among all operational clinics</div>
     <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:#dbeafe"></span>0 offs</span>
+      <span><span class="ld" style="background:#e5e9ee"></span>0 offs</span>
       <span><span class="ld" style="background:var(--b3)"></span>1 off</span>
       <span><span class="ld" style="background:var(--g3)"></span>2 offs</span>
       <span><span class="ld" style="background:var(--g2)"></span>3 offs</span>
@@ -466,8 +466,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">Average HbA1c — baseline vs last available</div>
     <div class="cs">Average HbA1c value, among PLT1Ds enrolled &gt;3 months with both baseline and latest values · Target: &lt;8.5</div>
     <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:#7db8e8"></span>Baseline</span>
-      <span><span class="ld" style="background:#0f3460"></span>Last available</span>
+      <span><span class="ld" style="background:#9aa7b4"></span>Baseline</span>
+      <span><span class="ld" style="background:#2b3648"></span>Last available</span>
     </div>
     <div style="height:260px;position:relative"><canvas id="c-hba-avg"></canvas></div>
   </div>
@@ -479,9 +479,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">HbA1c distribution — last test (≥3 months post enrolment)</div>
     <div class="cs">% PLT1Ds by HbA1c bucket at last test, among PLT1Ds enrolled ≥3 months with HbA1c done post enrolment · by time bucket</div>
     <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
-      <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
-      <span><span class="ld" style="background:#7db8e8"></span>10–13%</span>
+      <span><span class="ld" style="background:#2b3648"></span>&lt;7%</span>
+      <span><span class="ld" style="background:#4b5b6e"></span>7–10%</span>
+      <span><span class="ld" style="background:#9aa7b4"></span>10–13%</span>
       <span><span class="ld" style="background:#94a3b8"></span>13–16%</span>
       <span><span class="ld" style="background:#e2e8f0"></span>&gt;16%</span>
     </div>
@@ -813,7 +813,7 @@ function renderKPIs(d,f){
 
 function renderSmbg(){
   const el=document.getElementById('smbg-mom'); el.innerHTML='';
-  const cols=['#e2e8f0','#7db8e8','#1a5fa8','#0f3460'], txts=['#64748b','#fff','#fff','#fff'];
+  const cols=['#e2e8f0','#9aa7b4','#4b5b6e','#2b3648'], txts=['#64748b','#fff','#fff','#fff'];
   SMBG_MOM.forEach(r=>{
     const d=document.createElement('div'); d.className='mom-row';
     let segs='';
@@ -830,7 +830,7 @@ function renderSmbg(){
 }
 
 function renderHyperHypo(){
-  const cols=['#1a5fa8','#7db8e8','#e2e8f0','#64748b','#334155'];
+  const cols=['#4b5b6e','#9aa7b4','#e2e8f0','#64748b','#334155'];
   const txts=['#fff','#fff','#64748b','#fff','#fff'];
   ['hyper-rows','hypo-rows'].forEach((elId,isHypo)=>{
     const el=document.getElementById(elId); el.innerHTML='';
@@ -846,7 +846,7 @@ function renderHyperHypo(){
 }
 
 function renderPTF(){
-  const ptfCols={'PHC':'#bfdbfe','CHC':'#7db8e8','DH':'#2e86de','State MC':'#1a5fa8','Central MC':'#0f3460','Pvt Hospital':'#94a3b8','Pvt Clinic':'#cbd5e1','Newly Dx':'#64748b'};
+  const ptfCols={'PHC':'#c9d2db','CHC':'#9aa7b4','DH':'#6b7a8c','State MC':'#4b5b6e','Central MC':'#2b3648','Pvt Hospital':'#94a3b8','Pvt Clinic':'#cbd5e1','Newly Dx':'#64748b'};
   const ptf=(DATA.demographics.prevFacility||[]).map(d=>({...d,c:ptfCols[d.l]||'#94a3b8'}));
   document.getElementById('ptf-legend').innerHTML=ptf.map(d=>`<span><span class="ld" style="background:${d.c}"></span>${d.l}</span>`).join('');
   let h='<div class="sbar">';
@@ -856,7 +856,7 @@ function renderPTF(){
 
 function renderGender(){
   if(_cg)_cg.destroy();
-  const cols=['#0f3460','#2e86de','#94a3b8'];
+  const cols=['#2b3648','#6b7a8c','#94a3b8'];
   const gd=(DATA.demographics.gender||[]).map((g,i)=>({...g,c:cols[i]||'#94a3b8'}));
   _cg=new Chart(document.getElementById('c-gender'),{type:'doughnut',data:{datasets:[{data:gd.map(g=>g.v),backgroundColor:gd.map(g=>g.c),borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   if(gd[0]){sv('gender-pct',gd[0].v+'%'); sv('gender-lbl',gd[0].l);}
@@ -866,7 +866,7 @@ function renderGender(){
 function renderTDD(){
   const f=getF();
   const el=document.getElementById('tdd-groups'); el.innerHTML='';
-  const bgMap={'Pediatric <13':'#eff6ff','Pubertal 13–17':'#dbeafe','Adults ≥18':'#f0f9ff'};
+  const bgMap={'Pediatric <13':'#eef1f4','Pubertal 13–17':'#e5e9ee','Adults ≥18':'#f0f9ff'};
   const ageKey={ped:'Pediatric <13',pub:'Pubertal 13–17',adu:'Adults ≥18'};
   const all=DATA.insulin.tdd||[];
   const grps=f.age!=='all'?all.filter(g=>g.grp===ageKey[f.age]):all;
@@ -881,7 +881,7 @@ function renderTDD(){
 
 function renderBasal(){
   const el=document.getElementById('basal-bars'); el.innerHTML='';
-  const colMap={'<20%':'#64748b','20–30%':'#94a3b8','30–50%':'#1a5fa8','50–60%':'#7db8e8','> 60%':'#94a3b8'};
+  const colMap={'<20%':'#64748b','20–30%':'#94a3b8','30–50%':'#4b5b6e','50–60%':'#9aa7b4','> 60%':'#94a3b8'};
   (DATA.insulin.basal||[]).forEach(item=>{
     const d=document.createElement('div'); d.className='pr';
     if(item.ideal)d.style.cssText='border-left:2px solid var(--b2);padding-left:4px;margin-bottom:9px';
@@ -913,8 +913,8 @@ function buildC1(o){
   _c1=new Chart(document.getElementById('c1'),{
     type:'bar',
     data:{labels:lb,datasets:[
-      {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16},
-      {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:16},
+      {label:'Complete support',data:cs,backgroundColor:'#4b5b6e',stack:'s',_pct:false,_minVal:1,_minH:16},
+      {label:'Light touch',data:lt,backgroundColor:'#9aa7b4',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:16},
       {label:'Clinics',data:cl,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
        borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
@@ -951,8 +951,8 @@ function buildC2(o){
   _c2=new Chart(document.getElementById('c2'),{
     type:'bar',
     data:{labels:lb,datasets:[
-      {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_fs:8,_minVal:1,_minH:12},
-      {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:12},
+      {label:'Complete support',data:cs,backgroundColor:'#4b5b6e',stack:'s',_pct:false,_fs:8,_minVal:1,_minH:12},
+      {label:'Light touch',data:lt,backgroundColor:'#9aa7b4',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:12},
       {label:'Avg/clinic',data:av,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
        borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
@@ -984,7 +984,7 @@ function buildClinOps(){
     type:'bar',
     data:{labels:CLINOPS_M, datasets:[
       {label:'% functional', data:CLINOPS_V,
-       backgroundColor:CLINOPS_V.map(v=>v>=75?'#1a5fa8':'#94a3b8'),
+       backgroundColor:CLINOPS_V.map(v=>v>=75?'#4b5b6e':'#94a3b8'),
        borderRadius:3, _minVal:1, _minH:6}
     ]},
     options:{
@@ -1000,7 +1000,7 @@ function buildClinOps(){
 
 function buildOffDays(){
   if(_cod)_cod.destroy();
-  const cols=['#dbeafe','#2e86de','#94a3b8','#64748b','#334155'];
+  const cols=['#e5e9ee','#6b7a8c','#94a3b8','#64748b','#334155'];
   const lbls=['0 offs','1 off','2 offs','3 offs','4 offs'];
   _cod=new Chart(document.getElementById('c-offdays'),{
     type:'bar',
@@ -1084,8 +1084,8 @@ function buildHbaAvg(){
   _cha=new Chart(document.getElementById('c-hba-avg'),{
     type:'bar',
     data:{labels:HBA_LBLS, datasets:[
-      {label:'Baseline',      data:HBA_AVG_BASE, backgroundColor:'#7db8e8', _noLabel:true},
-      {label:'Last available',data:HBA_AVG_LAST, backgroundColor:'#0f3460', _noLabel:true}
+      {label:'Baseline',      data:HBA_AVG_BASE, backgroundColor:'#9aa7b4', _noLabel:true},
+      {label:'Last available',data:HBA_AVG_LAST, backgroundColor:'#2b3648', _noLabel:true}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
@@ -1134,9 +1134,9 @@ function buildHbaDist(){
   window._chdist=new Chart(document.getElementById('c-hba-dist'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
-      {label:'<7%',  data:HBA_D_LT7,   backgroundColor:'#0f3460', stack:'s', _minVal:3, _minH:14},
-      {label:'7–10%', data:HBA_D_7_10, backgroundColor:'#1a5fa8', stack:'s', _minVal:3, _minH:14},
-      {label:'10–13%',data:HBA_D_10_13,backgroundColor:'#7db8e8', stack:'s', _minVal:3, _minH:14, _lc:'#0f172a'},
+      {label:'<7%',  data:HBA_D_LT7,   backgroundColor:'#2b3648', stack:'s', _minVal:3, _minH:14},
+      {label:'7–10%', data:HBA_D_7_10, backgroundColor:'#4b5b6e', stack:'s', _minVal:3, _minH:14},
+      {label:'10–13%',data:HBA_D_10_13,backgroundColor:'#9aa7b4', stack:'s', _minVal:3, _minH:14, _lc:'#0f172a'},
       {label:'13–16%',data:HBA_D_13_16,backgroundColor:'#94a3b8', stack:'s', _minVal:3, _minH:14},
       {label:'>16%', data:HBA_D_GT16,  backgroundColor:'#e2e8f0', stack:'s', _minVal:3, _minH:14, _lc:'#334155'},
     ]},
@@ -1159,7 +1159,7 @@ function buildHbaLatest(){
   window._chlatest=new Chart(document.getElementById('c-hba-latest'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
-      {label:'Avg HbA1c', data:HBA_LATEST, backgroundColor:'#1a5fa8',
+      {label:'Avg HbA1c', data:HBA_LATEST, backgroundColor:'#4b5b6e',
        borderRadius:3, _pct:false, _lc:'#fff', _minVal:0, _minH:6, _fs:9}
     ]},
     options:{
@@ -1178,23 +1178,23 @@ function buildStaticCharts(){
   // Pilot split donut — reads from DATA.capacity
   if(_cp)_cp.destroy();
   const ps=DATA.capacity.pilotSplit||[54,46];
-  _cp=new Chart(document.getElementById('c-pilot'),{type:'doughnut',data:{datasets:[{data:ps,backgroundColor:['#0f3460','#e2e8f0'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  _cp=new Chart(document.getElementById('c-pilot'),{type:'doughnut',data:{datasets:[{data:ps,backgroundColor:['#2b3648','#e2e8f0'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   sv('pilot-pct',ps[0]+'%');
   document.getElementById('pilot-legend').innerHTML=
-    [['Pilot site',ps[0],'#0f3460'],['Non-pilot',ps[1],'#e2e8f0']]
+    [['Pilot site',ps[0],'#2b3648'],['Non-pilot',ps[1],'#e2e8f0']]
     .map(([l,v,c])=>`<div style="display:flex;justify-content:space-between"><span><span class="ld" style="background:${c};display:inline-block;margin-right:4px"></span>${l}</span><strong>${v}%</strong></div>`)
     .join('');
 
   // Specialty donut — reads from DATA.capacity
   const spec=DATA.capacity.specialty||[];
-  const specCols=['#0f3460','#1a5fa8','#7db8e8','#bfdbfe'];
+  const specCols=['#2b3648','#4b5b6e','#9aa7b4','#c9d2db'];
   if(_cs2)_cs2.destroy();
   _cs2=new Chart(document.getElementById('c-spec'),{type:'doughnut',data:{datasets:[{data:spec.map(s=>s.v),backgroundColor:specCols,borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   document.getElementById('spec-legend').innerHTML=spec.map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${specCols[i]};display:inline-block;margin-right:4px"></span>${s.l}</span><strong>${s.v}%</strong></div>`).join('');
 
   // FLW cadre donut — reads from DATA.capacity
   const flw=DATA.capacity.flwCadre||[];
-  const flwCols=['#0f3460','#1a5fa8','#7db8e8','#94a3b8'];
+  const flwCols=['#2b3648','#4b5b6e','#9aa7b4','#94a3b8'];
   if(_cfl)_cfl.destroy();
   if(!flw.length){  // Orientation tab unreadable (formula errors) → show pending
     sv('flw-donut-pct','—'); sv('flw-donut-lbl','');
@@ -1270,7 +1270,7 @@ function buildFupChart(){
     type:'bar',
     data:{labels:labs, datasets:[
       {label:'% Follow-up', data:vals,
-       backgroundColor:vals.map(v=>v>=75?'#0f3460':'#1a5fa8'),
+       backgroundColor:vals.map(v=>v>=75?'#2b3648':'#4b5b6e'),
        borderRadius:3, _minVal:1, _minH:14},
       {label:'Target', data:rev.map(()=>75), type:'line',
        borderColor:'#d97706', borderDash:[5,5], borderWidth:1.5,
@@ -1293,7 +1293,7 @@ function buildFupChart(){
 function buildAge(){
   if(window._cage) window._cage.destroy();
   const ag=DATA.demographics.age||[];
-  const agCols=['#7db8e8','#1a5fa8','#0f3460'];
+  const agCols=['#9aa7b4','#4b5b6e','#2b3648'];
   window._cage=new Chart(document.getElementById('c-age'),{type:'doughnut',
     data:{datasets:[{data:ag.map(a=>a.v),backgroundColor:agCols,borderWidth:0}]},
     options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
