@@ -1316,6 +1316,10 @@ function applyFilters(){
   safe('renderHyperHypo', renderHyperHypo);
   safe('buildClinOps',    buildClinOps);
   safe('buildOffDays',    buildOffDays);
+  safe('buildHbaChange',  buildHbaChange);
+  safe('buildHbaAvg',     buildHbaAvg);
+  safe('buildHbaDist',    buildHbaDist);
+  safe('buildHbaLatest',  buildHbaLatest);
 }
 
 // ═══════════ DIRECT GOOGLE SHEETS DATA LAYER ═══════════
@@ -1562,13 +1566,14 @@ function recompute(){
     capacity:computeCapacity(capF,oriF)
   };
 
-  // mock sections (sheets not yet populated)
-  SMBG_MOM=MOCK.smbg.mom;SMBG_LAST=MOCK.smbg.last;
-  HYPER_M=MOCK.gly.months;HYPER_D=MOCK.gly.hyper;HYPO_D=MOCK.gly.hypo;
-  HBA_LBLS=MOCK.hba.changeLabels;HBA_N=MOCK.hba.changeN;HBA_I4=MOCK.hba.i4;HBA_I2=MOCK.hba.i2;HBA_IL=MOCK.hba.iL;
-  HBA_NC=MOCK.hba.nc;HBA_WL=MOCK.hba.wL;HBA_W2=MOCK.hba.w2;HBA_W4=MOCK.hba.w4;
-  HBA_AVG_BASE=MOCK.hba.avgB;HBA_AVG_LAST=MOCK.hba.avgL;HBA_DIST_LBLS=MOCK.hba.distLabels;
-  HBA_D_LT7=MOCK.hba.lt7;HBA_D_7_10=MOCK.hba.d710;HBA_D_10_13=MOCK.hba.d1013;HBA_D_13_16=MOCK.hba.d1316;HBA_D_GT16=MOCK.hba.gt16;HBA_LATEST=MOCK.hba.latest;
+  // ── SMBG, Hyper/Hypo, HbA1c (real data, joined to filtered patients by ID) ──
+  const smbg=computeSmbg(idSet); SMBG_MOM=smbg.mom; SMBG_LAST=smbg.last;
+  const hh=computeHyperHypo(idSet); HYPER_M=hh.months; HYPER_D=hh.hyper; HYPO_D=hh.hypo;
+  const hba=computeHba1c(idSet);
+  HBA_LBLS=hba.changeLabels; HBA_N=hba.changeN; HBA_I4=hba.i4; HBA_I2=hba.i2; HBA_IL=hba.iL;
+  HBA_NC=hba.nc; HBA_WL=hba.wL; HBA_W2=hba.w2; HBA_W4=hba.w4;
+  HBA_AVG_BASE=hba.avgB; HBA_AVG_LAST=hba.avgL; HBA_DIST_LBLS=hba.distLabels;
+  HBA_D_LT7=hba.lt7; HBA_D_7_10=hba.d710; HBA_D_10_13=hba.d1013; HBA_D_13_16=hba.d1316; HBA_D_GT16=hba.gt16; HBA_LATEST=hba.latest;
 
   // merged object for renderKPIs (geo + patient)
   const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]||0;
@@ -1577,7 +1582,7 @@ function recompute(){
     enr:csEnr+ltEnr, csEnr, ltEnr, target,
     newLast, newPrev, avgClin:csOp>0?Math.round(newLast/csOp*10)/10:0,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
-    hbTest:null, hbDec:null, hbDecN:null,
+    hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
     hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
     dka:pctC(dkaN,fupDen), hypo:pctC(hypoN,fupDen),
     drBat:distinct(drs,'Training Batch'), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
@@ -1611,11 +1616,108 @@ function computeCapacity(capF,oriF){
   return{specialty,pilotSplit:[pctC(pilot,dT),100-pctC(pilot,dT)],flwCadre};
 }
 
-const MOCK={
-  smbg:{mom:[{m:'Apr 26',v:[25,54,12,9],n:1512},{m:'Mar 26',v:[25,43,18,14],n:1398},{m:'Feb 26',v:[21,42,21,16],n:1244},{m:'Jan 26',v:[20,48,19,13],n:1108},{m:'Dec 25',v:[27,51,17,5],n:1002},{m:'Nov 25',v:[30,43,19,8],n:889}],last:{m:'May 26',v:[25,55,12,8],n:911}},
-  gly:{months:[{m:'May 26',n:943},{m:'Apr 26',n:891},{m:'Mar 26',n:824}],hyper:[[22,31,27,13,7],[20,29,28,15,8],[18,28,30,16,8]],hypo:[[63,20,10,5,2],[60,22,11,5,2],[62,21,10,5,2]]},
-  hba:{changeLabels:[['Overall',''],['3–6 months',''],['6–9 months',''],['9–12 months',''],['12–15 months',''],['15–18 months',''],['>18 months','']],changeN:[0,0,0,0,0,0,0],i4:[0,0,0,0,0,0,0],i2:[0,0,0,0,0,0,0],iL:[0,0,0,0,0,0,0],nc:[0,0,0,0,0,0,0],wL:[0,0,0,0,0,0,0],w2:[0,0,0,0,0,0,0],w4:[0,0,0,0,0,0,0],avgB:[0,0,0,0,0,0,0],avgL:[0,0,0,0,0,0,0],distLabels:[['3–6m',''],['6–9m',''],['9–12m',''],['12–15m',''],['15–18m',''],['>18m','']],lt7:[0,0,0,0,0,0],d710:[0,0,0,0,0,0],d1013:[0,0,0,0,0,0],d1316:[0,0,0,0,0,0],gt16:[0,0,0,0,0,0],latest:[0,0,0,0,0,0]}
-};
+// ── SMBG frequency (per-day readings, monthly columns) ──
+function computeSmbg(idSet){
+  const g=RAW.smbgGrid; if(!g||g.length<2) return {mom:[],last:{m:'',v:[0,0,0,0],n:0}};
+  const hr=headerRowOf(g,['Claude ID','Claude_ID','Enrolled for >3 months']);
+  const hdr=g[hr]; let idC=0,m3C=-1; const mc=[];
+  for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
+    if(/claude/i.test(h))idC=i;
+    if(/enrolled for ?>?3/i.test(h))m3C=i;
+    const d=parseDate(h); if(d&&/\d{4}/.test(h)) mc.push({i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2),year:d.getFullYear(),month:d.getMonth()});
+  }
+  const bucket=v=>{const s=String(v).trim();if(s==='.'||s==='')return -1;const x=Number(s);if(isNaN(x))return -1;return x===0?0:x<1?1:x<=2?2:3;};
+  const acc={},acc3={}; mc.forEach(m=>{acc[m.label]={b:[0,0,0,0],n:0,y:m.year,mo:m.month};acc3[m.label]={b:[0,0,0,0],n:0};});
+  for(let r=hr+1;r<g.length;r++){const row=g[r]; if(!idSet[normv(row[idC])])continue;
+    const is3=m3C>=0&&isYes(row[m3C]);
+    mc.forEach(m=>{const bk=bucket(row[m.i]); if(bk>=0){acc[m.label].b[bk]++;acc[m.label].n++; if(is3){acc3[m.label].b[bk]++;acc3[m.label].n++;}}});
+  }
+  const wd=mc.filter(m=>acc[m.label].n>0).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+  const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label],t=a.n||1;return{m:m.label,v:a.b.map(x=>pctC(x,t)),n:a.n};});
+  let last={m:'',v:[0,0,0,0],n:0};
+  if(wd.length){const m=wd[wd.length-1],a=acc3[m.label],t=a.n||1;last={m:m.label,v:a.b.map(x=>pctC(x,t)),n:a.n};}
+  return {mom,last};
+}
+
+// ── Hyper / Hypo reading distribution (last 3 months, 5 bins each) ──
+function computeHyperHypo(idSet){
+  const g=RAW.hhGrid; if(!g||g.length<2) return {months:[],hyper:[],hypo:[]};
+  const hr=headerRowOf(g,['Claude ID','Claude_ID','% Hyper readings']);
+  const hdr=g[hr]; let idC=0,dateC=-1,hypoC=-1,hyperC=-1;
+  for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
+    if(/claude/i.test(h))idC=i; if(/hypo/i.test(h))hypoC=i; if(/hyper/i.test(h))hyperC=i;}
+  for(let i=0;i<hdr.length;i++){if(i===idC||i===hypoC||i===hyperC)continue; if(g[hr+1]&&parseDate(g[hr+1][i])){dateC=i;break;}}
+  const bin=s=>{const x=parseFloat(String(s).replace('%',''));if(isNaN(x))return -1;return x<20?0:x<40?1:x<60?2:x<80?3:4;};
+  const acc={};
+  for(let r=hr+1;r<g.length;r++){const row=g[r]; if(!idSet[normv(row[idC])])continue;
+    const d=dateC>=0?parseDate(row[dateC]):null; if(!d)continue;
+    const label=MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
+    const a=acc[label]||(acc[label]={hy:[0,0,0,0,0],ho:[0,0,0,0,0],n:0,y:d.getFullYear(),mo:d.getMonth()});
+    const bh=bin(row[hyperC]),bo=bin(row[hypoC]); if(bh>=0)a.hy[bh]++; if(bo>=0)a.ho[bo]++; a.n++;
+  }
+  const last3=Object.keys(acc).map(l=>acc[l]).sort((a,b)=>a.y!==b.y?a.y-b.y:a.mo-b.mo).slice(-3).reverse();
+  return {
+    months:last3.map(a=>({m:MON[a.mo]+' '+String(a.y).slice(2),n:a.n})),
+    hyper:last3.map(a=>a.hy.map(x=>pctC(x,a.n||1))),
+    hypo:last3.map(a=>a.ho.map(x=>pctC(x,a.n||1)))
+  };
+}
+
+// ── HbA1c (KPIs + change / average / distribution / latest charts) ──
+function computeHba1c(idSet){
+  const all=RAW.hba||[]; if(!all.length) return hbaEmpty();
+  const idK=colKey(all[0],[/claude/i])||'Claude_ID';
+  const baseK=colKey(all[0],[/baseline hba1c/i]);
+  const latK=colKey(all[0],[/latest hba1c value/i]);
+  const dateK=colKey(all[0],[/date of latest/i]);
+  const bkK=colKey(all[0],[/latest hba1c time bucket/i]);
+  const rows=all.filter(r=>idSet[normv(r[idK])]);
+  const BUCK=['3-6 months','6-9 months','9-12 months','12-15 months','15-18 months','>18 months'];
+  const LBL =['3–6 months','6–9 months','9–12 months','12–15 months','15–18 months','>18 months'];
+  const mapB=s=>{s=String(s).trim().toLowerCase();
+    if(/^3-6/.test(s))return 0; if(/^6-9/.test(s))return 1; if(/^9-12/.test(s))return 2;
+    if(/^12-15/.test(s))return 3; if(/^15-18/.test(s))return 4; if(/>?\s*18/.test(s))return 5; return -1;};
+  // change categories per bucket (index 0=Overall, 1..6 = buckets)
+  const cat=()=>({i4:0,i2:0,iL:0,nc:0,wL:0,w2:0,w4:0,n:0});
+  const C=[cat(),cat(),cat(),cat(),cat(),cat(),cat()];
+  const sumB=[0,0,0,0,0,0,0],cntB=[0,0,0,0,0,0,0],sumL=[0,0,0,0,0,0,0]; // for averages incl Overall
+  const dist=[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]; // per bucket 5 bins
+  const distN=[0,0,0,0,0,0], latSum=[0,0,0,0,0,0];
+  let hbTestNum=0, decDen=0, decNum=0;
+  const now=new Date(), cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-90);
+  rows.forEach(r=>{
+    const base=num(r[baseK]), lat=num(r[latK]);
+    const dLat=dateK?parseDate(r[dateK]):null;
+    if(dLat&&dLat>=cutoff) hbTestNum++;
+    const bi=mapB(r[bkK]);
+    if(base==null||lat==null||bi<0) return;     // need both readings + a >3m bucket
+    const ch=base-lat;                            // positive = improvement
+    decDen++; if(lat<base) decNum++;
+    const put=g=>{const c=C[g];c.n++;
+      if(ch>=4)c.i4++;else if(ch>=2)c.i2++;else if(ch>0)c.iL++;else if(ch===0)c.nc++;else if(ch>-2)c.wL++;else if(ch>-4)c.w2++;else c.w4++;};
+    put(0); put(bi+1);
+    sumB[0]+=base;sumL[0]+=lat;cntB[0]++; sumB[bi+1]+=base;sumL[bi+1]+=lat;cntB[bi+1]++;
+    const lb=lat<7?0:lat<10?1:lat<13?2:lat<16?3:4;
+    dist[bi][lb]++; distN[bi]++; latSum[bi]+=lat;
+  });
+  const lblN=i=>(C[i].n?'(n='+C[i].n+')':'');
+  return {
+    hbTest:pctC(hbTestNum, Object.keys(idSet).length),
+    hbDec:pctC(decNum,decDen), hbDecN:decDen,
+    changeLabels:[['Overall',lblN(0)]].concat(LBL.map((l,i)=>[l,lblN(i+1)])),
+    changeN:C.map(c=>c.n),
+    i4:C.map(c=>pctC(c.i4,c.n||1)), i2:C.map(c=>pctC(c.i2,c.n||1)), iL:C.map(c=>pctC(c.iL,c.n||1)),
+    nc:C.map(c=>pctC(c.nc,c.n||1)), wL:C.map(c=>pctC(c.wL,c.n||1)), w2:C.map(c=>pctC(c.w2,c.n||1)), w4:C.map(c=>pctC(c.w4,c.n||1)),
+    avgB:cntB.map((c,i)=>c?Math.round(sumB[i]/c*10)/10:0),
+    avgL:cntB.map((c,i)=>c?Math.round(sumL[i]/c*10)/10:0),
+    distLabels:LBL.map((l,i)=>[l.replace(' months','m').replace('–','–'),(distN[i]?'(n='+distN[i]+')':'')]),
+    lt7:dist.map((d,i)=>pctC(d[0],distN[i]||1)), d710:dist.map((d,i)=>pctC(d[1],distN[i]||1)),
+    d1013:dist.map((d,i)=>pctC(d[2],distN[i]||1)), d1316:dist.map((d,i)=>pctC(d[3],distN[i]||1)),
+    gt16:dist.map((d,i)=>pctC(d[4],distN[i]||1)),
+    latest:distN.map((c,i)=>c?Math.round(latSum[i]/c*10)/10:0)
+  };
+}
+function hbaEmpty(){return{hbTest:null,hbDec:null,hbDecN:0,changeLabels:[['Overall','']],changeN:[0],i4:[0],i2:[0],iL:[0],nc:[0],wL:[0],w2:[0],w4:[0],avgB:[0],avgL:[0],distLabels:[['3–6m','']],lt7:[0],d710:[0],d1013:[0],d1316:[0],gt16:[0],latest:[0]};}
 
 function showError(err){
   const ov=document.getElementById('overlay');
@@ -1636,7 +1738,7 @@ async function boot(){
   if(btn){btn.disabled=true;btn.textContent='Refreshing…';btn.style.opacity='.5';}
   try{
     const C=window.DASHBOARD_CONFIG;
-    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid]=await Promise.all([
+    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid]=await Promise.all([
       fetchTab(C.wb1,'Enrolled List'),
       fetchTab(C.wb1,'CompleteSupport_Facilities'),
       fetchTab(C.wb1,'Light_touch_facilities'),
@@ -1644,7 +1746,10 @@ async function boot(){
       fetchTab(C.wb1,'Orientation_T1D signs'),
       fetchTab(C.wb1,'Followup_adherence'),
       fetchTab(C.wb2,'Operations_Summary'),
-      fetchTab(C.wb2,'# of offs')
+      fetchTab(C.wb2,'# of offs'),
+      fetchTab(C.wb1,'SMBG_Monthly'),
+      fetchTab(C.wb1,'SMBG_Hyper/Hypo'),
+      fetchTab(C.wb1,'Hba1c_Baseline/Latest')
     ]);
     RAW={
       enrolled:toObjects(enr,    ['Claude_ID','State','Sex','Age']),
@@ -1653,17 +1758,14 @@ async function boot(){
       cap:     toObjects(cap,    ['Type of Service Provider','Name of Service Provider']),
       orient:  toObjects(orient, ['Type of Service Provider','# of Service Providers','Session #']),
       fupGrid: fupGrid,                           // kept as grid (date headers)
-      opsGrid: opsGrid, offsGrid: offsGrid        // transposed sheets
+      opsGrid: opsGrid, offsGrid: offsGrid,       // transposed sheets
+      smbgGrid: smbgGrid, hhGrid: hhGrid,         // kept as grids (date-header / blank-header cols)
+      hba:     toObjects(hbaGrid, ['Claude_ID','Baseline HbA1c value (%)'])
     };
     if(RAW.enrolled.length<50) throw new Error('Enrolled List returned '+RAW.enrolled.length+' rows. Check the tab name / sharing.');
     computeClinicOps();
-    applyFilters();                 // recompute() populates all globals, then renders
-    // one-time chart inits (read globals set by recompute; mock data unaffected by filters)
-    safe('buildInfoTable', buildInfoTable);
-    safe('buildHbaChange', buildHbaChange);
-    safe('buildHbaAvg',    buildHbaAvg);
-    safe('buildHbaDist',   buildHbaDist);
-    safe('buildHbaLatest', buildHbaLatest);
+    safe('buildInfoTable', buildInfoTable);   // static, build once
+    applyFilters();                           // recompute() + render everything (incl. HbA1c charts)
     const el=document.getElementById('hdr-badge');
     if(el)el.textContent='Updated '+new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     if(ov)ov.style.display='none';
