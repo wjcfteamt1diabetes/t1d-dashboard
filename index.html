@@ -258,7 +258,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g2">
   <div class="card">
     <div class="ct">Cumulative enrolments vs operational clinics</div>
-    <div class="cs">Cumulative count stacked by age group · line = # operational clinics</div>
+    <div class="cs">Cumulative enrolments: complete support vs light touch · line = # operational clinics</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
@@ -754,7 +754,7 @@ let MAX=0, off=[null,null];   // null = not yet positioned → defaults to lates
 let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const TARGETS={RJ:4000,MP:1082,UK:602,CG:270,all:5954};
+let TARGETS={RJ:4000,MP:1082,UK:602,CG:270,all:5954};  // overwritten from Targets sheet at load
 
 function getF(){return{state:document.getElementById('f-state').value,status:document.getElementById('f-status').value,sex:document.getElementById('f-sex').value,age:document.getElementById('f-age').value};}
 function getD(){ return CURD; }
@@ -1209,7 +1209,7 @@ function buildInfoTable(){
     {n:'4',ind:'Operational clinics',tab:'T1',type:'Absolute # + %',num:'Facilities where Operational Status = Yes (complete) + all in light touch list',den:'Total planned facilities',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name, Operational Status'},
     {n:'5',ind:'PLT1Ds enrolled (total / CS / LT)',tab:'T1',type:'Absolute #',num:'Count of rows in enrolled_list · CS = facilities not in LT sheet · LT = sum of enrolments in LT sheet',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Patient ID, Facility Name'},
     {n:'6',ind:'Enrolled vs target (%)',tab:'T1',type:'%',num:'Count of all enrolled PLT1Ds (LT + CS)',den:'Committed target (from Targets sheet)',sheet:'enrolled_list, Targets',cols:'Patient ID'},
-    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1Ds by age group up to each month',den:'—',sheet:'enrolled_list',cols:'Date of enrolment, Age'},
+    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1Ds (complete support) + cumulative light-touch enrolments up to each month',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Date of enrolment'},
     {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1Ds with enrolment date in that month',den:'—',sheet:'enrolled_list, CompleteSupport_Facilities',cols:'Date of enrolment, Date of operationalisation'},
     {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1Ds by Sex column value',den:'All PLT1Ds enrolled',sheet:'enrolled_list',cols:'Sex'},
     {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1Ds with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
@@ -1219,7 +1219,7 @@ function buildInfoTable(){
     {n:'12b',ind:'SMBG frequency (>3m enrolled, last month)',tab:'T1',type:'%',num:'Same as 12a but restricted to PLT1Ds enrolled for >3 months',den:'PLT1Ds enrolled >3 months with non-dot value in last month',sheet:'SMBG_Monthly',cols:'All'},
     {n:'13a/b',ind:'% Hyper / Hypo readings (last 3 months)',tab:'T1',type:'%',num:'Visits by bucket: 0-20% / 20-40% / 40-60% / 60-80% / 80-100% hyper or hypo readings',den:'Visits with SMBG reading in that month',sheet:'SMBG_HyperHypo',cols:'% Hyper readings, % Hypo readings, Date of visit'},
     {n:'14a',ind:'Clinic functionality (MoM)',tab:'T1',type:'%',num:'Clinics functional >75% of designated days in the month',den:'Operational clinics with non-blank values in that month',sheet:'Operations_Summary',cols:'All'},
-    {n:'14b',ind:'Clinic off days',tab:'T1',type:'%',num:'Clinics with exactly 1/2/3/4+ off days in the month',den:'Operational clinics in that month',sheet:'Operations_Summary',cols:'# of offs column'},
+    {n:'14b',ind:'Clinic off days',tab:'T1',type:'%',num:'Clinics with exactly 0/1/2/3/4+ off days in the month',den:'Clinics with a non-blank value in that month',sheet:'# of offs',cols:'All (each column = a facility)'},
     {n:'14c',ind:'Trained clinical staff at clinic',tab:'T1',type:'%',num:'Clinics with a trained Pediatrician / MD Medicine / MO on-site',den:'Total operational clinics',sheet:'CompleteSupport_Facilities, Capacity_Building',cols:'Facility Name, Designation/Department, Trained = Yes'},
     {sec:'TAB 2 — Clinical Outcomes'},
     {n:'15',ind:'HbA1c testing rate',tab:'T2',type:'%',num:'PLT1Ds with HbA1c test in last 3 months',den:'Total PLT1Ds enrolled',sheet:'Hba1c_BaselineLatest',cols:'Patient ID, Date of latest Hba1c, Latest hba1c time bucket'},
@@ -1497,6 +1497,8 @@ function recompute(){
   const nrs=capF.filter(r=>{const t=normv(r['Type of Service Provider']);return t==='staff nurse'||t==='nurse';});
   const nrNames={};nrs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)nrNames[n]=true;});
   const distinct=(rows,col)=>{const s={};rows.forEach(r=>{const v=normv(r[col]);if(v)s[v]=true;});return Object.keys(s).length;};
+  const distinctCombo=(rows,cols)=>{const s={};rows.forEach(r=>{if(cols.some(c=>normv(r[c]))){s[cols.map(c=>normv(r[c])).join('|')]=true;}});return Object.keys(s).length;};
+  const statesCount=distinct(csF,'State');
   const prePost=rows=>{const pr=[],po=[];rows.forEach(r=>{const a=num(r['Pre-test Score']),b=num(r['Post-test Score']),m=num(r['Maximum Score']);if(a!=null&&b!=null&&m>0){pr.push(a/m*100);po.push(b/m*100);}});const mean=x=>x.length?Math.round(x.reduce((s,y)=>s+y,0)/x.length):0;return{pre:mean(pr),post:mean(po)};};
   const drSc=prePost(drs),nrSc=prePost(nrs);
   const flwHr=oriF.reduce((s,r)=>s+(num(r['# of Service Providers'])||0),0);
@@ -1570,7 +1572,7 @@ function recompute(){
     demographics:{
       gender:[{l:'Male',v:pctC(male,gTot)},{l:'Female',v:pctC(female,gTot)},{l:'Other/NS',v:Math.max(0,100-pctC(male,gTot)-pctC(female,gTot))}],
       age:[{l:'Pediatric (<13)',v:pctC(ped,aTot)},{l:'Pubertal (13–17)',v:pctC(pub,aTot)},{l:'Adults (≥18)',v:pctC(adu,aTot)}],
-      prevFacility:Object.keys(facMap).map(l=>({l,v:pctC(facMap[l],P.length||1)})).filter(d=>d.v>0).sort((x,y)=>y.v-x.v),
+      prevFacility:(function(){const ft=Object.values(facMap).reduce((a,b)=>a+b,0)||1;return Object.keys(facMap).map(l=>({l,v:pctC(facMap[l],ft)})).filter(d=>d.v>0).sort((x,y)=>y.v-x.v);})(),
       inactiveReasons:Object.keys(inactMap).map(l=>({l,v:inactMap[l]})).sort((x,y)=>y.v-x.v)
     },
     insulin:{
@@ -1592,15 +1594,15 @@ function recompute(){
   // merged object for renderKPIs (geo + patient)
   const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]||0;
   CURD={
-    states:f.state==='all'?4:1, dist, plan:csF.length+lt.facCount, op:csOp+lt.facCount, csOp, ltOp:lt.facCount,
+    states:statesCount, dist, plan:csF.length+lt.facCount, op:csOp+lt.facCount, csOp, ltOp:lt.facCount,
     enr:csEnr+ltEnr, csEnr, ltEnr, target,
     newLast, newPrev, avgClin:csOp>0?Math.round(newLast/csOp*10)/10:0,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
     hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
     hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
     dka:pctC(dkaN,fupDen), hypo:pctC(hypoN,fupDen),
-    drBat:distinct(drs,'Training Batch'), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
-    nrBat:distinct(nrs,'Training Batch'), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
+    drBat:distinctCombo(drs,['State','Training Batch']), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
+    nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
     flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
   };
 }
@@ -1752,7 +1754,7 @@ async function boot(){
   if(btn){btn.disabled=true;btn.textContent='Refreshing…';btn.style.opacity='.5';}
   try{
     const C=window.DASHBOARD_CONFIG;
-    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid]=await Promise.all([
+    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid]=await Promise.all([
       fetchTab(C.wb1,'Enrolled List'),
       fetchTab(C.wb1,'CompleteSupport_Facilities'),
       fetchTab(C.wb1,'Light_touch_facilities'),
@@ -1763,8 +1765,16 @@ async function boot(){
       fetchTab(C.wb2,'# of offs'),
       fetchTab(C.wb1,'SMBG_Monthly'),
       fetchTab(C.wb1,'SMBG_Hyper/Hypo'),
-      fetchTab(C.wb1,'Hba1c_Baseline/Latest')
+      fetchTab(C.wb1,'Hba1c_Baseline/Latest'),
+      fetchTab(C.wb1,'Targets')
     ]);
+    // Build per-state targets from the Targets sheet (#6)
+    try{
+      const tgt=toObjects(tgtGrid,['State','State-level targets']);
+      const tm={}; tgt.forEach(t=>{const s=normv(t['State']);const v=num(t['State-level targets']);
+        if(s&&v!=null&&s!=='total'&&!/follow/.test(s)) tm[s.toUpperCase()]=v;});
+      if(Object.keys(tm).length){ tm.all=['RJ','MP','UK','CG'].reduce((a,k)=>a+(tm[k]||0),0); TARGETS=tm; }
+    }catch(e){console.warn('Targets parse failed, using defaults',e);}
     RAW={
       enrolled:toObjects(enr,    ['Claude_ID','State','Sex','Age']),
       csFac:   toObjects(csFac,  ['Facility name','T1D Clinic Operational?','State']),
