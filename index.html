@@ -383,8 +383,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   <div class="card cab">
     <div class="ct">In-house HbA1c testing facility</div>
     <div class="cs">% operational clinics with on-site HbA1c testing, among all operational clinics</div>
-    <div class="kv b">68%</div>
-    <div class="ks">38 of 56 operational clinics</div>
+    <div class="kv b" id="hba1c-fac">—</div>
+    <div class="ks" id="hba1c-fac-n">of operational clinics</div>
   </div>
   <div class="card" style="align-self:start" id="trained-staff-card">
     <div class="ct">Trained clinical staff at T1D clinics</div>
@@ -749,7 +749,7 @@ let HBA_N,HBA_LBLS,HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4;
 let HBA_AVG_BASE,HBA_AVG_LAST,HBA_DIST_LBLS,HBA_D_LT7,HBA_D_7_10,HBA_D_10_13,HBA_D_13_16,HBA_D_GT16,HBA_LATEST;
 
 const WIN=6;
-let MAX=0, off=[0,0];
+let MAX=0, off=[null,null];   // null = not yet positioned → defaults to latest window
 let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -797,6 +797,8 @@ function renderKPIs(d,f){
   sv('ppnr-lbl','Staff nurses (n='+b.nrTr+')'); sv('ppnr-pre',b.nrPre+'%'); sv('ppnr-post',b.nrPost+'%');
   const pnrPre=document.getElementById('pf-nr-pre'); if(pnrPre)pnrPre.style.width=b.nrPre+'%'; const pnrPost=document.getElementById('pf-nr-post'); if(pnrPost)pnrPost.style.width=b.nrPost+'%';
   sv('ppnr-imp','+'+(b.nrPost-b.nrPre)+'pp improvement');
+  if(d.hba1cFacPct!=null){sv('hba1c-fac',d.hba1cFacPct+'%'); sv('hba1c-fac-n',d.hba1cFacCount+' of '+d.hba1cFacDen+' operational clinics');}
+  else{sv('hba1c-fac','—'); sv('hba1c-fac-n','HbA1c-availability column not found');}
   sv('flw-ses',b.flwSes); sv('flw-hr',fmt(b.flwHr));
   sv('flw-dist',b.flwDist); sv('flw-dist-s','of '+b.flwTotDist+' pilot districts');
   const fp=Math.round(b.flwDist/b.flwTotDist*100); sw('flw-gauge',fp); sv('flw-pct',fp+'%');
@@ -1364,30 +1366,45 @@ async function fetchTab(wbId,tabName){
   return parseCSV(text);
 }
 
-// 2D grid → array of row objects using grid[headerRow] as keys
-function toObjects(grid,headerRow){
+// Find the header row by scanning the first rows for any expected column name.
+// gviz can include/drop a merged title row, so we never trust a fixed index.
+function headerRowOf(grid,expected){
+  for(let r=0;r<Math.min(grid.length,10);r++){
+    const cells=grid[r].map(c=>String(c).trim());
+    if(expected.some(nm=>cells.indexOf(nm)>=0)) return r;
+  }
+  return 0;
+}
+
+// 2D grid → array of row objects, auto-detecting the header row
+function toObjects(grid,expected){
   if(!grid||!grid.length) return [];
-  const hdrs=grid[headerRow].map(h=>String(h).trim());
-  return grid.slice(headerRow+1).map(r=>{const o={};hdrs.forEach((h,i)=>o[h]=r[i]!==undefined?r[i]:'');return o;});
+  const hr=Array.isArray(expected)?headerRowOf(grid,expected):(expected||0);
+  const hdrs=grid[hr].map(h=>String(h).trim());
+  return grid.slice(hr+1).map(r=>{const o={};hdrs.forEach((h,i)=>o[h]=r[i]!==undefined?r[i]:'');return o;})
+    .filter(o=>Object.keys(o).some(k=>String(o[k]).trim()!==''));
 }
 
 function pctC(n,d){return d>0?Math.round(n/d*100):0;}
+// Fuzzy column lookup: first key on the row matching ALL regexes
+function colKey(row,regexes){return Object.keys(row).find(k=>regexes.every(re=>re.test(k)));}
 
 // ── Light-touch facility data for a state (null = all) ──
 function ltData(stateUp){
   const g=RAW.ltGrid; if(!g||g.length<2) return {facCount:0,totalEnr:0,monthly:{}};
-  const hdr=g[1];
+  const hr=headerRowOf(g,['Facility name','Total enrolments (autocalculated)']);
+  const hdr=g[hr];
   let si=-1,ni=-1,ti=-1; const monthCols=[];
   for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
     if(h==='State')si=i; if(h==='Facility name')ni=i;
-    if(h==='Total enrolments (autocalculated)')ti=i;
+    if(/total enrolments/i.test(h))ti=i;
     const d=parseDate(hdr[i]); if(d&&h&&!/enrolment|facility|state|category|s no|^total/i.test(h)) monthCols.push({i:i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2)});
   }
   let facCount=0,totalEnr=0;const monthly={};
-  for(let r=2;r<g.length;r++){const row=g[r];
-    if(stateUp&&String(row[si]||'').trim().toUpperCase()!==stateUp) continue;
-    if(!normv(row[ni])) continue;
-    facCount++; const te=num(row[ti]); if(te!=null)totalEnr+=te;
+  for(let r=hr+1;r<g.length;r++){const row=g[r];
+    if(ni<0||!normv(row[ni])) continue;
+    if(stateUp&&si>=0&&String(row[si]||'').trim().toUpperCase()!==stateUp) continue;
+    facCount++; const te=ti>=0?num(row[ti]):null; if(te!=null)totalEnr+=te;
     monthCols.forEach(mc=>{const v=num(row[mc.i]); if(v!=null)monthly[mc.label]=(monthly[mc.label]||0)+v;});
   }
   return {facCount,totalEnr,monthly};
@@ -1395,12 +1412,23 @@ function ltData(stateUp){
 
 // ── Clinic ops (program-wide; transposed sheet) ──
 function parseOps(grid){
-  if(!grid||grid.length<7) return {facs:[],months:[]};
-  const facRow=grid[1],opRow=grid[2],facs=[];
-  for(let i=4;i<facRow.length;i++){const nm=String(facRow[i]).trim(); if(nm)facs.push({name:nm,idx:i,op:isYes(opRow[i])});}
+  if(!grid||!grid.length) return {facs:[],months:[]};
+  let facRow=-1,opRow=-1,myRow=-1,labelCol=-1,monthCol=-1;
+  for(let r=0;r<Math.min(grid.length,12);r++){
+    grid[r].forEach((c,i)=>{const v=String(c).trim();
+      if(/^facility name$/i.test(v)){facRow=r;labelCol=i;}
+      if(/^operational status$/i.test(v))opRow=r;
+      if(/^month\/?\s*year$/i.test(v)){myRow=r;monthCol=i;}
+    });
+  }
+  if(facRow<0||labelCol<0) return {facs:[],months:[]};
+  if(monthCol<0) monthCol=Math.max(0,labelCol-1);
+  const facs=[];
+  for(let i=labelCol+1;i<grid[facRow].length;i++){const nm=String(grid[facRow][i]).trim(); if(nm)facs.push({name:nm,idx:i,op:opRow>=0?isYes(grid[opRow][i]):true});}
   const months=[];
-  for(let r=6;r<grid.length;r++){const lbl=String(grid[r][2]||'').trim();
-    if(!lbl||lbl==='Month/Year')continue;
+  const startR=(myRow>=0?myRow:opRow)+1;
+  for(let r=startR;r<grid.length;r++){const lbl=String(grid[r][monthCol]||'').trim();
+    if(!lbl||/^month\/?\s*year$/i.test(lbl))continue;
     const vals={};facs.forEach(f=>vals[f.name]=grid[r][f.idx]);months.push({label:lbl,vals});}
   return {facs,months};
 }
@@ -1440,7 +1468,10 @@ function recompute(){
   const lt  =ltData(stateUp);
 
   // ── Geography (state-scoped) ──
-  const csOp=csF.filter(x=>isYes(x['T1D Clinic Operational?'])).length;
+  const opF=csF.filter(x=>isYes(x['T1D Clinic Operational?']));
+  const csOp=opF.length;
+  const hbKey=csF.length?colKey(csF[0],[/hba1c/i,/avail/i]):null;
+  const hbFac=hbKey?opF.filter(x=>isYes(x[hbKey])).length:null;
   const dists={};csF.forEach(x=>{const d=normv(x['District']);if(d)dists[d]=true;});
   const dist=Object.keys(dists).length;
   const drs=capF.filter(r=>normv(r['Type of Service Provider'])==='doctor');
@@ -1508,7 +1539,7 @@ function recompute(){
   MONTHS=months.map(m=>m.label);
   CS_CUM=csCum;LT_CUM=ltCum;CLIN=clin;NEWENR_CS=neCs;NEWENR_LT=neLt;NEWENR=neCs.map((v,i)=>v+neLt[i]);AVGCL=avg;
   MAX=Math.max(0,MONTHS.length-WIN);
-  if(off[0]>MAX||off[0]==null)off=[MAX,MAX];
+  off=[off[0]==null?MAX:Math.min(off[0],MAX), off[1]==null?MAX:Math.min(off[1],MAX)];
   FUP_MOM=fmom;
 
   TRAINED_STAFF=[
@@ -1547,6 +1578,7 @@ function recompute(){
     newLast, newPrev, avgClin:csOp>0?Math.round(newLast/csOp*10)/10:0,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
     hbTest:null, hbDec:null, hbDecN:null,
+    hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
     dka:pctC(dkaN,fupDen), hypo:pctC(hypoN,fupDen),
     drBat:distinct(drs,'Training Batch'), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
     nrBat:distinct(nrs,'Training Batch'), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
@@ -1615,13 +1647,13 @@ async function boot(){
       fetchTab(C.wb2,'# of offs')
     ]);
     RAW={
-      enrolled:toObjects(enr,0),                  // title row already removed → headers row 1
-      csFac:toObjects(csFac,1),                   // title row 1, headers row 2
-      ltGrid:ltGrid,                              // kept as grid (date headers in row 2)
-      cap:toObjects(cap,0),
-      orient:toObjects(orient,1),
-      fupGrid:fupGrid,                            // kept as grid (date headers in row 1)
-      opsGrid:opsGrid, offsGrid:offsGrid          // transposed sheets
+      enrolled:toObjects(enr,    ['Claude_ID','State','Sex','Age']),
+      csFac:   toObjects(csFac,  ['Facility name','T1D Clinic Operational?','State']),
+      ltGrid:  ltGrid,                            // kept as grid (date headers)
+      cap:     toObjects(cap,    ['Type of Service Provider','Name of Service Provider']),
+      orient:  toObjects(orient, ['Type of Service Provider','# of Service Providers','Session #']),
+      fupGrid: fupGrid,                           // kept as grid (date headers)
+      opsGrid: opsGrid, offsGrid: offsGrid        // transposed sheets
     };
     if(RAW.enrolled.length<50) throw new Error('Enrolled List returned '+RAW.enrolled.length+' rows. Check the tab name / sharing.');
     computeClinicOps();
