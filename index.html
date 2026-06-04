@@ -1425,6 +1425,19 @@ function toObjects(grid,expected){
 }
 
 function pctC(n,d){return d>0?Math.round(n/d*100):0;}
+// Integer percentages that sum to exactly 100 (largest-remainder method).
+function pctParts(counts,total){
+  total=(total==null)?counts.reduce((a,b)=>a+(Number(b)||0),0):total;
+  if(!total) return counts.map(()=>0);
+  const raw=counts.map(c=>(Number(c)||0)/total*100);
+  const fl=raw.map(Math.floor);
+  let rem=Math.round(100-fl.reduce((a,b)=>a+b,0));
+  if(rem>0){
+    const ord=raw.map((v,i)=>({i,f:v-Math.floor(v)})).sort((a,b)=>b.f-a.f);
+    for(let k=0;k<rem;k++) fl[ord[k%ord.length].i]++;
+  }
+  return fl;
+}
 // Fuzzy column lookup: first key on the row matching ALL regexes
 function colKey(row,regexes){return Object.keys(row).find(k=>regexes.every(re=>re.test(k)));}
 
@@ -1513,7 +1526,7 @@ function computeClinicOps(){
     M.push(om.label);FP.push(pctC(nf,den));
     const o2=offsMap[om.label];const b=[0,0,0,0,0];let od=0;
     if(o2)o2.vals.forEach(v=>{const x=opNum(v);if(x!=null){od++;if(x===0)b[0]++;else if(x===1)b[1]++;else if(x===2)b[2]++;else if(x===3)b[3]++;else b[4]++;}});
-    OD.push(b.map(x=>pctC(x,od)));
+    OD.push(pctParts(b));
   });
   const take=Math.min(8,M.length),s=M.length-take;
   CLINOPS_M=M.slice(s);CLINOPS_V=FP.slice(s);OFFDAYS_D=OD.slice(s);
@@ -1686,16 +1699,20 @@ function recompute(){
     {lbl:'With trained MO',          v:pctC(csF.filter(x=>isYes(x['Trained Medical Officer available?'])).length,csOp||1)}
   ];
 
+  const gParts=pctParts([male,female,oth]);
+  const aParts=pctParts([ped,pub,adu]);
+  const facLabels=Object.keys(facMap), facPts=pctParts(facLabels.map(l=>facMap[l]));
+  const basPts=pctParts(bas);
   DATA={
     demographics:{
-      gender:[{l:'Male',v:pctC(male,gTot)},{l:'Female',v:pctC(female,gTot)},{l:'Other/NS',v:Math.max(0,100-pctC(male,gTot)-pctC(female,gTot))}],
-      age:[{l:'Pediatric (<13)',v:pctC(ped,aTot)},{l:'Pubertal (13–17)',v:pctC(pub,aTot)},{l:'Adults (≥18)',v:pctC(adu,aTot)}],
-      prevFacility:(function(){const ft=Object.values(facMap).reduce((a,b)=>a+b,0)||1;return Object.keys(facMap).map(l=>({l,v:pctC(facMap[l],ft)})).filter(d=>d.v>0).sort((x,y)=>y.v-x.v);})(),
+      gender:[{l:'Male',v:gParts[0]},{l:'Female',v:gParts[1]},{l:'Other/NS',v:gParts[2]}],
+      age:[{l:'Pediatric (<13)',v:aParts[0]},{l:'Pubertal (13–17)',v:aParts[1]},{l:'Adults (≥18)',v:aParts[2]}],
+      prevFacility:facLabels.map((l,i)=>({l,v:facPts[i]})).filter(d=>d.v>0).sort((x,y)=>y.v-x.v),
       inactiveReasons:Object.keys(inactMap).map(l=>({l,v:inactMap[l]})).sort((x,y)=>y.v-x.v)
     },
     insulin:{
-      tdd:['ped','pub','adu'].map(g=>{const t=tdd[g].n||1;return{grp:g==='ped'?'Pediatric <13':g==='pub'?'Pubertal 13–17':'Adults ≥18',n:tdd[g].n,below:pctC(tdd[g].b,t),inRange:pctC(tdd[g].i,t),above:pctC(tdd[g].a,t)};}),
-      basal:[{l:'<20%',v:pctC(bas[0],basN||1)},{l:'20–30%',v:pctC(bas[1],basN||1)},{l:'30–50%',v:pctC(bas[2],basN||1),ideal:true},{l:'50–60%',v:pctC(bas[3],basN||1)},{l:'> 60%',v:pctC(bas[4],basN||1)}]
+      tdd:['ped','pub','adu'].map(g=>{const p=pctParts([tdd[g].b,tdd[g].i,tdd[g].a]);return{grp:g==='ped'?'Pediatric <13':g==='pub'?'Pubertal 13–17':'Adults ≥18',n:tdd[g].n,below:p[0],inRange:p[1],above:p[2]};}),
+      basal:[{l:'<20%',v:basPts[0]},{l:'20–30%',v:basPts[1]},{l:'30–50%',v:basPts[2],ideal:true},{l:'50–60%',v:basPts[3]},{l:'> 60%',v:basPts[4]}]
     },
     capacity:computeCapacity(capF,oriF)
   };
@@ -1741,13 +1758,15 @@ function computeCapacity(capF,oriF){
   const docs=capF.filter(r=>normv(r['Type of Service Provider'])==='doctor');const dT=docs.length||1;
   const SPEC={'pediatrician':'Pediatrician','paediatrician':'Pediatrician','md medicine':'MD Medicine','medical officer':'Medical Officer','mo':'Medical Officer'};
   const sm={};docs.forEach(r=>{const l=SPEC[normv(r['Designation/ Department'])]||'Other';sm[l]=(sm[l]||0)+1;});
-  const specialty=['Pediatrician','MD Medicine','Medical Officer','Other'].map(l=>({l,v:pctC(sm[l]||0,dT)})).filter(d=>d.v>0);
+  const specLbl=['Pediatrician','MD Medicine','Medical Officer','Other'], specPts=pctParts(specLbl.map(l=>sm[l]||0));
+  const specialty=specLbl.map((l,i)=>({l,v:specPts[i]})).filter(d=>d.v>0);
   const pilot=docs.filter(r=>isYes(r['Pilot facility? (Yes/No)'])).length;
+  const pPts=pctParts([pilot,(docs.length-pilot)]);
   const CAD={'asha':'ASHA Worker','asha worker':'ASHA Worker','anm':'ANM','bcm':'BCM'};
   const cm={};oriF.forEach(r=>{const l=CAD[normv(r['Type of Service Provider'])]||'Other';cm[l]=(cm[l]||0)+(num(r['# of Service Providers'])||0);});
-  const cT=Object.keys(cm).reduce((s,k)=>s+(cm[k]||0),0)||1;
-  const flwCadre=['ASHA Worker','ANM','BCM','Other'].map(l=>({l,v:pctC(cm[l]||0,cT)})).filter(d=>d.v>0);
-  return{specialty,pilotSplit:[pctC(pilot,dT),100-pctC(pilot,dT)],flwCadre};
+  const cadLbl=['ASHA Worker','ANM','BCM','Other'], cadPts=pctParts(cadLbl.map(l=>cm[l]||0));
+  const flwCadre=cadLbl.map((l,i)=>({l,v:cadPts[i]})).filter(d=>d.v>0);
+  return{specialty,pilotSplit:pPts,flwCadre};
 }
 
 // ── SMBG frequency (per-day readings, monthly columns) ──
@@ -1767,9 +1786,9 @@ function computeSmbg(idSet){
     mc.forEach(m=>{const bk=bucket(row[m.i]); if(bk>=0){acc[m.label].b[bk]++;acc[m.label].n++; if(is3){acc3[m.label].b[bk]++;acc3[m.label].n++;}}});
   }
   const wd=mc.filter(m=>acc[m.label].n>0).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
-  const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label],t=a.n||1;return{m:m.label,v:a.b.map(x=>pctC(x,t)),n:a.n};});
+  const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label];return{m:m.label,v:pctParts(a.b),n:a.n};});
   let last={m:'',v:[0,0,0,0],n:0};
-  if(wd.length){const m=wd[wd.length-1],a=acc3[m.label],t=a.n||1;last={m:m.label,v:a.b.map(x=>pctC(x,t)),n:a.n};}
+  if(wd.length){const m=wd[wd.length-1],a=acc3[m.label];last={m:m.label,v:pctParts(a.b),n:a.n};}
   return {mom,last};
 }
 
@@ -1792,8 +1811,8 @@ function computeHyperHypo(idSet){
   const last3=Object.keys(acc).map(l=>acc[l]).sort((a,b)=>a.y!==b.y?a.y-b.y:a.mo-b.mo).slice(-3).reverse();
   return {
     months:last3.map(a=>({m:MON[a.mo]+' '+String(a.y).slice(2),n:a.n})),
-    hyper:last3.map(a=>a.hy.map(x=>pctC(x,a.n||1))),
-    hypo:last3.map(a=>a.ho.map(x=>pctC(x,a.n||1)))
+    hyper:last3.map(a=>pctParts(a.hy)),
+    hypo:last3.map(a=>pctParts(a.ho))
   };
 }
 
@@ -1835,19 +1854,22 @@ function computeHba1c(idSet){
     dist[bi][lb]++; distN[bi]++; latSum[bi]+=lat;
   });
   const lblN=i=>(C[i].n?'(n='+C[i].n+')':'');
+  // Per-bucket largest-remainder so each bucket's 7 change-categories / 5 bands sum to 100
+  const chgPts=C.map(c=>pctParts([c.i4,c.i2,c.iL,c.nc,c.wL,c.w2,c.w4]));
+  const distPts=dist.map(d=>pctParts(d));
   return {
     hbTest:pctC(hbTestNum, Object.keys(idSet).length),
     hbDec:pctC(decNum,decDen), hbDecN:decDen,
     changeLabels:[['Overall',lblN(0)]].concat(LBL.map((l,i)=>[l,lblN(i+1)])),
     changeN:C.map(c=>c.n),
-    i4:C.map(c=>pctC(c.i4,c.n||1)), i2:C.map(c=>pctC(c.i2,c.n||1)), iL:C.map(c=>pctC(c.iL,c.n||1)),
-    nc:C.map(c=>pctC(c.nc,c.n||1)), wL:C.map(c=>pctC(c.wL,c.n||1)), w2:C.map(c=>pctC(c.w2,c.n||1)), w4:C.map(c=>pctC(c.w4,c.n||1)),
+    i4:chgPts.map(p=>p[0]), i2:chgPts.map(p=>p[1]), iL:chgPts.map(p=>p[2]),
+    nc:chgPts.map(p=>p[3]), wL:chgPts.map(p=>p[4]), w2:chgPts.map(p=>p[5]), w4:chgPts.map(p=>p[6]),
     avgB:cntB.map((c,i)=>c?Math.round(sumB[i]/c*10)/10:0),
     avgL:cntB.map((c,i)=>c?Math.round(sumL[i]/c*10)/10:0),
     distLabels:LBL.map((l,i)=>[l.replace(' months','m').replace('–','–'),(distN[i]?'(n='+distN[i]+')':'')]),
-    lt7:dist.map((d,i)=>pctC(d[0],distN[i]||1)), d710:dist.map((d,i)=>pctC(d[1],distN[i]||1)),
-    d1013:dist.map((d,i)=>pctC(d[2],distN[i]||1)), d1316:dist.map((d,i)=>pctC(d[3],distN[i]||1)),
-    gt16:dist.map((d,i)=>pctC(d[4],distN[i]||1)),
+    lt7:distPts.map(p=>p[0]), d710:distPts.map(p=>p[1]),
+    d1013:distPts.map(p=>p[2]), d1316:distPts.map(p=>p[3]),
+    gt16:distPts.map(p=>p[4]),
     latest:distN.map((c,i)=>c?Math.round(latSum[i]/c*10)/10:0)
   };
 }
