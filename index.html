@@ -1807,7 +1807,9 @@ async function boot(){
     fillRow(ltGrid, ['State','Facility name'],                     LT_CANON);
     fillRow(orient, ['State','Type of Service Provider','Pilot District? (Yes/No)'], ORI_CANON);
     RAW={
-      enrolled:toObjects(enr,    ['Claude_ID','State','Survival Status']),
+      // Keep only real patient rows — the sheet pre-fills IDs (P1..P5000) but most are blank placeholders
+      enrolled:toObjects(enr, ['Claude_ID','State','Survival Status'])
+                 .filter(p=>normv(p['Sex'])||normv(p['Age'])||normv(p['Facility Name'])||normv(p['Date of enrolment'])),
       csFac:   toObjects(csFac,  ['Facility name','T1D Clinic Operational?','State']),
       ltGrid:  ltGrid,                            // kept as grid (date headers)
       cap:     parseCapacity(cap),
