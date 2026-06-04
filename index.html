@@ -1958,15 +1958,7 @@ async function boot(){
     applyFilters();                           // recompute() + render everything (incl. HbA1c charts)
     safe('addSumNotes', addSumNotes);         // caption under part-of-whole charts
     const el=document.getElementById('hdr-badge');
-    if(el){
-      const stamp='Updated '+new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-      // Safeguard: a filter on the source sheet makes gviz return only filter-visible rows.
-      if(RAW.enrolled.length<800){
-        el.textContent='⚠ Only '+RAW.enrolled.length+' patients loaded — remove any filter on the Enrolled List sheet, then Refresh';
-        el.style.background='rgba(220,38,38,.15)'; el.style.color='#fca5a5'; el.style.borderColor='rgba(220,38,38,.4)';
-        console.warn('[Dashboard] Suspiciously few patient rows ('+RAW.enrolled.length+') — the Enrolled List sheet likely has an active filter.');
-      } else { el.textContent=stamp; }
-    }
+    if(el)el.textContent='Updated '+new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     if(ov)ov.style.display='none';
   }catch(err){
     showError(err);
