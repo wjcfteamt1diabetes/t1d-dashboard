@@ -1164,8 +1164,7 @@ function buildHbaLatest(){
   window._chlatest=new Chart(document.getElementById('c-hba-latest'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
-      {label:'Avg HbA1c', data:HBA_LATEST, backgroundColor:'#1a5fa8',
-       borderRadius:3, _pct:false, _lc:'#fff', _minVal:0, _minH:6, _fs:9}
+      {label:'Avg HbA1c', data:HBA_LATEST, backgroundColor:'#1a5fa8', borderRadius:3, _noLabel:true}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
@@ -1175,7 +1174,22 @@ function buildHbaLatest(){
            categoryPercentage:0.5, barPercentage:0.5},
         y:{display:false, min:5, max:12}
       }
-    }
+    },
+    plugins:[{
+      id:'hbaLatestCentreLabels',
+      afterDatasetsDraw(chart){
+        const ctx=chart.ctx, meta=chart.getDatasetMeta(0); if(meta.hidden) return;
+        const bottom=chart.chartArea.bottom;
+        meta.data.forEach((bar,j)=>{
+          const v=chart.data.datasets[0].data[j]; if(v==null||v===0) return;
+          ctx.save();
+          ctx.font='bold 9px DM Sans,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillStyle='#fff';
+          ctx.fillText(String(v), bar.x, (bar.y+bottom)/2);  // centre of the visible bar
+          ctx.restore();
+        });
+      }
+    }]
   });
 }
 
