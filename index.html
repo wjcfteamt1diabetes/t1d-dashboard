@@ -1461,21 +1461,18 @@ function opNum(s){const t=String(s).trim();if(t==='')return null;
   if(t.indexOf('%')>=0){const x=parseFloat(t);return isNaN(x)?null:x/100;}
   const x=Number(t.replace(/,/g,''));return isNaN(x)?null:x;}
 
-// Transposed Sheet2 layout (gviz drops label cells, header-row count varies).
-// Reliable signature: data rows have col0 = TRUE/FALSE, month label "Mon YY" at col2, facility values at col4+.
+// Transposed Sheet2 layout: a "Month/Year" header cell marks the month-label column;
+// each data row is one month, with facility values in every other column.
 function parseOps(grid){
   if(!grid||!grid.length) return {months:[]};
-  let firstData=-1;
-  for(let r=0;r<grid.length;r++){const c0=String(grid[r][0]).trim().toLowerCase();
-    if(c0==='true'||c0==='false'){firstData=r;break;}}
-  if(firstData<0) return {months:[]};
-  let monthCol=2;
-  grid[firstData].forEach((c,i)=>{if(/^[A-Za-z]{3}\s?\d{2}$/.test(String(c).trim()))monthCol=i;});
-  const facStart=monthCol+2;                 // skip month label + "# of weeks"
+  let monthCol=0, headerRow=0, found=false;
+  for(let r=0;r<Math.min(grid.length,6)&&!found;r++){
+    grid[r].forEach((c,i)=>{ if(!found&&/^month\/?\s*year$/i.test(String(c).trim())){monthCol=i;headerRow=r;found=true;} });
+  }
   const months=[];
-  for(let r=firstData;r<grid.length;r++){const lbl=String(grid[r][monthCol]||'').trim();
+  for(let r=headerRow+1;r<grid.length;r++){const lbl=String(grid[r][monthCol]||'').trim();
     if(!/^[A-Za-z]{3}\s?\d{2}$/.test(lbl))continue;
-    months.push({label:lbl,vals:grid[r].slice(facStart)});}
+    months.push({label:lbl,vals:grid[r].filter((_,i)=>i!==monthCol)});}
   return {months};
 }
 
