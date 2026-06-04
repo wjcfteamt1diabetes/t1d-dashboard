@@ -34,8 +34,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .flbl{font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .fsel{font-size:11px;font-family:var(--fn);padding:3px 20px 3px 6px;border:1px solid var(--bdr);border-radius:4px;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 5px center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--t1)}
 .fdiv{width:1px;height:20px;background:var(--bdr);margin:0 2px}
-.fclear{font-size:10px;font-family:var(--fn);font-weight:600;color:var(--b2);background:#f8fafc;border:1px solid var(--b5);border-radius:4px;padding:3px 9px;cursor:pointer;white-space:nowrap}
-.fclear:hover{background:#eff6ff;border-color:var(--b2)}
 .ftag{font-size:10px;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:3px 8px;font-weight:600}
 
 .tabs-bar{background:#fff;border-bottom:1px solid var(--bdr);position:sticky;top:44px;z-index:110;box-shadow:0 1px 4px rgba(15,52,96,.06)}
@@ -172,7 +170,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
       <option value="all">All</option><option value="ped">Pediatric (&lt;13)</option>
       <option value="pub">Pubertal (13–17)</option><option value="adu">Adults (≥18)</option>
     </select>
-    <button class="fclear" onclick="clearFilters()" title="Reset all filters">✕ Clear all</button>
     <div class="fdiv"></div>
     <span class="ftag" id="n-tag">n = 2,216 PLT1Ds</span>
   </div>
@@ -763,11 +760,6 @@ const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','De
 let TARGETS={RJ:4000,MP:1082,UK:602,CG:270,all:5954};  // overwritten from Targets sheet at load
 
 function fval(id){const e=document.getElementById(id);return e?e.value:'all';}
-function clearFilters(){
-  ['f-state','f-division','f-district','f-facility','f-dpc','f-status','f-sex','f-age']
-    .forEach(id=>{const e=document.getElementById(id); if(e)e.value='all';});
-  applyFilters();   // repopulates cascading dropdowns + recomputes every chart
-}
 function getF(){return{
   state:fval('f-state'), division:fval('f-division'), district:fval('f-district'),
   facility:fval('f-facility'), dpc:fval('f-dpc'),
