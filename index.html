@@ -690,6 +690,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 <script>
 Chart.defaults.font.family = 'DM Sans';
+// Render every chart at high resolution (crisp on all displays, incl. the fixed-size donuts)
+Chart.defaults.devicePixelRatio = Math.max(2.5, window.devicePixelRatio || 1);
 
 // Inline bar label plugin — draws value text in centre of each bar segment
 Chart.register({
