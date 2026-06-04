@@ -1339,6 +1339,8 @@ function applyFilters(){
 function normv(v){return String(v==null?'':v).trim().toLowerCase();}
 function isYes(v){const s=normv(v);return s==='yes'||s==='y'||s==='true'||s==='1';}
 function num(v){const s=String(v).trim();if(s==='')return null;const n=Number(s.replace(/,/g,''));return isNaN(n)?null:n;}
+// Percentage as a number 0-100: "40.00%"→40, "40"→40, decimal 0.4→40
+function pctNum(v){const s=String(v).trim();if(s==='')return null;let x=parseFloat(s.replace('%',''));if(isNaN(x))return null;if(s.indexOf('%')<0&&x<=1)x*=100;return x;}
 function stUp(p){return String(p['State']||'').trim().toUpperCase();}
 function sexTok(p){const s=normv(p['Sex']);return s.charAt(0)==='m'?'M':s.charAt(0)==='f'?'F':'O';}
 function ageTok(p){const a=num(p['Age']);return a==null?'unk':a<13?'ped':a<18?'pub':'adu';}
@@ -1403,6 +1405,21 @@ function toObjects(grid,expected){
 function pctC(n,d){return d>0?Math.round(n/d*100):0;}
 // Fuzzy column lookup: first key on the row matching ALL regexes
 function colKey(row,regexes){return Object.keys(row).find(k=>regexes.every(re=>re.test(k)));}
+
+// gviz drops the header text on numeric / date / percent columns. Refill blank
+// headers positionally from the known schema (present text headers are kept as-is).
+function fillRow(grid,anchors,canon){
+  if(!grid||!grid.length) return;
+  const hr=headerRowOf(grid,anchors);
+  const hdr=grid[hr];
+  for(let i=0;i<canon.length;i++){ if(canon[i] && !String(hdr[i]==null?'':hdr[i]).trim()) hdr[i]=canon[i]; }
+}
+const EN_CANON=['Claude_ID','State','Age','Sex','Facility Name','Date of enrolment','Survival Status','Case Status (Active/Inactive)','Date of Marking Inactive','Reason for marking inactive','Month of diagnosis','Year of diagnosis','Previous treatment regimen','Previous treatment facility category','Transitioned to basal-bolus insulin regimen?','Baseline HbA1c value (%)','ID card','SMBG Logbook','Glucometer','Lancing Device','Insulin Pen','Linked to peer support group','Date of most recent visit','Weight (kg)','Height (cm)','Prescribed regimen','Units of basal insulin','Units of bolus insulin','Total Insulin prescribed','Insulin regimen check','BB Split check','Basal %','Age group','Weight available?','Actual TDD','Ideal TDD (Min)','Ideal TDD (Max)','In Range?','Follow-up visit in the last 12 months?','# of DKA episodes in the last 12 months','# of severe hypoglycemia episodes in the last 12 months'];
+const HBA_CANON=['Claude_ID','State','Age','Sex','Facility Name','Date of enrolment','Survival Status','Case Status (Active/Inactive)','Baseline HbA1c value (%)','First Hba1c','Date of first Hba1c','Time between first hba1c and enrolment','Mismatch between baseline and first hba1c (<30 days)','Latest Hba1c value','Date of latest Hba1c','Time since enrolment','Latest hba1c time bucket'];
+const HH_CANON=['Claude ID','Facility Name','Date of visit','% Hypo readings','% Hyper readings','Days since enrolment','Time bucket'];
+const CS_CANON=['','State','Division','District','Block','Facility category','Facility name','DPC','Block&FC','Directive for operationalisation issued from the state?','Directive for operationalisation issued from CS office?','T1D Clinic Operational?','Date of Operationalisation','Clinic Day','HbA1c Available?','Trained pediatrician available?','Trained MD Medicine available?','Trained Medical Officer available?','Referral pathway developed?','Peer support groups formed?'];
+const LT_CANON=['State','District','Facility category','Facility name','Total enrolments (autocalculated)'];
+const ORI_CANON=['State','District','Block','Type of Service Provider','# of Service Providers','Session #','Pilot District? (Yes/No)','Month of Orientation','Year of Orientation','Remarks'];
 
 // Capacity_Building: gviz returns BLANK headers for Training Batch / Maximum Score /
 // Pre-test / Post-test (values are present). Recover them by anchoring off known headers.
@@ -1535,7 +1552,7 @@ function recompute(){
     if(isYes(p['Follow-up visit in the last 12 months?'])){fupDen++;if(num(p['# of DKA episodes in the last 12 months'])>0)dkaN++;if(num(p['# of severe hypoglycemia episodes in the last 12 months'])>0)hypoN++;}
     const ir=normv(p['In Range?']);const grp=ag==null?null:ag<13?'ped':ag<18?'pub':'adu';
     if(grp&&(ir==='below'||ir==='in range'||ir==='above')){tdd[grp].n++;if(ir==='below')tdd[grp].b++;else if(ir==='in range')tdd[grp].i++;else tdd[grp].a++;}
-    const bp=num(p['Basal %']);if(bp!=null&&bp>0){basN++;if(bp<0.20)bas[0]++;else if(bp<0.30)bas[1]++;else if(bp<=0.50)bas[2]++;else if(bp<=0.60)bas[3]++;else bas[4]++;}
+    const bp=pctNum(p['Basal %']);if(bp!=null&&bp>0){basN++;if(bp<20)bas[0]++;else if(bp<30)bas[1]++;else if(bp<=50)bas[2]++;else if(bp<=60)bas[3]++;else bas[4]++;}
     if(statusTok(p)==='inactive'){const rs=String(p['Reason for marking inactive']).trim();if(rs)inactMap[rs]=(inactMap[rs]||0)+1;}
     const ed=parseDate(p['Date of enrolment']);
     if(ed&&ed.getFullYear()===lastM.getFullYear()&&ed.getMonth()===lastM.getMonth())newLast++;
@@ -1785,16 +1802,23 @@ async function boot(){
         if(s&&v!=null&&s!=='total'&&!/follow/.test(s)) tm[s.toUpperCase()]=v;});
       if(Object.keys(tm).length){ tm.all=['RJ','MP','UK','CG'].reduce((a,k)=>a+(tm[k]||0),0); TARGETS=tm; }
     }catch(e){console.warn('Targets parse failed, using defaults',e);}
+    // Refill headers gviz dropped on numeric/date/% columns, then parse
+    fillRow(enr,    ['Claude_ID','State','Sex','Survival Status'], EN_CANON);
+    fillRow(hbaGrid,['Claude_ID','State','Survival Status'],       HBA_CANON);
+    fillRow(hhGrid, ['Claude ID','Facility Name','Time bucket'],   HH_CANON);
+    fillRow(csFac,  ['State','Facility name','T1D Clinic Operational?'], CS_CANON);
+    fillRow(ltGrid, ['State','Facility name'],                     LT_CANON);
+    fillRow(orient, ['State','Type of Service Provider','Pilot District? (Yes/No)'], ORI_CANON);
     RAW={
-      enrolled:toObjects(enr,    ['Claude_ID','State','Sex','Age']),
+      enrolled:toObjects(enr,    ['Claude_ID','State','Survival Status']),
       csFac:   toObjects(csFac,  ['Facility name','T1D Clinic Operational?','State']),
       ltGrid:  ltGrid,                            // kept as grid (date headers)
       cap:     parseCapacity(cap),
-      orient:  toObjects(orient, ['Type of Service Provider','# of Service Providers','Session #']),
+      orient:  toObjects(orient, ['Type of Service Provider','Pilot District? (Yes/No)','State']),
       fupGrid: fupGrid,                           // kept as grid (date headers)
       opsGrid: opsGrid, offsGrid: offsGrid,       // transposed sheets
-      smbgGrid: smbgGrid, hhGrid: hhGrid,         // kept as grids (date-header / blank-header cols)
-      hba:     toObjects(hbaGrid, ['Claude_ID','Baseline HbA1c value (%)'])
+      smbgGrid: smbgGrid, hhGrid: hhGrid,         // kept as grids
+      hba:     toObjects(hbaGrid, ['Claude_ID','State','Latest hba1c time bucket'])
     };
     if(RAW.enrolled.length<50) throw new Error('Enrolled List returned '+RAW.enrolled.length+' rows. Check the tab name / sharing.');
     computeClinicOps();
