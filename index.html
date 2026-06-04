@@ -123,9 +123,32 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 /* Data-pending stub */
 .data-pending{font-size:10px;color:var(--tm);font-style:normal;background:#f8fafc;border:1px dashed var(--bdr);border-radius:5px;padding:8px 12px;text-align:center;margin-top:4px}
 .sum-note{font-size:8px;color:var(--tm);margin-top:6px;line-height:1.3}
+/* Passcode gate */
+#gate{position:fixed;inset:0;z-index:10000;background:var(--b1);display:flex;align-items:center;justify-content:center;font-family:var(--fn)}
+.gate-card{background:#fff;border-radius:12px;padding:30px 34px;width:330px;max-width:90vw;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}
+.gate-card h2{font-size:16px;color:var(--t1);margin-bottom:4px;font-weight:700}
+.gate-card p{font-size:11px;color:var(--t2);margin-bottom:18px}
+.gate-card input{width:100%;font-family:var(--fn);font-size:18px;text-align:center;letter-spacing:6px;padding:10px;border:1px solid var(--bdr);border-radius:6px;color:var(--t1);outline:none}
+.gate-card input:focus{border-color:var(--b2)}
+.gate-card button{width:100%;margin-top:12px;padding:10px;background:var(--b2);color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;font-family:var(--fn);cursor:pointer}
+.gate-card button:hover{background:var(--b1)}
+.gate-err{font-size:11px;color:#dc2626;margin-top:10px;min-height:14px}
+.gate-lock{font-size:26px;margin-bottom:8px}
 </style>
 </head>
 <body>
+
+<!-- Passcode gate -->
+<div id="gate">
+  <div class="gate-card">
+    <div class="gate-lock">🔒</div>
+    <h2>T1D Program Dashboard</h2>
+    <p>Enter the access passcode to continue</p>
+    <input id="gate-input" type="password" inputmode="numeric" autocomplete="off" placeholder="••••" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <button onclick="tryUnlock()">Unlock</button>
+    <div class="gate-err" id="gate-err"></div>
+  </div>
+</div>
 
 <!-- Loading overlay -->
 <div id="overlay" style="position:fixed;inset:0;z-index:9999;background:rgba(240,244,250,.97);display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif">
@@ -1967,7 +1990,36 @@ async function boot(){
   }
 }
 
-boot();
+// ── Passcode gate ──────────────────────────────────────────
+// Only the SHA-256 hash of the (salted) passcode is stored here — the passcode
+// itself never appears in the source. Note: this is access gating for a static
+// site, not strong security (the public Google Sheets remain reachable directly).
+const PASS_HASH='362f70236dd8583d04bea7db6eae7c0ea961d346251a372497462f736e08c756';
+const PASS_SALT='wjcf-t1d::';
+async function sha256(s){
+  const buf=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function tryUnlock(){
+  const inp=document.getElementById('gate-input'), err=document.getElementById('gate-err');
+  try{
+    if(await sha256(PASS_SALT+inp.value.trim())===PASS_HASH){
+      sessionStorage.setItem('t1d_auth', PASS_HASH);
+      document.getElementById('gate').style.display='none';
+      boot();
+    }else{
+      err.textContent='Incorrect passcode'; inp.value=''; inp.focus();
+    }
+  }catch(e){ err.textContent='This browser blocks the unlock (needs HTTPS).'; }
+}
+(function initGate(){
+  if(sessionStorage.getItem('t1d_auth')===PASS_HASH){
+    document.getElementById('gate').style.display='none';
+    boot();
+  }else{
+    const i=document.getElementById('gate-input'); if(i) i.focus();
+  }
+})();
 </script>
 </body>
 </html>
