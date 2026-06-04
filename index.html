@@ -787,9 +787,9 @@ function renderKPIs(d,f){
   sv('hb-dec',    d.hbDec!=null  ? d.hbDec+'%'   : '—');
   sv('hb-dec-n',  d.hbDec!=null  ? 'n = '+fmt(d.hbDecN||0)+' with ≥2 readings' : 'Data pending — HbA1c sheet not yet populated');
   sv('dka',  d.dka!=null  ? d.dka+'%'  : '—');
-  sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.enr)+' · '+(d.dka<10?'✓ on target':'⚠ above target') : '');
+  sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.enr)+' · '+(d.dka<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
   sv('hypo', d.hypo!=null ? d.hypo+'%' : '—');
-  sv('hypo-n',d.hypo!=null ? 'n = '+fmt(d.enr)+' · '+(d.hypo<10?'✓ on target':'⚠ above target') : '');
+  sv('hypo-n',d.hypo!=null ? 'n = '+fmt(d.enr)+' · '+(d.hypo<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
   sv('dr-bat',b.drBat); sv('dr-tr',b.drTr); sv('dr-tr-n','across '+sln(f.state));
   sv('ppdr-lbl','Doctors (n='+b.drTr+')'); sv('ppdr-pre',b.drPre+'%'); sv('ppdr-post',b.drPost+'%');
   const pdrPre=document.getElementById('pf-dr-pre'); if(pdrPre)pdrPre.style.width=b.drPre+'%'; const pdrPost=document.getElementById('pf-dr-post'); if(pdrPost)pdrPost.style.width=b.drPost+'%';
@@ -1624,7 +1624,7 @@ function recompute(){
     insBase:pctC(insB,n), insLast:pctC(insL,n),
     hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
     hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
-    dka:pctC(dkaN,fupDen), hypo:pctC(hypoN,fupDen),
+    dka:fupDen?pctC(dkaN,fupDen):null, hypo:fupDen?pctC(hypoN,fupDen):null,
     drBat:distinctCombo(drs,['State','Training Batch']), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
     nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
     flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
