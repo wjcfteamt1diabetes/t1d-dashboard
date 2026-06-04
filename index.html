@@ -151,14 +151,14 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
       <option value="all">All states</option><option value="RJ">Rajasthan</option>
       <option value="MP">Madhya Pradesh</option><option value="UK">Uttarakhand</option><option value="CG">Chhattisgarh</option>
     </select>
-    <span class="flbl">Division</span><select class="fsel"><option>All divisions</option></select>
-    <span class="flbl">District</span><select class="fsel"><option>All districts</option></select>
-    <span class="flbl">Facility</span><select class="fsel"><option>All facilities</option></select>
-    <span class="flbl">DPC</span><select class="fsel"><option>All DPCs</option></select>
+    <span class="flbl">Division</span><select class="fsel" id="f-division" onchange="applyFilters()"><option value="all">All divisions</option></select>
+    <span class="flbl">District</span><select class="fsel" id="f-district" onchange="applyFilters()"><option value="all">All districts</option></select>
+    <span class="flbl">Facility</span><select class="fsel" id="f-facility" onchange="applyFilters()"><option value="all">All facilities</option></select>
+    <span class="flbl">DPC</span><select class="fsel" id="f-dpc" onchange="applyFilters()"><option value="all">All DPCs</option></select>
     <div class="fdiv"></div>
     <span class="flbl">Status</span>
     <select class="fsel" id="f-status" onchange="applyFilters()">
-      <option value="all">All cases</option><option value="active">Active only</option>
+      <option value="all">All cases</option><option value="active">Active only</option><option value="inactive">Inactive only</option>
     </select>
     <span class="flbl">Sex</span>
     <select class="fsel" id="f-sex" onchange="applyFilters()">
@@ -756,7 +756,12 @@ let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 let TARGETS={RJ:4000,MP:1082,UK:602,CG:270,all:5954};  // overwritten from Targets sheet at load
 
-function getF(){return{state:document.getElementById('f-state').value,status:document.getElementById('f-status').value,sex:document.getElementById('f-sex').value,age:document.getElementById('f-age').value};}
+function fval(id){const e=document.getElementById(id);return e?e.value:'all';}
+function getF(){return{
+  state:fval('f-state'), division:fval('f-division'), district:fval('f-district'),
+  facility:fval('f-facility'), dpc:fval('f-dpc'),
+  status:fval('f-status'), sex:fval('f-sex'), age:fval('f-age')
+};}
 function getD(){ return CURD; }
 function sv(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function sw(id,w){const e=document.getElementById(id);if(e)e.style.width=w+'%';}
@@ -1310,6 +1315,7 @@ function safe(name, fn){
 }
 
 function applyFilters(){
+  safe('populateFilters', populateFilters);   // cascade dropdown options to current selection
   recompute();
   const f=getF(), d=getD();
   safe('renderKPIs',      ()=>renderKPIs(d,f));
@@ -1434,21 +1440,26 @@ function parseCapacity(grid){
     .filter(o=>String(o['Name of Service Provider']||'').trim()!=='');
 }
 
-// ── Light-touch facility data for a state (null = all) ──
-function ltData(stateUp){
+// ── Light-touch facility data, filtered by State / District / Facility (Division & DPC don't apply to LT) ──
+function ltData(f){
+  f=f||{state:'all',district:'all',facility:'all',division:'all',dpc:'all'};
   const g=RAW.ltGrid; if(!g||g.length<2) return {facCount:0,totalEnr:0,monthly:{}};
   const hr=headerRowOf(g,['Facility name','Total enrolments (autocalculated)']);
   const hdr=g[hr];
-  let si=-1,ni=-1,ti=-1; const monthCols=[];
+  let si=-1,di=-1,ni=-1,ti=-1; const monthCols=[];
   for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
-    if(h==='State')si=i; if(h==='Facility name')ni=i;
+    if(h==='State')si=i; if(h==='District')di=i; if(h==='Facility name')ni=i;
     if(/total enrolments/i.test(h))ti=i;
-    const d=parseDate(hdr[i]); if(d&&h&&!/enrolment|facility|state|category|s no|^total/i.test(h)) monthCols.push({i:i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2)});
+    const d=parseDate(hdr[i]); if(d&&h&&!/enrolment|facility|state|district|category|s no|^total/i.test(h)) monthCols.push({i:i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2)});
   }
+  // If a Division or DPC filter is active, LT has no such attribute → exclude LT entirely.
+  if(f.division!=='all'||f.dpc!=='all') return {facCount:0,totalEnr:0,monthly:{}};
   let facCount=0,totalEnr=0;const monthly={};
   for(let r=hr+1;r<g.length;r++){const row=g[r];
     if(ni<0||!normv(row[ni])) continue;
-    if(stateUp&&si>=0&&String(row[si]||'').trim().toUpperCase()!==stateUp) continue;
+    if(f.state!=='all'&&si>=0&&String(row[si]||'').trim().toUpperCase()!==f.state) continue;
+    if(f.district!=='all'&&di>=0&&normv(row[di])!==normv(f.district)) continue;
+    if(f.facility!=='all'&&normv(row[ni])!==normv(f.facility)) continue;
     facCount++; const te=ti>=0?num(row[ti]):null; if(te!=null)totalEnr+=te;
     monthCols.forEach(mc=>{const v=num(row[mc.i]); if(v!=null)monthly[mc.label]=(monthly[mc.label]||0)+v;});
   }
@@ -1492,22 +1503,89 @@ function computeClinicOps(){
   CLINOPS_M=M.slice(s);CLINOPS_V=FP.slice(s);OFFDAYS_D=OD.slice(s);
 }
 
+// ── Build facility → geo attributes + the geo list used to populate filter dropdowns ──
+function buildGeo(){
+  const facAttr={}, geo=[];
+  (RAW.csFac||[]).forEach(x=>{
+    const o={state:String(x['State']||'').trim().toUpperCase(),division:String(x['Division']||'').trim(),
+             district:String(x['District']||'').trim(),dpc:String(x['DPC']||'').trim(),facility:String(x['Facility name']||'').trim()};
+    if(o.facility){facAttr[normv(o.facility)]=o; geo.push(o);}
+  });
+  // LT facilities from the grid (State, District, Facility name; no Division/DPC)
+  const g=RAW.ltGrid;
+  if(g&&g.length>1){
+    const hr=headerRowOf(g,['Facility name','State']);
+    const h=g[hr].map(c=>String(c).trim());
+    const si=h.indexOf('State'),di=h.indexOf('District'),ni=h.indexOf('Facility name');
+    for(let r=hr+1;r<g.length;r++){
+      const fn=ni>=0?String(g[r][ni]||'').trim():''; if(!fn)continue;
+      const o={state:si>=0?String(g[r][si]||'').trim().toUpperCase():'',division:'',
+               district:di>=0?String(g[r][di]||'').trim():'',dpc:'',facility:fn};
+      if(!facAttr[normv(fn)])facAttr[normv(fn)]=o; geo.push(o);
+    }
+  }
+  RAW.facAttr=facAttr; RAW.geo=geo;
+}
+
+function distinctSorted(arr){return Array.from(new Set(arr.map(x=>String(x||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));}
+function fillSelect(id,opts,allLabel){
+  const el=document.getElementById(id); if(!el) return;
+  const cur=el.value;
+  el.innerHTML='<option value="all">'+allLabel+'</option>'+
+    opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}">${o}</option>`).join('');
+  el.value=(cur==='all'||opts.indexOf(cur)>=0)?cur:'all';
+}
+// Cascading: Division/District/Facility narrow to the current higher-level selection
+function populateFilters(){
+  const f=getF(), G=RAW.geo||[];
+  const inState=g=>f.state==='all'||String(g.state).toUpperCase()===f.state;
+  const inDiv  =g=>f.division==='all'||normv(g.division)===normv(f.division);
+  const inDist =g=>f.district==='all'||normv(g.district)===normv(f.district);
+  fillSelect('f-division', distinctSorted(G.filter(inState).map(g=>g.division)), 'All divisions');
+  fillSelect('f-district', distinctSorted(G.filter(g=>inState(g)&&inDiv(g)).map(g=>g.district)), 'All districts');
+  fillSelect('f-facility', distinctSorted(G.filter(g=>inState(g)&&inDiv(g)&&inDist(g)).map(g=>g.facility)), 'All facilities');
+  fillSelect('f-dpc',      distinctSorted(G.filter(inState).map(g=>g.dpc)), 'All DPCs');
+}
+
 // ── Recompute everything for the current filter ──
 function recompute(){
   const f=getF();
-  const stateUp=f.state==='all'?null:f.state;
+  const fa=RAW.facAttr||{};
+  const attr=name=>fa[normv(name)]||{};
+  // Geography matchers — patients/capacity resolve division/dpc via the facility lookup;
+  // CS facilities carry all dims directly; orientation is at State+District level.
+  const geoPatient=p=>{const a=attr(p['Facility Name']);
+    if(f.state!=='all'&&stUp(p)!==f.state)return false;
+    if(f.facility!=='all'&&normv(p['Facility Name'])!==normv(f.facility))return false;
+    if(f.division!=='all'&&normv(a.division)!==normv(f.division))return false;
+    if(f.district!=='all'&&normv(a.district)!==normv(f.district))return false;
+    if(f.dpc!=='all'&&normv(a.dpc)!==normv(f.dpc))return false; return true;};
+  const geoCS=x=>{
+    if(f.state!=='all'&&String(x['State']).trim().toUpperCase()!==f.state)return false;
+    if(f.facility!=='all'&&normv(x['Facility name'])!==normv(f.facility))return false;
+    if(f.division!=='all'&&normv(x['Division'])!==normv(f.division))return false;
+    if(f.district!=='all'&&normv(x['District'])!==normv(f.district))return false;
+    if(f.dpc!=='all'&&normv(x['DPC'])!==normv(f.dpc))return false; return true;};
+  const geoCap=r=>{const a=attr(r['Facility Name']);
+    if(f.state!=='all'&&String(r['State']).trim().toUpperCase()!==f.state)return false;
+    if(f.facility!=='all'&&normv(r['Facility Name'])!==normv(f.facility))return false;
+    if(f.division!=='all'&&normv(a.division)!==normv(f.division))return false;
+    if(f.district!=='all'&&normv(r['District'])!==normv(f.district))return false;
+    if(f.dpc!=='all'&&normv(a.dpc)!==normv(f.dpc))return false; return true;};
+  const geoOri=r=>{
+    if(f.state!=='all'&&String(r['State']).trim().toUpperCase()!==f.state)return false;
+    if(f.district!=='all'&&normv(r['District'])!==normv(f.district))return false; return true;};
+
   const survAll=RAW.enrolled.filter(p=>normv(p['Survival Status'])!=='no');
-  const stSurv=stateUp?survAll.filter(p=>stUp(p)===stateUp):survAll;            // state only
-  const P=survAll.filter(p=>
-    (!stateUp||stUp(p)===stateUp)&&
+  const P=survAll.filter(p=>geoPatient(p)&&
     (f.sex==='all'||sexTok(p)===f.sex)&&
     (f.age==='all'||ageTok(p)===f.age)&&
-    (f.status==='all'||statusTok(p)===f.status));                              // all filters
+    (f.status==='all'||statusTok(p)===f.status));
 
-  const csF =stateUp?RAW.csFac.filter(x=>String(x['State']).trim().toUpperCase()===stateUp):RAW.csFac;
-  const capF=stateUp?RAW.cap.filter(x=>String(x['State']).trim().toUpperCase()===stateUp):RAW.cap;
-  const oriF=stateUp?RAW.orient.filter(x=>String(x['State']).trim().toUpperCase()===stateUp):RAW.orient;
-  const lt  =ltData(stateUp);
+  const csF =RAW.csFac.filter(geoCS);
+  const capF=RAW.cap.filter(geoCap);
+  const oriF=RAW.orient.filter(geoOri);
+  const lt  =ltData(f);
 
   // ── Geography (state-scoped) ──
   const opF=csF.filter(x=>isYes(x['T1D Clinic Operational?']));
@@ -1821,6 +1899,8 @@ async function boot(){
     };
     if(RAW.enrolled.length<50) throw new Error('Enrolled List returned '+RAW.enrolled.length+' rows. Check the tab name / sharing.');
     computeClinicOps();
+    buildGeo();                               // facility→geo lookup + dropdown option lists
+    populateFilters();                        // fill Division/District/Facility/DPC from live data
     safe('buildInfoTable', buildInfoTable);   // static, build once
     applyFilters();                           // recompute() + render everything (incl. HbA1c charts)
     const el=document.getElementById('hdr-badge');
