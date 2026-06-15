@@ -202,7 +202,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <button class="tab active" onclick="switchTab(0)">Operations &amp; Basic Care Package</button>
     <button class="tab" onclick="switchTab(1)">Clinical Outcomes</button>
     <button class="tab" onclick="switchTab(2)">Capacity Building</button>
-    <button class="tab" onclick="switchTab(3)">Indicator Definitions</button>
+    <button class="tab" onclick="switchTab(3)">Stock Levels</button>
+    <button class="tab" onclick="switchTab(4)">Indicator Definitions</button>
   </div>
 </div>
 
@@ -688,7 +689,84 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 </div></div><!-- /tab-2 -->
 
 <!-- ══════════ TAB 3 — INFO ══════════ -->
+<!-- ══════════ TAB 3 — STOCK LEVELS ══════════ -->
 <div class="tc" id="tab-3">
+<div class="tc-wrap">
+
+<div class="sl">Stock availability — latest reported month <span id="stk-period-tag" style="font-weight:600;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:2px 8px;font-size:10px;margin-left:8px"></span></div>
+<div class="g4">
+  <div class="card cab">
+    <div class="ct">Glucometer</div>
+    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="kv b" id="stk-glm-cov">—</div>
+    <div class="ks" id="stk-glm-stk">—</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Glucostrips</div>
+    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="kv b" id="stk-gst-cov">—</div>
+    <div class="ks" id="stk-gst-stk">—</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Long-acting insulin</div>
+    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="kv b" id="stk-lai-cov">—</div>
+    <div class="ks" id="stk-lai-stk">—</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">Short-acting insulin</div>
+    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="kv b" id="stk-sai-cov">—</div>
+    <div class="ks" id="stk-sai-stk">—</div>
+  </div>
+</div>
+
+<div class="sl">Coverage trend — month on month</div>
+<div class="card">
+  <div class="ct">Average % coverage across reporting facilities</div>
+  <div class="cs">% of demand met · one line per commodity · among facilities reporting in each month</div>
+  <div class="lg">
+    <span><span class="ld" style="background:var(--b1)"></span>Glucometer</span>
+    <span><span class="ld" style="background:var(--b2)"></span>Glucostrips</span>
+    <span><span class="ld" style="background:var(--b3)"></span>Long-acting insulin</span>
+    <span><span class="ld" style="background:#d97706"></span>Short-acting insulin</span>
+  </div>
+  <div style="height:230px;position:relative;margin-top:6px"><canvas id="c-stk-trend"></canvas></div>
+</div>
+
+<div class="sl">Stockout heatmap — by facility</div>
+<div class="card">
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+    <div>
+      <div class="ct" style="margin-bottom:0">Monthly stockouts &amp; coverage by facility</div>
+      <div class="cs">Each cell = one facility-month · green = full coverage · red = stockout</div>
+    </div>
+    <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
+      <span class="flbl">Commodity</span>
+      <select class="fsel" id="stk-heat-com" onchange="safe('renderStockHeatmap',renderStockHeatmap)">
+        <option value="Glucometer">Glucometer</option>
+        <option value="Glucostrips">Glucostrips</option>
+        <option value="Long-acting Insulin" selected>Long-acting insulin</option>
+        <option value="Short-acting Insulin">Short-acting insulin</option>
+      </select>
+    </div>
+  </div>
+  <div class="lg" style="margin-bottom:8px">
+    <span><span class="ld" style="background:#16a34a"></span>100% coverage</span>
+    <span><span class="ld" style="background:#86efac"></span>75–99%</span>
+    <span><span class="ld" style="background:#fde68a"></span>50–74%</span>
+    <span><span class="ld" style="background:#fdba74"></span>25–49%</span>
+    <span><span class="ld" style="background:#f87171"></span>1–24%</span>
+    <span><span class="ld" style="background:#dc2626"></span>Stockout (0%)</span>
+    <span><span class="ld" style="background:#f1f5f9;border:1px solid var(--bdr)"></span>No data</span>
+  </div>
+  <div id="stk-heat" style="overflow-x:auto"></div>
+</div>
+
+</div></div><!-- /tab-3 -->
+
+<!-- ══════════ TAB 4 — INDICATOR DEFINITIONS ══════════ -->
+<div class="tc" id="tab-4">
 <div class="tc-wrap">
 <div class="sl">Indicator Definitions &amp; Calculation Methodology</div>
 <div class="card" style="padding:0;overflow:hidden">
@@ -708,7 +786,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <tbody id="info-tbody"></tbody>
 </table>
 </div>
-</div></div><!-- /tab-3 -->
+</div></div><!-- /tab-4 -->
 
 
 <script>
@@ -1390,6 +1468,143 @@ function applyFilters(){
   safe('buildHbaAvg',     buildHbaAvg);
   safe('buildHbaDist',    buildHbaDist);
   safe('buildHbaLatest',  buildHbaLatest);
+  safe('renderStockKPIs', renderStockKPIs);
+  safe('renderStockTrend',renderStockTrend);
+  safe('renderStockHeatmap', renderStockHeatmap);
+}
+
+// ═══════════ STOCK LEVELS ═══════════
+const STK_CANON=['Facility','Commodity','Month','Year','Month-Year','Meet Complete Demand','% Coverage','Stockout'];
+const STK_COMS=[
+  {name:'Glucometer',          slug:'glm', color:'#0f3460'},
+  {name:'Glucostrips',         slug:'gst', color:'#1a5fa8'},
+  {name:'Long-acting Insulin', slug:'lai', color:'#2e86de'},
+  {name:'Short-acting Insulin',slug:'sai', color:'#d97706'}
+];
+const STK_MON_IDX={January:0,February:1,March:2,April:3,May:4,June:5,July:6,August:7,September:8,October:9,November:10,December:11};
+function stkYmKey(r){return (r.year||0)*12+(STK_MON_IDX[r.month]||0);}
+function stkYmLabel(r){return r.month.slice(0,3)+' '+String(r.year).slice(2);}
+function parseStock(grid){
+  if(!grid||!grid.length) return [];
+  const objs=toObjects(grid, ['Facility','Commodity','Month-Year']);
+  return objs.map(o=>{
+    const covRaw=o['% Coverage']; let cov=null;
+    if(covRaw!=null && String(covRaw).trim()!==''){
+      const s=String(covRaw).replace('%','').trim(); const n=Number(s);
+      if(!isNaN(n)) cov = n<=1 ? Math.round(n*100) : Math.round(n);
+    }
+    const so=String(o['Stockout']==null?'':o['Stockout']).trim();
+    const mt=String(o['Meet Complete Demand']==null?'':o['Meet Complete Demand']).trim();
+    return {
+      fac:String(o['Facility']||'').trim(),
+      commodity:String(o['Commodity']||'').trim(),
+      month:String(o['Month']||'').trim(),
+      year:Number(o['Year'])||null,
+      ym:String(o['Month-Year']||'').trim(),
+      met: mt===''?null:(mt==='1'?1:0),
+      coverage: cov,
+      stockout: so===''?null:(so==='1'?1:0)
+    };
+  }).filter(r=>r.fac && r.commodity && r.month && r.year);
+}
+function stockFiltered(){
+  const rows=RAW&&RAW.stock?RAW.stock:[];
+  const f=getF(), fa=RAW.facAttr||{};
+  return rows.filter(r=>{
+    if(f.facility!=='all'&&normv(r.fac)!==normv(f.facility))return false;
+    const a=fa[normv(r.fac)]||{};
+    if(f.state!=='all'&&String(a.state||'').toUpperCase()!==f.state)return false;
+    if(f.division!=='all'&&normv(a.division||'')!==normv(f.division))return false;
+    if(f.district!=='all'&&normv(a.district||'')!==normv(f.district))return false;
+    if(f.dpc!=='all'&&normv(a.dpc||'')!==normv(f.dpc))return false;
+    return true;
+  });
+}
+function renderStockKPIs(){
+  const rows=stockFiltered();
+  const reported=rows.filter(r=>r.coverage!=null || r.stockout!=null);
+  let latestKey=-1, latestLabel='';
+  reported.forEach(r=>{const k=stkYmKey(r); if(k>latestKey){latestKey=k; latestLabel=stkYmLabel(r);}});
+  const tag=document.getElementById('stk-period-tag'); if(tag) tag.textContent=latestLabel||'No data';
+  STK_COMS.forEach(c=>{
+    const cRows=rows.filter(r=>r.commodity===c.name && stkYmKey(r)===latestKey);
+    const withCov=cRows.filter(r=>r.coverage!=null);
+    const avg=withCov.length?Math.round(withCov.reduce((a,r)=>a+r.coverage,0)/withCov.length):null;
+    const stockouts=cRows.filter(r=>r.stockout===1).length;
+    const total=cRows.length;
+    const stkRate=total?Math.round(stockouts/total*100):null;
+    const covEl=document.getElementById('stk-'+c.slug+'-cov');
+    const stkEl=document.getElementById('stk-'+c.slug+'-stk');
+    if(covEl) covEl.textContent = avg==null ? '—' : avg+'%';
+    if(stkEl) stkEl.textContent = total ? stockouts+' / '+total+' facilities stocked out ('+stkRate+'%)' : '—';
+  });
+}
+let _cstk;
+function renderStockTrend(){
+  const rows=stockFiltered();
+  const keys=Array.from(new Set(rows.filter(r=>r.coverage!=null).map(stkYmKey))).sort((a,b)=>a-b);
+  const lastKeys=keys.slice(-12);
+  const sampleByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!sampleByKey[k]) sampleByKey[k]=stkYmLabel(r);});
+  const labels=lastKeys.map(k=>sampleByKey[k]||'');
+  const datasets=STK_COMS.map(c=>({
+    label:c.name,
+    data:lastKeys.map(k=>{
+      const w=rows.filter(r=>r.commodity===c.name && stkYmKey(r)===k && r.coverage!=null);
+      return w.length?Math.round(w.reduce((a,r)=>a+r.coverage,0)/w.length):null;
+    }),
+    borderColor:c.color, backgroundColor:c.color,
+    borderWidth:2, tension:.25, pointRadius:3, pointHoverRadius:4, spanGaps:true, _noLabel:true
+  }));
+  const ctx=document.getElementById('c-stk-trend'); if(!ctx) return;
+  if(_cstk){_cstk.destroy();_cstk=null;}
+  _cstk=new Chart(ctx,{type:'line',data:{labels,datasets},options:{
+    responsive:true,maintainAspectRatio:false,
+    plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y+'%')}}},
+    scales:{
+      y:{min:0,max:100,ticks:{font:{size:10},callback:v=>v+'%'},grid:{color:'#f1f5f9'}},
+      x:{ticks:{font:{size:10}},grid:{display:false}}
+    }
+  }});
+}
+function stkColorForCov(cov,stockout){
+  if(stockout===1) return '#dc2626';
+  if(cov==null) return null;
+  if(cov===0) return '#dc2626';
+  if(cov>=100) return '#16a34a';
+  if(cov>=75)  return '#86efac';
+  if(cov>=50)  return '#fde68a';
+  if(cov>=25)  return '#fdba74';
+  return '#f87171';
+}
+function renderStockHeatmap(){
+  const com=document.getElementById('stk-heat-com'); const wrap=document.getElementById('stk-heat');
+  if(!com||!wrap) return;
+  const commodity=com.value;
+  const rows=stockFiltered().filter(r=>r.commodity===commodity);
+  if(!rows.length){ wrap.innerHTML='<div class="data-pending">No stock data for the current filter selection.</div>'; return; }
+  const keys=Array.from(new Set(rows.map(stkYmKey))).sort((a,b)=>a-b);
+  const lastKeys=keys.slice(-12);
+  const lblByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!lblByKey[k]) lblByKey[k]=stkYmLabel(r);});
+  const facs=Array.from(new Set(rows.map(r=>r.fac))).sort((a,b)=>a.localeCompare(b));
+  const byFK={}; rows.forEach(r=>{byFK[r.fac+'|'+stkYmKey(r)]=r;});
+  let html='<table style="border-collapse:separate;border-spacing:2px;font-size:10px">';
+  html+='<thead><tr><th style="text-align:left;padding:2px 6px;color:var(--tm);font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.4px;position:sticky;left:0;background:#fff;z-index:2">Facility</th>';
+  lastKeys.forEach(k=>{html+='<th style="padding:2px 4px;color:var(--t2);font-weight:600;font-size:9px;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap">'+lblByKey[k]+'</th>';});
+  html+='</tr></thead><tbody>';
+  facs.forEach(fac=>{
+    html+='<tr><td style="padding:2px 6px;color:var(--t1);font-size:10px;white-space:nowrap;position:sticky;left:0;background:#fff;z-index:1">'+fac+'</td>';
+    lastKeys.forEach(k=>{
+      const r=byFK[fac+'|'+k];
+      const c=r?stkColorForCov(r.coverage,r.stockout):null;
+      const title=r?(fac+' · '+lblByKey[k]+(r.coverage!=null?(' · '+r.coverage+'% coverage'):'')+(r.stockout===1?' · STOCKOUT':'')):(fac+' · '+lblByKey[k]+' · no data');
+      const bg=c||'#f1f5f9';
+      const bdr=c?'':'1px solid var(--bdr)';
+      html+='<td title="'+title.replace(/"/g,'&quot;')+'" style="width:22px;height:18px;background:'+bg+';border:'+(bdr||'1px solid transparent')+';border-radius:2px"></td>';
+    });
+    html+='</tr>';
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML=html;
 }
 
 // ═══════════ DIRECT GOOGLE SHEETS DATA LAYER ═══════════
@@ -1931,7 +2146,7 @@ async function boot(){
   if(btn){btn.disabled=true;btn.textContent='Refreshing…';btn.style.opacity='.5';}
   try{
     const C=window.DASHBOARD_CONFIG;
-    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid]=await Promise.all([
+    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid,stkGrid]=await Promise.all([
       fetchTab(C.wb1,'Enrolled List'),
       fetchTab(C.wb1,'CompleteSupport_Facilities'),
       fetchTab(C.wb1,'Light_touch_facilities'),
@@ -1943,7 +2158,8 @@ async function boot(){
       fetchTab(C.wb1,'SMBG_Monthly'),
       fetchTab(C.wb1,'SMBG_Hyper/Hypo'),
       fetchTab(C.wb1,'Hba1c_Baseline/Latest'),
-      fetchTab(C.wb1,'Targets')
+      fetchTab(C.wb1,'Targets'),
+      fetchTab(C.wb2,'Stock Levels')
     ]);
     // Build per-state targets from the Targets sheet (#6)
     try{
@@ -1959,6 +2175,7 @@ async function boot(){
     fillRow(csFac,  ['State','Facility name','T1D Clinic Operational?'], CS_CANON);
     fillRow(ltGrid, ['State','Facility name'],                     LT_CANON);
     fillRow(orient, ['State','Type of Service Provider','Pilot District? (Yes/No)'], ORI_CANON);
+    fillRow(stkGrid,['Facility','Commodity','Month'], STK_CANON);
     RAW={
       // Keep only real patient rows — the sheet pre-fills IDs (P1..P5000) but most are blank placeholders
       enrolled:toObjects(enr, ['Claude_ID','State','Survival Status'])
@@ -1970,7 +2187,8 @@ async function boot(){
       fupGrid: fupGrid,                           // kept as grid (date headers)
       opsGrid: opsGrid, offsGrid: offsGrid,       // transposed sheets
       smbgGrid: smbgGrid, hhGrid: hhGrid,         // kept as grids
-      hba:     toObjects(hbaGrid, ['Claude_ID','State','Latest hba1c time bucket'])
+      hba:     toObjects(hbaGrid, ['Claude_ID','State','Latest hba1c time bucket']),
+      stock:   parseStock(stkGrid)
     };
     if(RAW.enrolled.length<50) throw new Error('Enrolled List returned '+RAW.enrolled.length+' rows. Check the tab name / sharing.');
     computeClinicOps();
