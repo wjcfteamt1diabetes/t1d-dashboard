@@ -347,6 +347,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="cs">% PLT1Ds by facility type, among those with non-blank previous facility value</div>
     <div class="lg" id="ptf-legend" style="margin-top:4px"></div>
     <div id="ptf-bars" style="margin-top:4px"></div>
+    <div id="ptf-abbr" style="margin-top:6px;font-size:8.5px;line-height:1.5;color:var(--tm)"></div>
   </div>
 </div>
 
@@ -953,13 +954,23 @@ function renderHyperHypo(){
   });
 }
 
+// Expansions shown as a footnote under the chart, keyed by the short tag.
+const PTF_ABBR={'PHC':'Primary Health Centre','CHC':'Community Health Centre','DH':'District Hospital',
+  'SDH':'Sub-District Hospital','Sat. Hosp':'Satellite Hospital','State GMC':'State Govt Medical College',
+  'Central GMC':'Central Govt Medical College (AIIMS, PGI etc.)','Pvt Hosp':'Private Hospital','Pvt Clinic':'Private Clinic','Newly Dx':'Newly Diagnosed'};
 function renderPTF(){
-  const ptfCols={'PHC':'#bfdbfe','CHC':'#7db8e8','DH':'#2e86de','State MC':'#1a5fa8','Central MC':'#0f3460','Pvt Hospital':'#94a3b8','Pvt Clinic':'#cbd5e1','Newly Dx':'#64748b'};
+  const ptfCols={'PHC':'#bfdbfe','CHC':'#7db8e8','DH':'#2e86de','SDH':'#5b8fd1','Sat. Hosp':'#a8c5e8','State GMC':'#1a5fa8','Central GMC':'#0f3460','Pvt Hosp':'#94a3b8','Pvt Clinic':'#cbd5e1','Newly Dx':'#64748b'};
   const ptf=(DATA.demographics.prevFacility||[]).map(d=>({...d,c:ptfCols[d.l]||'#94a3b8'}));
   document.getElementById('ptf-legend').innerHTML=ptf.map(d=>`<span><span class="ld" style="background:${d.c}"></span>${d.l}</span>`).join('');
   let h='<div class="sbar">';
   ptf.forEach(d=>{h+=`<div class="ss" style="width:${d.v}%;background:${d.c};color:${d.v>10?'#fff':d.v>5?'#334155':'transparent'};font-size:9px">${d.v>5?d.v+'%':''}</div>`;});
   document.getElementById('ptf-bars').innerHTML=h+'</div>';
+  // Abbreviation key — only for tags actually present in the current view
+  const note=document.getElementById('ptf-abbr');
+  if(note){
+    const shown=ptf.filter(d=>PTF_ABBR[d.l]).map(d=>`<strong>${d.l}</strong> ${PTF_ABBR[d.l]}`);
+    note.innerHTML=shown.length?shown.join(' · '):'';
+  }
 }
 
 function renderGender(){
@@ -1895,7 +1906,10 @@ function recompute(){
   const facMap={},inactMap={};
   const tdd={ped:{b:0,i:0,a:0,n:0},pub:{b:0,i:0,a:0,n:0},adu:{b:0,i:0,a:0,n:0}};
   const bas=[0,0,0,0,0];let basN=0;
-  const FAC={'phc':'PHC','chc':'CHC','dh':'DH','state mc':'State MC','central mc':'Central MC','private hospital':'Pvt Hospital','private clinic':'Pvt Clinic','newly diagnosed':'Newly Dx'};
+  const FAC={'phc':'PHC','chc':'CHC','dh':'DH','sdh':'SDH','sub district hospital':'SDH','satellite hospital':'Sat. Hosp',
+    'state mc':'State GMC','state government medical college':'State GMC',
+    'central mc':'Central GMC','central government medical college (aiims, pgi etc.)':'Central GMC','central government medical college':'Central GMC',
+    'private hospital':'Pvt Hosp','private clinic':'Pvt Clinic','newly diagnosed':'Newly Dx'};
   P.forEach(p=>{
     const sc=normv(p['Sex']).charAt(0); if(sc==='m')male++;else if(sc==='f')female++;else oth++;
     const ag=num(p['Age']); if(ag!=null){if(ag<13)ped++;else if(ag<18)pub++;else adu++;}
