@@ -373,10 +373,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">SMBG frequency per day</div>
     <div class="cs">% PLT1Ds by monitoring frequency, among PLT1Ds with SMBG data · bottom row = enrolled &gt;3 months only</div>
     <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:var(--g4)"></span>0 readings</span>
-      <span><span class="ld" style="background:var(--b4)"></span>&lt;1 per day</span>
-      <span><span class="ld" style="background:var(--b2)"></span>1–2 per day</span>
-      <span><span class="ld" style="background:var(--b1)"></span>&gt;2 per day</span>
+      <span><span class="ld" style="background:var(--g4)"></span>Not monitoring</span>
+      <span><span class="ld" style="background:var(--b4)"></span>&lt;3 per day</span>
+      <span><span class="ld" style="background:var(--b2)"></span>3–4 per day</span>
+      <span><span class="ld" style="background:var(--b1)"></span>&gt;4 per day</span>
     </div>
     <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:5px">All enrolled — month on month</div>
     <div id="smbg-mom"></div>
@@ -1347,7 +1347,7 @@ function buildInfoTable(){
     {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1Ds with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
     {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Total PLT1Ds enrolled',sheet:'enrolled_list',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
     {n:'11',ind:'Follow-up attendance (MoM)',tab:'T1',type:'%',num:'PLT1Ds marked Y in the given month',den:'PLT1Ds marked Y + N in that month (excludes dots = not due/inactive)',sheet:'Followup_adherence',cols:'All columns (each month is a column)'},
-    {n:'12a',ind:'SMBG frequency (all enrolled, MoM)',tab:'T1',type:'%',num:'Count by SMBG category: 0 readings / <1/day / 1–2/day / >2/day',den:'PLT1Ds with non-dot value in that month',sheet:'SMBG_Monthly',cols:'All (each column = a month)'},
+    {n:'12a',ind:'SMBG frequency (all enrolled, MoM)',tab:'T1',type:'%',num:'Count by SMBG category: not monitoring / <3/day / 3–4/day / >4/day',den:'PLT1Ds with non-dot value in that month',sheet:'SMBG_Monthly',cols:'All (each column = a month)'},
     {n:'12b',ind:'SMBG frequency (>3m enrolled, last month)',tab:'T1',type:'%',num:'Same as 12a but restricted to PLT1Ds enrolled for >3 months',den:'PLT1Ds enrolled >3 months with non-dot value in last month',sheet:'SMBG_Monthly',cols:'All'},
     {n:'13a/b',ind:'% Hyper / Hypo readings (last 3 months)',tab:'T1',type:'%',num:'Visits by bucket: 0-20% / 20-40% / 40-60% / 60-80% / 80-100% hyper or hypo readings',den:'Visits with SMBG reading in that month',sheet:'SMBG_HyperHypo',cols:'% Hyper readings, % Hypo readings, Date of visit'},
     {n:'14a',ind:'Clinic functionality (MoM)',tab:'T1',type:'%',num:'Clinics functional >75% of designated days in the month',den:'Operational clinics with non-blank values in that month',sheet:'Operations_Summary',cols:'All'},
@@ -2031,7 +2031,7 @@ function computeSmbg(idSet){
     if(/enrolled for ?>?3/i.test(h))m3C=i;
     const d=parseDate(h); if(d&&/\d{4}/.test(h)) mc.push({i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2),year:d.getFullYear(),month:d.getMonth()});
   }
-  const bucket=v=>{const s=String(v).trim();if(s==='.'||s==='')return -1;const x=Number(s);if(isNaN(x))return -1;return x===0?0:x<1?1:x<=2?2:3;};
+  const bucket=v=>{const s=String(v).trim();if(s==='.'||s==='')return -1;const x=Number(s);if(isNaN(x))return -1;return x===0?0:x<3?1:x<=4?2:3;};
   const acc={},acc3={}; mc.forEach(m=>{acc[m.label]={b:[0,0,0,0],n:0,y:m.year,mo:m.month};acc3[m.label]={b:[0,0,0,0],n:0};});
   for(let r=hr+1;r<g.length;r++){const row=g[r]; if(!idSet[normv(row[idC])])continue;
     const is3=m3C>=0&&isYes(row[m3C]);
