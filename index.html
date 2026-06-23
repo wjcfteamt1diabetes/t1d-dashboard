@@ -2030,6 +2030,7 @@ function recompute(){
     },
     insulin:{
       tdd:['ped','adu'].map(g=>{const p=pctParts([tdd[g].b,tdd[g].i,tdd[g].a]);return{grp:g==='ped'?'Pediatric 0–17':'Adults ≥18',n:tdd[g].n,below:p[0],inRange:p[1],above:p[2]};}),
+      basal:[{l:'<20%',v:basPts[0]},{l:'20–30%',v:basPts[1]},{l:'30–50%',v:basPts[2],ideal:true},{l:'50–60%',v:basPts[3]},{l:'> 60%',v:basPts[4]}]
     },
     capacity:computeCapacity(capF,oriF)
   };
