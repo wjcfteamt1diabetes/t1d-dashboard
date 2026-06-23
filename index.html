@@ -193,7 +193,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
       <option value="pub">Pubertal (13–17)</option><option value="adu">Adults (≥18)</option>
     </select>
     <div class="fdiv"></div>
-    <span class="ftag" id="n-tag">n = 2,216 PLT1Ds</span>
+    <span class="ftag" id="n-tag">n = 2,216 PLT1D</span>
   </div>
 </div>
 
@@ -242,15 +242,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     </div>
   </div>
   <div class="card cab">
-    <div class="ct">PLT1Ds enrolled</div>
-    <div class="cs">% of target, among all PLT1Ds enrolled</div>
+    <div class="ct">PLT1D enrolled</div>
+    <div class="cs">% of target, among all PLT1D enrolled</div>
     <div class="kv b" id="k-enr">2,216</div>
     <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="k-gauge" style="width:72%"></div></div><div class="gauge-pct" id="k-gaugeN">72%</div></div>
     <div class="kn" id="k-target">of target 3,080</div>
   </div>
   <div class="card">
     <div class="ct">New enrolments — last month</div>
-    <div class="cs">Count, among all newly enrolled PLT1Ds</div>
+    <div class="cs">Count, among all newly enrolled PLT1D</div>
     <div class="kv g2c" id="k-new">51</div>
     <div class="ks" id="k-avgclin">Avg/clinic: 0.9</div>
     <div class="ktr dn" id="k-newtrend">↓ vs 96 prior month</div>
@@ -262,7 +262,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">Total enrolled</div>
     <div class="cs">Absolute count, all states · all support types</div>
     <div class="kv" id="k-tot">2,216</div>
-    <div class="kn" id="k-tot-n">n = 2,216 PLT1Ds</div>
+    <div class="kn" id="k-tot-n">n = 2,216 PLT1D</div>
   </div>
   <div class="card cab">
     <div class="ct">Complete support</div>
@@ -316,7 +316,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g3">
   <div class="card">
     <div class="ct">Gender distribution</div>
-    <div class="cs">% PLT1Ds, among all PLT1Ds enrolled (CS only)</div>
+    <div class="cs">% PLT1D, among all PLT1D enrolled (CS only)</div>
     <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
       <div style="position:relative;width:100px;height:100px;flex-shrink:0">
         <canvas id="c-gender" width="100" height="100"></canvas>
@@ -330,7 +330,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Age distribution</div>
-    <div class="cs">% PLT1Ds by age group, among all PLT1Ds enrolled (CS only)</div>
+    <div class="cs">% PLT1D by age group, among all PLT1D enrolled (CS only)</div>
     <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
       <div style="position:relative;width:100px;height:100px;flex-shrink:0">
         <canvas id="c-age" width="100" height="100"></canvas>
@@ -344,7 +344,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Previous treatment facility</div>
-    <div class="cs">% PLT1Ds by facility type, among those with non-blank previous facility value</div>
+    <div class="cs">% PLT1D by facility type, among those with non-blank previous facility value</div>
     <div id="ptf-bars" style="margin-top:8px"></div>
   </div>
 </div>
@@ -353,7 +353,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g2" style="align-items:start">
   <div class="card cab">
     <div class="ct">Insulin regimen — basal-bolus</div>
-    <div class="cs">% PLT1Ds on basal-bolus regimen, among all PLT1Ds enrolled · Target: 100%</div>
+    <div class="cs">% PLT1D on basal-bolus regimen, among all PLT1D enrolled · Target: 100%</div>
     <div style="margin-top:10px">
       <div class="pr"><div class="pl">Baseline</div><div class="pb"><div class="pf" id="ins-base" style="width:44%;background:#7db8e8"><span class="pv" id="ins-base-v">44%</span></div></div></div>
       <div class="pr"><div class="pl">Current</div><div class="pb"><div class="pf" id="ins-last" style="width:96%;background:var(--b1)"><span class="pv" id="ins-last-v">96%</span></div></div></div>
@@ -362,7 +362,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Follow-up attendance — month on month</div>
-    <div class="cs">% PLT1Ds attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots · Target: &gt;75%</div>
+    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots · Target: &gt;75%</div>
     <div style="height:195px;position:relative;margin-top:6px"><canvas id="c-fup"></canvas></div>
   </div>
 </div>
@@ -370,7 +370,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g2">
   <div class="card">
     <div class="ct">SMBG frequency per day</div>
-    <div class="cs">% PLT1Ds by monitoring frequency, among PLT1Ds with SMBG data · bottom row = enrolled &gt;3 months only</div>
+    <div class="cs">% PLT1D by monitoring frequency, among PLT1D with SMBG data · bottom row = enrolled &gt;3 months only</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:var(--g4)"></span>Not monitoring</span>
       <span><span class="ld" style="background:var(--b4)"></span>&lt;3 per day</span>
@@ -445,25 +445,25 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g4">
   <div class="card cab">
     <div class="ct">HbA1c tests done — last 3 months</div>
-    <div class="cs">% PLT1Ds tested for HbA1c in the last 3 months, among enrolled PLT1Ds</div>
+    <div class="cs">% PLT1D tested for HbA1c in the last 3 months, among enrolled PLT1D</div>
     <div class="kv b" id="hb-test">38%</div>
     <div class="ks" id="hb-test-n">n = 2,216 enrolled</div>
   </div>
   <div class="card cab">
     <div class="ct">Improving HbA1c trend</div>
-    <div class="cs">% PLT1Ds improved vs baseline, among those with ≥2 readings enrolled &gt;3 months</div>
+    <div class="cs">% PLT1D improved vs baseline, among those with ≥2 readings enrolled &gt;3 months</div>
     <div class="kv b" id="hb-dec">61%</div>
     <div class="ks" id="hb-dec-n">n = 843 with ≥2 readings</div>
   </div>
   <div class="card cao">
     <div class="ct">DKA — last 12 months</div>
-    <div class="cs">% PLT1Ds with ≥1 DKA episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
+    <div class="cs">% PLT1D with ≥1 DKA episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
     <div class="kv g2c" id="dka">8%</div>
     <div class="ks" id="dka-n">n = 2,216 · ✓ on target</div>
   </div>
   <div class="card cao">
     <div class="ct">Hypoglycaemia — last 12 months</div>
-    <div class="cs">% PLT1Ds with ≥1 hypoglycaemia episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
+    <div class="cs">% PLT1D with ≥1 hypoglycaemia episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
     <div class="kv g2c" id="hypo">11%</div>
     <div class="ks" id="hypo-n">n = 2,216 · ⚠ above target</div>
   </div>
@@ -473,7 +473,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g2">
   <div class="card">
     <div class="ct">Change in HbA1c — first test to most recent test</div>
-    <div class="cs">% PLT1Ds by change category, among those enrolled &gt;3 months with both baseline and latest reading · n-sizes shown below each bucket</div>
+    <div class="cs">% PLT1D by change category, among those enrolled &gt;3 months with both baseline and latest reading · n-sizes shown below each bucket</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:var(--hI4)"></span>Improved ≥4%</span>
       <span><span class="ld" style="background:var(--hI2)"></span>Improved 2–4%</span>
@@ -487,7 +487,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Average HbA1c — baseline vs last available</div>
-    <div class="cs">Average HbA1c value, among PLT1Ds enrolled &gt;3 months with both baseline and latest values · Target: &lt;8.5</div>
+    <div class="cs">Average HbA1c value, among PLT1D enrolled &gt;3 months with both baseline and latest values · Target: &lt;8.5</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:#7db8e8"></span>Baseline</span>
       <span><span class="ld" style="background:#0f3460"></span>Last available</span>
@@ -500,7 +500,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g2">
   <div class="card">
     <div class="ct">HbA1c distribution — last test (≥3 months post enrolment)</div>
-    <div class="cs">% PLT1Ds by HbA1c bucket at last test, among PLT1Ds enrolled ≥3 months with HbA1c done post enrolment · by time bucket</div>
+    <div class="cs">% PLT1D by HbA1c bucket at last test, among PLT1D enrolled ≥3 months with HbA1c done post enrolment · by time bucket</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
       <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
@@ -512,7 +512,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Average HbA1c — latest test (enrolled ≥3 months)</div>
-    <div class="cs">Average HbA1c at most recent test, among PLT1Ds enrolled ≥3 months with at least one HbA1c recorded · by time since enrolment</div>
+    <div class="cs">Average HbA1c at most recent test, among PLT1D enrolled ≥3 months with at least one HbA1c recorded · by time since enrolment</div>
     <div style="height:200px;position:relative;margin-top:28px"><canvas id="c-hba-latest"></canvas></div>
   </div>
 </div>
@@ -521,7 +521,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g2">
   <div class="card">
     <div class="ct">TDD ranges — last visit</div>
-    <div class="cs">% PLT1Ds by range, among those with TDD recorded · Pediatric &lt;13: 0.7–1.0 u/kg · Pubertal+Adults: 1.0–1.5 u/kg</div>
+    <div class="cs">% PLT1D by range, among those with TDD recorded · Pediatric &lt;13: 0.7–1.0 u/kg · Pubertal+Adults: 1.0–1.5 u/kg</div>
     <div class="lg" style="margin-top:6px">
       <span><span class="ld" style="background:var(--g2)"></span>Below range</span>
       <span><span class="ld" style="background:var(--b2)"></span>In range</span>
@@ -531,7 +531,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Basal dose as % of TDD — last visit</div>
-    <div class="cs">% PLT1Ds by bucket, among those with TDD data at last visit · Ideal: 30–50%</div>
+    <div class="cs">% PLT1D by bucket, among those with TDD data at last visit · Ideal: 30–50%</div>
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:0" id="basal-bars"></div>
     <div style="margin-top:6px;font-size:9px;color:var(--tm)">★ Ideal range: 30–50% of TDD as basal</div>
   </div>
@@ -879,9 +879,9 @@ function renderKPIs(d,f){
   const op=Math.round(b.op/b.plan*100);
   const opEl=document.getElementById('k-op-pct'); if(opEl){opEl.textContent=op+'% of planned';opEl.style.color=op>=90?'var(--b2)':'var(--g2)';}
   sv('k-cs-op',b.csOp); sv('k-lt-op',b.ltOp);
-  sv('k-enr',fmt(d.enr)); sv('k-tot',fmt(d.enr)); sv('k-tot-n','n = '+fmt(d.enr)+' PLT1Ds');
+  sv('k-enr',fmt(d.enr)); sv('k-tot',fmt(d.enr)); sv('k-tot-n','n = '+fmt(d.enr)+' PLT1D');
   const gp=Math.round(d.enr/b.target*100); sw('k-gauge',Math.min(gp,100)); sv('k-gaugeN',gp+'%'); sv('k-target','of target '+fmt(b.target));
-  sv('n-tag','n = '+fmt(d.enr)+' PLT1Ds');
+  sv('n-tag','n = '+fmt(d.enr)+' PLT1D');
   sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',Math.round(d.csEnr/d.enr*100)+'% of enrolled · '+b.csOp+' facilities');
   sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',Math.round(d.ltEnr/d.enr*100)+'% of enrolled · '+b.ltOp+' facilities');
   const nL=d.newLast, nP=d.newPrev;
@@ -1351,29 +1351,29 @@ function buildInfoTable(){
     {n:'2',ind:'Pilot districts',tab:'T1',type:'Absolute #',num:'Count of distinct district values',den:'—',sheet:'CompleteSupport_Facilities',cols:'District'},
     {n:'3',ind:'Planned facilities',tab:'T1',type:'Absolute #',num:'Count of distinct facilities across complete support + light touch lists',den:'—',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name'},
     {n:'4',ind:'Operational clinics',tab:'T1',type:'Absolute # + %',num:'Facilities where Operational Status = Yes (complete) + all in light touch list',den:'Total planned facilities',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name, Operational Status'},
-    {n:'5',ind:'PLT1Ds enrolled (total / CS / LT)',tab:'T1',type:'Absolute #',num:'Count of rows in enrolled_list · CS = facilities not in LT sheet · LT = sum of enrolments in LT sheet',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Patient ID, Facility Name'},
-    {n:'6',ind:'Enrolled vs target (%)',tab:'T1',type:'%',num:'Count of all enrolled PLT1Ds (LT + CS)',den:'Committed target (from Targets sheet)',sheet:'enrolled_list, Targets',cols:'Patient ID'},
-    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1Ds (complete support) + cumulative light-touch enrolments up to each month',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Date of enrolment'},
-    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1Ds with enrolment date in that month',den:'—',sheet:'enrolled_list, CompleteSupport_Facilities',cols:'Date of enrolment, Date of operationalisation'},
-    {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1Ds by Sex column value',den:'All PLT1Ds enrolled',sheet:'enrolled_list',cols:'Sex'},
-    {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1Ds with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
-    {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Total PLT1Ds enrolled',sheet:'enrolled_list',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
-    {n:'11',ind:'Follow-up attendance (MoM)',tab:'T1',type:'%',num:'PLT1Ds marked Y in the given month',den:'PLT1Ds marked Y + N in that month (excludes dots = not due/inactive)',sheet:'Followup_adherence',cols:'All columns (each month is a column)'},
-    {n:'12a',ind:'SMBG frequency (all enrolled, MoM)',tab:'T1',type:'%',num:'Count by SMBG category: not monitoring / <3/day / 3–4/day / >4/day',den:'PLT1Ds with non-dot value in that month',sheet:'SMBG_Monthly',cols:'All (each column = a month)'},
-    {n:'12b',ind:'SMBG frequency (>3m enrolled, last month)',tab:'T1',type:'%',num:'Same as 12a but restricted to PLT1Ds enrolled for >3 months',den:'PLT1Ds enrolled >3 months with non-dot value in last month',sheet:'SMBG_Monthly',cols:'All'},
+    {n:'5',ind:'PLT1D enrolled (total / CS / LT)',tab:'T1',type:'Absolute #',num:'Count of rows in enrolled_list · CS = facilities not in LT sheet · LT = sum of enrolments in LT sheet',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Patient ID, Facility Name'},
+    {n:'6',ind:'Enrolled vs target (%)',tab:'T1',type:'%',num:'Count of all enrolled PLT1D (LT + CS)',den:'Committed target (from Targets sheet)',sheet:'enrolled_list, Targets',cols:'Patient ID'},
+    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1D (complete support) + cumulative light-touch enrolments up to each month',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Date of enrolment'},
+    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1D with enrolment date in that month',den:'—',sheet:'enrolled_list, CompleteSupport_Facilities',cols:'Date of enrolment, Date of operationalisation'},
+    {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1D by Sex column value',den:'All PLT1D enrolled',sheet:'enrolled_list',cols:'Sex'},
+    {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1D with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
+    {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Total PLT1D enrolled',sheet:'enrolled_list',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
+    {n:'11',ind:'Follow-up attendance (MoM)',tab:'T1',type:'%',num:'PLT1D marked Y in the given month',den:'PLT1D marked Y + N in that month (excludes dots = not due/inactive)',sheet:'Followup_adherence',cols:'All columns (each month is a column)'},
+    {n:'12a',ind:'SMBG frequency (all enrolled, MoM)',tab:'T1',type:'%',num:'Count by SMBG category: not monitoring / <3/day / 3–4/day / >4/day',den:'PLT1D with non-dot value in that month',sheet:'SMBG_Monthly',cols:'All (each column = a month)'},
+    {n:'12b',ind:'SMBG frequency (>3m enrolled, last month)',tab:'T1',type:'%',num:'Same as 12a but restricted to PLT1D enrolled for >3 months',den:'PLT1D enrolled >3 months with non-dot value in last month',sheet:'SMBG_Monthly',cols:'All'},
     {n:'13a/b',ind:'% Hyper / Hypo readings (last 3 months)',tab:'T1',type:'%',num:'Visits by bucket: 0-20% / 20-40% / 40-60% / 60-80% / 80-100% hyper or hypo readings',den:'Visits with SMBG reading in that month',sheet:'SMBG_HyperHypo',cols:'% Hyper readings, % Hypo readings, Date of visit'},
     {n:'14a',ind:'Clinic functionality (MoM)',tab:'T1',type:'%',num:'Clinics functional >75% of designated days in the month',den:'Operational clinics with non-blank values in that month',sheet:'Operations_Summary',cols:'All'},
     {n:'14b',ind:'Clinic off days',tab:'T1',type:'%',num:'Clinics with exactly 0/1/2/3/4+ off days in the month',den:'Clinics with a non-blank value in that month',sheet:'# of offs',cols:'All (each column = a facility)'},
     {n:'14c',ind:'Trained clinical staff at clinic',tab:'T1',type:'%',num:'Clinics with a trained Pediatrician / MD Medicine / MO on-site',den:'Total operational clinics',sheet:'CompleteSupport_Facilities, Capacity_Building',cols:'Facility Name, Designation/Department, Trained = Yes'},
     {sec:'TAB 2 — Clinical Outcomes'},
-    {n:'15',ind:'HbA1c testing rate',tab:'T2',type:'%',num:'PLT1Ds with HbA1c test in last 3 months',den:'Total PLT1Ds enrolled',sheet:'Hba1c_BaselineLatest',cols:'Patient ID, Date of latest Hba1c, Latest hba1c time bucket'},
-    {n:'16',ind:'Improving HbA1c trend',tab:'T2',type:'%',num:'PLT1Ds enrolled >3m with latest HbA1c lower than baseline',den:'PLT1Ds enrolled >3m with both baseline and latest reading',sheet:'Hba1c_BaselineLatest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket'},
-    {n:'17',ind:'DKA episode — last 12 months',tab:'T2',type:'%',num:'PLT1Ds with ≥1 DKA episode in last 12 months',den:'PLT1Ds enrolled with ≥1 follow-up visit in last 12 months',sheet:'Enrolled List',cols:'# of DKA episodes in the last 12 months, Follow-up visit in the last 12 months?'},
-    {n:'18',ind:'Hypoglycaemia — last 12 months',tab:'T2',type:'%',num:'PLT1Ds with ≥1 hypoglycaemia episode in last 12 months',den:'PLT1Ds enrolled with ≥1 follow-up visit in last 12 months',sheet:'Enrolled List',cols:'# of severe hypoglycemia episodes in the last 12 months'},
-    {n:'19',ind:'HbA1c change (stacked bar)',tab:'T2',type:'%',num:'PLT1Ds by change bucket: Worsened ≥4% / 2-4% / <2% / No change / Improved <2% / 2-4% / ≥4%',den:'PLT1Ds enrolled >3m with both baseline and latest HbA1c (min 2 month gap)',sheet:'Hba1c_BaselineLatest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket since enrolment'},
-    {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1Ds enrolled >3m with both values. Target: <8.5',sheet:'Hba1c_BaselineLatest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
-    {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1Ds by TDD/kg range: below/in/above · Pediatric <13: 0.7-1.0 u/kg · Pubertal+Adults: 1.0-1.5 u/kg',den:'PLT1Ds with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
-    {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1Ds by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1Ds with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
+    {n:'15',ind:'HbA1c testing rate',tab:'T2',type:'%',num:'PLT1D with HbA1c test in last 3 months',den:'Total PLT1D enrolled',sheet:'Hba1c_BaselineLatest',cols:'Patient ID, Date of latest Hba1c, Latest hba1c time bucket'},
+    {n:'16',ind:'Improving HbA1c trend',tab:'T2',type:'%',num:'PLT1D enrolled >3m with latest HbA1c lower than baseline',den:'PLT1D enrolled >3m with both baseline and latest reading',sheet:'Hba1c_BaselineLatest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket'},
+    {n:'17',ind:'DKA episode — last 12 months',tab:'T2',type:'%',num:'PLT1D with ≥1 DKA episode in last 12 months',den:'PLT1D enrolled with ≥1 follow-up visit in last 12 months',sheet:'Enrolled List',cols:'# of DKA episodes in the last 12 months, Follow-up visit in the last 12 months?'},
+    {n:'18',ind:'Hypoglycaemia — last 12 months',tab:'T2',type:'%',num:'PLT1D with ≥1 hypoglycaemia episode in last 12 months',den:'PLT1D enrolled with ≥1 follow-up visit in last 12 months',sheet:'Enrolled List',cols:'# of severe hypoglycemia episodes in the last 12 months'},
+    {n:'19',ind:'HbA1c change (stacked bar)',tab:'T2',type:'%',num:'PLT1D by change bucket: Worsened ≥4% / 2-4% / <2% / No change / Improved <2% / 2-4% / ≥4%',den:'PLT1D enrolled >3m with both baseline and latest HbA1c (min 2 month gap)',sheet:'Hba1c_BaselineLatest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket since enrolment'},
+    {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1D enrolled >3m with both values. Target: <8.5',sheet:'Hba1c_BaselineLatest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
+    {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1D by TDD/kg range: below/in/above · Pediatric <13: 0.7-1.0 u/kg · Pubertal+Adults: 1.0-1.5 u/kg',den:'PLT1D with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
+    {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1D by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1D with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
     {sec:'TAB 3 — Capacity Building'},
     {n:'23',ind:'Batches held — doctors / nurses',tab:'T3',type:'Absolute #',num:'Count of distinct training batches by date and state',den:'—',sheet:'Capacity_Building',cols:'Training Batch, Type of Service Provider'},
     {n:'24',ind:'Doctors / nurses trained',tab:'T3',type:'Absolute #',num:'Count of distinct participants attending ≥1 session',den:'—',sheet:'Capacity_Building',cols:'Name of Service Provider, Type of Service Provider'},
