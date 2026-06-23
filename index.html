@@ -497,7 +497,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 </div>
 
 <div class="sl">Current HbA1c levels — all PLT1D with ≥1 reading</div>
-<div class="card" style="overflow-x:auto">
+<div class="card" style="max-width:760px">
   <div class="ct">Current HbA1c levels by time since enrolment</div>
   <div class="cs">% PLT1D by HbA1c band at most recent reading, among all PLT1D with ≥1 HbA1c recorded · by time since enrolment</div>
   <div class="lg" style="margin-top:4px">
@@ -507,7 +507,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <span><span class="ld" style="background:#94a3b8"></span>13–16%</span>
     <span><span class="ld" style="background:#e2e8f0"></span>&gt;16%</span>
   </div>
-  <div style="height:220px;position:relative;margin-top:6px"><canvas id="c-hba-all"></canvas></div>
+  <div style="height:240px;position:relative;margin-top:6px"><canvas id="c-hba-all"></canvas></div>
 </div>
 
 <div class="sl">HbA1c distribution &amp; latest values</div>
@@ -1341,7 +1341,7 @@ function buildHbaAll(){
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false},
            ticks:{font:{size:9}, maxRotation:0},
-           categoryPercentage:0.55, barPercentage:0.5},
+           categoryPercentage:0.7, barPercentage:0.75},
         y:{stacked:true, display:false, min:0, max:100}
       }
     }
