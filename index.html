@@ -1599,21 +1599,31 @@ function renderStockHeatmap(){
   const lblByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!lblByKey[k]) lblByKey[k]=stkYmLabel(r);});
   const facs=Array.from(new Set(rows.map(r=>r.fac))).sort((a,b)=>a.localeCompare(b));
   const byFK={}; rows.forEach(r=>{byFK[r.fac+'|'+stkYmKey(r)]=r;});
+  // Group facilities by state (joined via facility→state attribute lookup)
+  const fa=RAW.facAttr||{};
+  const stateOf=fac=>{const s=(fa[normv(fac)]||{}).state; return s&&String(s).trim()?String(s).trim().toUpperCase():'UNSPECIFIED';};
+  const byState={}; facs.forEach(fac=>{const s=stateOf(fac);(byState[s]=byState[s]||[]).push(fac);});
+  const states=Object.keys(byState).sort((a,b)=>{
+    if(a==='UNSPECIFIED')return 1; if(b==='UNSPECIFIED')return -1; return a.localeCompare(b);});
+  const ncol=lastKeys.length+1;
   let html='<table style="border-collapse:separate;border-spacing:2px;font-size:10px">';
   html+='<thead><tr><th style="text-align:left;padding:2px 6px;color:var(--tm);font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.4px;position:sticky;left:0;background:#fff;z-index:2">Facility</th>';
   lastKeys.forEach(k=>{html+='<th style="padding:2px 4px;color:var(--t2);font-weight:600;font-size:9px;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap">'+lblByKey[k]+'</th>';});
   html+='</tr></thead><tbody>';
-  facs.forEach(fac=>{
-    html+='<tr><td style="padding:2px 6px;color:var(--t1);font-size:10px;white-space:nowrap;position:sticky;left:0;background:#fff;z-index:1">'+fac+'</td>';
-    lastKeys.forEach(k=>{
-      const r=byFK[fac+'|'+k];
-      const c=r?stkColorForCov(r.coverage,r.stockout):null;
-      const title=r?(fac+' · '+lblByKey[k]+(r.coverage!=null?(' · '+r.coverage+'% coverage'):'')+(r.stockout===1?' · STOCKOUT':'')):(fac+' · '+lblByKey[k]+' · no data');
-      const bg=c||'#f1f5f9';
-      const bdr=c?'':'1px solid var(--bdr)';
-      html+='<td title="'+title.replace(/"/g,'&quot;')+'" style="width:22px;height:18px;background:'+bg+';border:'+(bdr||'1px solid transparent')+';border-radius:2px"></td>';
+  states.forEach(st=>{
+    html+='<tr><td colspan="'+ncol+'" style="padding:6px 6px 2px;color:var(--t1);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;position:sticky;left:0;background:#eef2f7;border-radius:2px">'+st+' <span style="color:var(--tm);font-weight:600">('+byState[st].length+')</span></td></tr>';
+    byState[st].forEach(fac=>{
+      html+='<tr><td style="padding:2px 6px 2px 14px;color:var(--t1);font-size:10px;white-space:nowrap;position:sticky;left:0;background:#fff;z-index:1">'+fac+'</td>';
+      lastKeys.forEach(k=>{
+        const r=byFK[fac+'|'+k];
+        const c=r?stkColorForCov(r.coverage,r.stockout):null;
+        const title=r?(fac+' · '+lblByKey[k]+(r.coverage!=null?(' · '+r.coverage+'% coverage'):'')+(r.stockout===1?' · STOCKOUT':'')):(fac+' · '+lblByKey[k]+' · no data');
+        const bg=c||'#f1f5f9';
+        const bdr=c?'':'1px solid var(--bdr)';
+        html+='<td title="'+title.replace(/"/g,'&quot;')+'" style="width:22px;height:18px;background:'+bg+';border:'+(bdr||'1px solid transparent')+';border-radius:2px"></td>';
+      });
+      html+='</tr>';
     });
-    html+='</tr>';
   });
   html+='</tbody></table>';
   wrap.innerHTML=html;
