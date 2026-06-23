@@ -229,7 +229,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">Planned facilities</div>
     <div class="cs">Count, complete support + light touch</div>
     <div class="kv b" id="k-plan">58</div>
-    <div class="kn" id="k-plan-n">n = 58 facilities</div>
+    <div class="kn" id="k-plan-n">58 facilities</div>
   </div>
   <div class="card cab">
     <div class="ct">Operational clinics</div>
@@ -874,7 +874,7 @@ function renderKPIs(d,f){
   const b=d;  // d is a merged geo+patient object
   sv('k-states',b.states); sv('k-states-n',f.state==='all'?'RJ · MP · UK · CG':sln(f.state));
   sv('k-dist',b.dist); sv('k-dist-n','n = '+b.dist+' districts');
-  sv('k-plan',b.plan); sv('k-plan-n','n = '+b.plan+' facilities');
+  sv('k-plan',b.plan); sv('k-plan-n',b.plan+' facilities');
   sv('k-op',b.op);
   const op=Math.round(b.op/b.plan*100);
   const opEl=document.getElementById('k-op-pct'); if(opEl){opEl.textContent=op+'% of planned';opEl.style.color=op>=90?'var(--b2)':'var(--g2)';}
