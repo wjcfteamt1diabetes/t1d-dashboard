@@ -362,7 +362,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Follow-up attendance — month on month</div>
-    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots · Target: &gt;75%</div>
+    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; latest month appears once attendance is marked · Target: &gt;75%</div>
     <div style="height:195px;position:relative;margin-top:6px"><canvas id="c-fup"></canvas></div>
   </div>
 </div>
@@ -2089,8 +2089,13 @@ function computeFollowup(idSet){
   const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
   for(let r=1;r<g.length;r++){if(!idSet[normv(g[r][0])])continue;
     cols.forEach(c=>{const v=normv(g[r][c.i]);if(v==='y')stat[c.label].y++;else if(v==='n')stat[c.label].n++;});}
-  return cols.filter(c=>stat[c.label].y+stat[c.label].n>0)
-    .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month).slice(-7).reverse()
+  const wd=cols.filter(c=>stat[c.label].y+stat[c.label].n>0)
+    .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+  // A trailing all-"N" month means attendance hasn't been marked in the sheet
+  // yet (zero attendees out of thousands due doesn't happen) — hide it until
+  // its first Y is entered, instead of charting a misleading 0%.
+  while(wd.length&&stat[wd[wd.length-1].label].y===0) wd.pop();
+  return wd.slice(-7).reverse()
     .map(c=>{const s=stat[c.label],t=s.y+s.n;return{m:c.label,v:pctC(s.y,t),n:t};});
 }
 
