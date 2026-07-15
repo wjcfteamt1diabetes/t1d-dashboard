@@ -1698,6 +1698,11 @@ function parseDate(v){
   const d=new Date(s); return isNaN(d)?null:d;          // "Oct 15 2025", ISO, etc.
 }
 
+// Month-column headers like "Dec-25" get misparsed by Date() with the 2-digit year
+// read as day-of-month (JS defaults the year itself to 2001). Recover the real year
+// from that day value in that case; trust the parsed year for any other format.
+function hdrYear(d){ return d.getFullYear()===2001 ? 2000+d.getDate() : d.getFullYear(); }
+
 // Minimal RFC-4180 CSV parser → 2D array of strings
 function parseCSV(text){
   const rows=[];let row=[],cur='',q=false;
@@ -2064,7 +2069,7 @@ function recompute(){
 function computeFollowup(idSet){
   const g=RAW.fupGrid; if(!g||g.length<2) return [];
   const hdr=g[0];const cols=[];
-  for(let i=2;i<hdr.length;i++){const d=parseDate(hdr[i]);if(d){const ys=d.getDate();cols.push({i:i,label:MON[d.getMonth()]+' '+ys,year:2000+ys,month:d.getMonth()});}}
+  for(let i=2;i<hdr.length;i++){const d=parseDate(hdr[i]);if(d){const y=hdrYear(d);cols.push({i:i,label:MON[d.getMonth()]+' '+String(y).slice(2),year:y,month:d.getMonth()});}}
   const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
   for(let r=1;r<g.length;r++){if(!idSet[normv(g[r][0])])continue;
     cols.forEach(c=>{const v=normv(g[r][c.i]);if(v==='y')stat[c.label].y++;else if(v==='n')stat[c.label].n++;});}
@@ -2096,7 +2101,7 @@ function computeSmbg(idSet){
   for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
     if(/claude/i.test(h))idC=i;
     if(/enrolled for ?>?3/i.test(h))m3C=i;
-    const d=parseDate(h); if(d&&/\d{4}/.test(h)) mc.push({i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2),year:d.getFullYear(),month:d.getMonth()});
+    const d=parseDate(h); if(d){const y=hdrYear(d); mc.push({i,label:MON[d.getMonth()]+' '+String(y).slice(2),year:y,month:d.getMonth()});}
   }
   const bucket=v=>{const s=String(v).trim();if(s==='.'||s==='')return -1;const x=Number(s);if(isNaN(x))return -1;return x===0?0:x<3?1:x<=4?2:3;};
   const acc={},acc3={}; mc.forEach(m=>{acc[m.label]={b:[0,0,0,0],n:0,y:m.year,mo:m.month};acc3[m.label]={b:[0,0,0,0],n:0};});
