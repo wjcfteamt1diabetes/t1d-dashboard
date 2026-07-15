@@ -1698,6 +1698,27 @@ function parseDate(v){
   const d=new Date(s); return isNaN(d)?null:d;          // "Oct 15 2025", ISO, etc.
 }
 
+// Month-column header ("Dec-25", "Dec 2025", ISO, gviz Date()) → {y, m} or null.
+// "Mon-YY" is matched explicitly: new Date("Dec-25") is engine-dependent (WebKit
+// defaults the year to 2000, V8 to 2001, both reading the 2-digit year as
+// day-of-month), so we must never rely on Date() for that format.
+function hdrMonth(h){
+  const s=String(h==null?'':h).trim(); if(!s) return null;
+  const m=s.match(/^([A-Za-z]{3,9})[\s\-\/]+(\d{2}|\d{4})$/);
+  if(m){
+    const mi=MON.findIndex(x=>x.toLowerCase()===m[1].slice(0,3).toLowerCase());
+    if(mi<0) return null;
+    let y=+m[2]; if(y<100) y+=2000;
+    return {y:y, m:mi};
+  }
+  const d=parseDate(s); if(!d) return null;
+  const fy=d.getFullYear();
+  // 2000/2001 = an engine default year on a partial date; the real 2-digit
+  // year landed in day-of-month. Genuine data starts well after 2001.
+  const y=(fy===2000||fy===2001)?2000+d.getDate():fy;
+  return (y>=2020&&y<=2100)?{y:y, m:d.getMonth()}:null;
+}
+
 // Minimal RFC-4180 CSV parser → 2D array of strings
 function parseCSV(text){
   const rows=[];let row=[],cur='',q=false;
@@ -2064,7 +2085,7 @@ function recompute(){
 function computeFollowup(idSet){
   const g=RAW.fupGrid; if(!g||g.length<2) return [];
   const hdr=g[0];const cols=[];
-  for(let i=2;i<hdr.length;i++){const d=parseDate(hdr[i]);if(d){const ys=d.getDate();cols.push({i:i,label:MON[d.getMonth()]+' '+ys,year:2000+ys,month:d.getMonth()});}}
+  for(let i=2;i<hdr.length;i++){const hm=hdrMonth(hdr[i]);if(hm)cols.push({i:i,label:MON[hm.m]+' '+String(hm.y).slice(2),year:hm.y,month:hm.m});}
   const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
   for(let r=1;r<g.length;r++){if(!idSet[normv(g[r][0])])continue;
     cols.forEach(c=>{const v=normv(g[r][c.i]);if(v==='y')stat[c.label].y++;else if(v==='n')stat[c.label].n++;});}
@@ -2096,7 +2117,7 @@ function computeSmbg(idSet){
   for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
     if(/claude/i.test(h))idC=i;
     if(/enrolled for ?>?3/i.test(h))m3C=i;
-    const d=parseDate(h); if(d&&/\d{4}/.test(h)) mc.push({i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2),year:d.getFullYear(),month:d.getMonth()});
+    const hm=hdrMonth(h); if(hm) mc.push({i,label:MON[hm.m]+' '+String(hm.y).slice(2),year:hm.y,month:hm.m});
   }
   const bucket=v=>{const s=String(v).trim();if(s==='.'||s==='')return -1;const x=Number(s);if(isNaN(x))return -1;return x===0?0:x<3?1:x<=4?2:3;};
   const acc={},acc3={}; mc.forEach(m=>{acc[m.label]={b:[0,0,0,0],n:0,y:m.year,mo:m.month};acc3[m.label]={b:[0,0,0,0],n:0};});
