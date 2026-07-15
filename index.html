@@ -1637,7 +1637,14 @@ function renderStockHeatmap(){
   if(!rows.length){ wrap.innerHTML='<div class="data-pending">No stock data for the current filter selection.</div>'; return; }
   const keys=Array.from(new Set(rows.map(stkYmKey))).sort((a,b)=>a-b);
   const lastKeys=keys.slice(-12);
+  // Extend the month axis through December of the latest data year, so the
+  // rest of the current year shows as "no data" cells that fill in over time.
+  if(lastKeys.length){
+    const endKey=Math.floor(lastKeys[lastKeys.length-1]/12)*12+11;
+    for(let k=lastKeys[lastKeys.length-1]+1;k<=endKey;k++) lastKeys.push(k);
+  }
   const lblByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!lblByKey[k]) lblByKey[k]=stkYmLabel(r);});
+  lastKeys.forEach(k=>{if(!lblByKey[k]) lblByKey[k]=MON[k%12]+' '+String(Math.floor(k/12)).slice(2);});
   const facs=Array.from(new Set(rows.map(r=>r.fac))).sort((a,b)=>a.localeCompare(b));
   const byFK={}; rows.forEach(r=>{byFK[r.fac+'|'+stkYmKey(r)]=r;});
   // Group facilities by state (joined via facility→state attribute lookup)
