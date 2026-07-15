@@ -1889,6 +1889,15 @@ function buildGeo(){
       if(!facAttr[normv(fn)])facAttr[normv(fn)]=o; geo.push(o);
     }
   }
+  // Facilities that report stock but are missing from (or spelled differently
+  // in) the CS/LT facility lists — pin their state so the stock heatmap doesn't
+  // group them under "Unspecified". Remove an entry once the facility is added
+  // to a facility list tab with its State filled in.
+  const EXTRA_FAC_STATE={'sdh mussoorie':'UK'};
+  Object.keys(EXTRA_FAC_STATE).forEach(k=>{
+    const o=facAttr[k]||(facAttr[k]={division:'',district:'',dpc:'',facility:k});
+    if(!String(o.state||'').trim()) o.state=EXTRA_FAC_STATE[k];
+  });
   RAW.facAttr=facAttr; RAW.geo=geo;
 }
 
