@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>T1D Program Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="config.js"></script>
 <style>
 :root{
@@ -162,6 +164,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   <div><div class="hdr-t">Type 1 Diabetes Program — India</div>
   <div class="hdr-s">Rajasthan · Madhya Pradesh · Uttarakhand · Chhattisgarh</div></div>
   <div style="display:flex;align-items:center;gap:8px">
+    <button id="pdf-btn" onclick="exportPDF()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:10px;padding:4px 12px;border-radius:20px;cursor:pointer;font-family:'Trebuchet MS',sans-serif;font-weight:600;transition:opacity .15s">⭳ Export PDF</button>
     <button id="refresh-btn" onclick="refreshData()" style="background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);font-size:10px;padding:4px 12px;border-radius:20px;cursor:pointer;font-family:'Trebuchet MS',sans-serif;font-weight:600;transition:opacity .15s">↺ Refresh Data</button>
     <div class="hdr-b" id="hdr-badge">Loading…</div>
   </div>
@@ -1382,6 +1385,78 @@ function buildStaticCharts(){
 
 function shift(c,d){off[c]=Math.max(0,Math.min(MAX,off[c]+d));c===0?buildC1(off[0]):buildC2(off[1]);}
 function switchTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',i===j));}
+
+// ═══ PDF EXPORT — one page per tab, single file, reflects active filters ═══
+// Reads the currently-selected (non-default) filters as a human-readable line.
+function activeFilterSummary(){
+  const map=[
+    ['f-state','State'],['f-division','Division'],['f-district','District'],
+    ['f-facility','Facility'],['f-dpc','DPC'],
+    ['f-status','Status'],['f-sex','Sex'],['f-age','Age group']
+  ];
+  const parts=[];
+  map.forEach(([id,lbl])=>{
+    const s=document.getElementById(id); if(!s||s.value==='all') return;
+    const txt=s.options[s.selectedIndex]?s.options[s.selectedIndex].text:s.value;
+    parts.push(lbl+': '+txt);
+  });
+  return parts.length?parts.join('   ·   '):'No filters applied — all patients & facilities';
+}
+
+async function exportPDF(){
+  const btn=document.getElementById('pdf-btn');
+  if(!window.jspdf||!window.html2canvas){alert('PDF libraries still loading — please try again in a moment.');return;}
+  const tabBtns=Array.from(document.querySelectorAll('.tabs-inner .tab'));
+  const origTab=tabBtns.findIndex(t=>t.classList.contains('active'));
+  // Enumerate every tab dynamically so new tabs are covered automatically.
+  const tabs=tabBtns.map((t,i)=>({i,name:t.textContent.trim()})).filter(t=>document.getElementById('tab-'+t.i));
+  const filterLine=activeFilterSummary();
+  const stamp=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const oldLabel=btn.textContent; btn.disabled=true; btn.style.opacity='.6';
+  const {jsPDF}=window.jspdf;
+  let doc=null;
+  try{
+    for(let k=0;k<tabs.length;k++){
+      btn.textContent='Exporting… '+(k+1)+'/'+tabs.length;
+      switchTab(tabs[k].i);
+      // Let the now-visible tab lay out and its Chart.js canvases resize to full size.
+      Object.values(Chart.instances||{}).forEach(c=>{try{c.resize();}catch(e){}});
+      await new Promise(r=>setTimeout(r,450));
+      const el=document.getElementById('tab-'+tabs[k].i);
+      const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#f0f4fa',
+        windowWidth:1420,scrollX:0,scrollY:0});
+      const cw=canvas.width, ch=canvas.height;
+      const banner=Math.round(cw*0.055);
+      const pageH=banner+ch;
+      const fmt=[cw,pageH];
+      if(!doc){ doc=new jsPDF({orientation:cw>=pageH?'landscape':'portrait',unit:'px',format:fmt,compress:true}); }
+      else{ doc.addPage(fmt,cw>=pageH?'landscape':'portrait'); }
+      // Banner
+      doc.setFillColor(15,52,96);
+      doc.rect(0,0,cw,banner,'F');
+      doc.setTextColor(255,255,255);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(cw*0.0135);
+      doc.text('T1D Program — India   |   '+tabs[k].name, cw*0.02, banner*0.40, {baseline:'middle'});
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(cw*0.0078);
+      doc.setTextColor(200,220,245);
+      doc.text('Filters:  '+filterLine, cw*0.02, banner*0.68, {baseline:'middle'});
+      doc.setTextColor(150,180,220);
+      doc.text('Generated '+stamp+'   ·   Page '+(k+1)+' of '+tabs.length, cw*0.02, banner*0.90, {baseline:'middle'});
+      doc.addImage(canvas.toDataURL('image/png'),'PNG',0,banner,cw,ch,undefined,'FAST');
+    }
+    const fnameState=(document.getElementById('f-state')?document.getElementById('f-state').value:'all')||'all';
+    doc.save('T1D_Dashboard_'+fnameState+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+  }catch(err){
+    console.error('PDF export failed',err);
+    alert('PDF export failed: '+(err&&err.message?err.message:err));
+  }finally{
+    if(origTab>=0) switchTab(origTab);
+    Object.values(Chart.instances||{}).forEach(c=>{try{c.resize();}catch(e){}});
+    btn.disabled=false; btn.style.opacity=''; btn.textContent=oldLabel;
+  }
+}
 
 // ═══ INFO TABLE ═══
 function buildInfoTable(){
