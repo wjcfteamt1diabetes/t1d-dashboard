@@ -36,6 +36,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .fsel{font-size:11px;font-family:var(--fn);padding:3px 20px 3px 6px;border:1px solid var(--bdr);border-radius:4px;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 5px center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--t1)}
 .fdiv{width:1px;height:20px;background:var(--bdr);margin:0 2px}
 .ftag{font-size:10px;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:3px 8px;font-weight:600}
+.fdate{padding:2px 6px;background:#f8fafc;background-image:none;-webkit-appearance:auto;appearance:auto;min-width:116px;cursor:text}
+.frange-clear{font-size:11px;line-height:1;color:var(--tm);background:#f8fafc;border:1px solid var(--bdr);border-radius:4px;padding:3px 6px;cursor:pointer}
+.frange-clear:hover{color:#dc2626;border-color:#fca5a5;background:#fef2f2}
 
 .tabs-bar{background:#fff;border-bottom:1px solid var(--bdr);position:sticky;top:44px;z-index:110;box-shadow:0 1px 4px rgba(15,52,96,.06)}
 .tabs-inner{max-width:1380px;margin:0 auto;padding:0 20px;display:flex}
@@ -195,6 +198,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
       <option value="all">All</option><option value="ped">Pediatric (0–17)</option>
       <option value="adu">Adults (≥18)</option>
     </select>
+    <div class="fdiv"></div>
+    <span class="flbl">Period</span>
+    <input type="month" class="fsel fdate" id="f-from" min="2025-01" onchange="applyFilters()" aria-label="From month" title="Show data from this month">
+    <span class="flbl" style="text-transform:none;letter-spacing:0">to</span>
+    <input type="month" class="fsel fdate" id="f-to" min="2025-01" onchange="applyFilters()" aria-label="To month" title="Show data up to this month">
+    <button class="frange-clear" id="f-range-clear" onclick="clearRange()" title="Clear date range" aria-label="Clear date range">✕</button>
     <div class="fdiv"></div>
     <span class="ftag" id="n-tag">n = 2,216 PLT1D</span>
   </div>
@@ -865,6 +874,26 @@ let CURD=null;         // merged geo+patient object consumed by renderKPIs
 let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL;
 let FUP_MOM,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
 let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
+// ── Date-range slicer (time-axis only): month bounds, inclusive; null = unbounded ──
+let DATE_FROM=null, DATE_TO=null;   // each: {y, m}  (m is 0-based month)
+function ymKey(y,m){return y*12+m;}
+function ymInRange(y,m){const k=ymKey(y,m);
+  if(DATE_FROM&&k<ymKey(DATE_FROM.y,DATE_FROM.m))return false;
+  if(DATE_TO  &&k>ymKey(DATE_TO.y, DATE_TO.m ))return false;
+  return true;}
+function parseMonthInput(v){const m=String(v||'').match(/^(\d{4})-(\d{2})$/);return m?{y:+m[1],m:+m[2]-1}:null;}
+function syncDateRange(){
+  let a=parseMonthInput((document.getElementById('f-from')||{}).value),
+      b=parseMonthInput((document.getElementById('f-to')  ||{}).value);
+  if(a&&b&&ymKey(a.y,a.m)>ymKey(b.y,b.m)){const t=a;a=b;b=t;}  // tolerate inverted picks
+  DATE_FROM=a; DATE_TO=b;
+}
+function clearRange(){const a=document.getElementById('f-from'),b=document.getElementById('f-to');
+  if(a)a.value='';if(b)b.value='';applyFilters();}
+function setMonthInputBounds(){
+  const now=new Date(), max=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  ['f-from','f-to'].forEach(id=>{const el=document.getElementById(id);if(el){el.min='2025-01';el.max=max;}});
+}
 let HBA_N,HBA_LBLS,HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4;
 let HBA_AVG_BASE,HBA_AVG_LAST,HBA_DIST_LBLS,HBA_D_LT7,HBA_D_7_10,HBA_D_10_13,HBA_D_13_16,HBA_D_GT16,HBA_LATEST;
 let HBA_ALL_LBLS,HBA_ALL_LT7,HBA_ALL_710,HBA_ALL_1013,HBA_ALL_1316,HBA_ALL_GT16;
@@ -1400,6 +1429,11 @@ function activeFilterSummary(){
     const txt=s.options[s.selectedIndex]?s.options[s.selectedIndex].text:s.value;
     parts.push(lbl+': '+txt);
   });
+  // Date-range slicer (time-axis) — show the active period if either bound is set.
+  const mLbl=v=>{const p=parseMonthInput(v);return p?MON[p.m]+' '+p.y:null;};
+  const from=mLbl((document.getElementById('f-from')||{}).value),
+        to  =mLbl((document.getElementById('f-to')  ||{}).value);
+  if(from||to) parts.push('Period: '+(from||'start')+' – '+(to||'latest'));
   return parts.length?parts.join('   ·   '):'No filters applied — all patients & facilities';
 }
 
@@ -1573,6 +1607,7 @@ function addSumNotes(){
 }
 
 function applyFilters(){
+  safe('syncDateRange', syncDateRange);       // read the From/To month pickers into DATE_FROM/DATE_TO
   safe('populateFilters', populateFilters);   // cascade dropdown options to current selection
   recompute();
   const f=getF(), d=getD();
@@ -1589,6 +1624,7 @@ function applyFilters(){
   safe('buildFupChart',   buildFupChart);
   safe('renderSmbg',      renderSmbg);
   safe('renderHyperHypo', renderHyperHypo);
+  safe('computeClinicOps', computeClinicOps);  // re-window clinic-ops series to the active date range
   safe('buildClinOps',    buildClinOps);
   safe('buildOffDays',    buildOffDays);
   safe('buildHbaChange',  buildHbaChange);
@@ -1652,7 +1688,7 @@ function renderStockKPIs(){
   const rows=stockFiltered();
   const reported=rows.filter(r=>r.coverage!=null || r.stockout!=null);
   let latestKey=-1, latestLabel='';
-  reported.forEach(r=>{const k=stkYmKey(r); if(k>latestKey){latestKey=k; latestLabel=stkYmLabel(r);}});
+  reported.forEach(r=>{const k=stkYmKey(r); if(ymInRange(Math.floor(k/12),k%12)&&k>latestKey){latestKey=k; latestLabel=stkYmLabel(r);}});
   const tag=document.getElementById('stk-period-tag'); if(tag) tag.textContent=latestLabel||'No data';
   STK_COMS.forEach(c=>{
     const cRows=rows.filter(r=>r.commodity===c.name && stkYmKey(r)===latestKey);
@@ -1670,7 +1706,8 @@ function renderStockKPIs(){
 let _cstk;
 function renderStockTrend(){
   const rows=stockFiltered();
-  const keys=Array.from(new Set(rows.filter(r=>r.coverage!=null).map(stkYmKey))).sort((a,b)=>a-b);
+  const keys=Array.from(new Set(rows.filter(r=>r.coverage!=null).map(stkYmKey)))
+    .filter(k=>ymInRange(Math.floor(k/12),k%12)).sort((a,b)=>a-b);
   const lastKeys=keys.slice(-12);
   const sampleByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!sampleByKey[k]) sampleByKey[k]=stkYmLabel(r);});
   const labels=lastKeys.map(k=>sampleByKey[k]||'');
@@ -1710,18 +1747,24 @@ function renderStockHeatmap(){
   const commodity=com.value;
   const rows=stockFiltered().filter(r=>r.commodity===commodity);
   if(!rows.length){ wrap.innerHTML='<div class="data-pending">No stock data for the current filter selection.</div>'; return; }
-  const keys=Array.from(new Set(rows.map(stkYmKey))).sort((a,b)=>a-b);
+  const keys=Array.from(new Set(rows.map(stkYmKey)))
+    .filter(k=>ymInRange(Math.floor(k/12),k%12)).sort((a,b)=>a-b);
   const lastKeys=keys.slice(-12);
   // Extend the month axis through December of the latest data year, so the
   // rest of the current year shows as "no data" cells that fill in over time.
+  // A To bound caps the extension so we never chart months past the range.
   if(lastKeys.length){
-    const endKey=Math.floor(lastKeys[lastKeys.length-1]/12)*12+11;
+    let endKey=Math.floor(lastKeys[lastKeys.length-1]/12)*12+11;
+    if(DATE_TO) endKey=Math.min(endKey, ymKey(DATE_TO.y,DATE_TO.m));
     for(let k=lastKeys[lastKeys.length-1]+1;k<=endKey;k++) lastKeys.push(k);
   }
   const lblByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!lblByKey[k]) lblByKey[k]=stkYmLabel(r);});
   lastKeys.forEach(k=>{if(!lblByKey[k]) lblByKey[k]=MON[k%12]+' '+String(Math.floor(k/12)).slice(2);});
-  const facs=Array.from(new Set(rows.map(r=>r.fac))).sort((a,b)=>a.localeCompare(b));
   const byFK={}; rows.forEach(r=>{byFK[r.fac+'|'+stkYmKey(r)]=r;});
+  // Only show facilities that have at least one cell inside the visible window.
+  const facs=Array.from(new Set(rows.map(r=>r.fac)))
+    .filter(fac=>lastKeys.some(k=>byFK[fac+'|'+k]))
+    .sort((a,b)=>a.localeCompare(b));
   // Group facilities by state (joined via facility→state attribute lookup)
   const fa=RAW.facAttr||{};
   const stateOf=fac=>{const s=(fa[normv(fac)]||{}).state; return s&&String(s).trim()?String(s).trim().toUpperCase():'UNSPECIFIED';};
@@ -1939,6 +1982,7 @@ function computeClinicOps(){
   const offsMap={};offs.months.forEach(m=>offsMap[m.label]=m);
   const M=[],FP=[],OD=[];
   ops.months.forEach(om=>{
+    const hm=hdrMonth(om.label); if(hm&&!ymInRange(hm.y,hm.m))return;   // trim to active date range
     let den=0,nf=0; om.vals.forEach(v=>{const x=opNum(v);if(x!=null){den++;if(x>=0.75)nf++;}});
     if(den===0)return;
     M.push(om.label);FP.push(pctC(nf,den));
@@ -2095,9 +2139,13 @@ function recompute(){
   const gTot=(male+female+oth)||1,aTot=(ped+adu)||1;
 
   // ── Series (responds to all filters; LT aggregate by state) ──
+  // Master month axis (Jan 2025 → current month), trimmed to the active date range.
+  // Trimming only the axis is correct here: each month's cumulative is computed
+  // as-of that month (e<=eom), so a later start still reflects all prior enrolments.
   const months=[];let dcur=new Date(2025,0,1);
   while(dcur.getFullYear()<now.getFullYear()||(dcur.getFullYear()===now.getFullYear()&&dcur.getMonth()<=now.getMonth())){
-    months.push({label:MON[dcur.getMonth()]+' '+String(dcur.getFullYear()).slice(2),y:dcur.getFullYear(),m:dcur.getMonth()});
+    if(ymInRange(dcur.getFullYear(),dcur.getMonth()))
+      months.push({label:MON[dcur.getMonth()]+' '+String(dcur.getFullYear()).slice(2),y:dcur.getFullYear(),m:dcur.getMonth()});
     dcur.setMonth(dcur.getMonth()+1);
   }
   const csCum=[],ltCum=[],clin=[],neCs=[],neLt=[],avg=[];let cumLt=0;
@@ -2180,7 +2228,7 @@ function computeFollowup(idSet){
   const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
   for(let r=1;r<g.length;r++){if(!idSet[normv(g[r][0])])continue;
     cols.forEach(c=>{const v=normv(g[r][c.i]);if(v==='y')stat[c.label].y++;else if(v==='n')stat[c.label].n++;});}
-  const wd=cols.filter(c=>stat[c.label].y+stat[c.label].n>0)
+  const wd=cols.filter(c=>stat[c.label].y+stat[c.label].n>0&&ymInRange(c.year,c.month))
     .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
   // A trailing all-"N" month means attendance hasn't been marked in the sheet
   // yet (zero attendees out of thousands due doesn't happen) — hide it until
@@ -2221,7 +2269,7 @@ function computeSmbg(idSet){
     const is3=m3C>=0&&isYes(row[m3C]);
     mc.forEach(m=>{const bk=bucket(row[m.i]); if(bk>=0){acc[m.label].b[bk]++;acc[m.label].n++; if(is3){acc3[m.label].b[bk]++;acc3[m.label].n++;}}});
   }
-  const wd=mc.filter(m=>acc[m.label].n>0).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+  const wd=mc.filter(m=>acc[m.label].n>0&&ymInRange(m.year,m.month)).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
   const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label];return{m:m.label,v:pctParts(a.b),n:a.n};});
   let last={m:'',v:[0,0,0,0],n:0};
   if(wd.length){const m=wd[wd.length-1],a=acc3[m.label];last={m:m.label,v:pctParts(a.b),n:a.n};}
@@ -2244,7 +2292,7 @@ function computeHyperHypo(idSet){
     const a=acc[label]||(acc[label]={hy:[0,0,0,0,0],ho:[0,0,0,0,0],n:0,y:d.getFullYear(),mo:d.getMonth()});
     const bh=bin(row[hyperC]),bo=bin(row[hypoC]); if(bh>=0)a.hy[bh]++; if(bo>=0)a.ho[bo]++; a.n++;
   }
-  const last3=Object.keys(acc).map(l=>acc[l]).sort((a,b)=>a.y!==b.y?a.y-b.y:a.mo-b.mo).slice(-3).reverse();
+  const last3=Object.keys(acc).map(l=>acc[l]).filter(a=>ymInRange(a.y,a.mo)).sort((a,b)=>a.y!==b.y?a.y-b.y:a.mo-b.mo).slice(-3).reverse();
   return {
     months:last3.map(a=>({m:MON[a.mo]+' '+String(a.y).slice(2),n:a.n})),
     hyper:last3.map(a=>pctParts(a.hy)),
@@ -2394,6 +2442,7 @@ async function boot(){
     computeClinicOps();
     buildGeo();                               // facility→geo lookup + dropdown option lists
     populateFilters();                        // fill Division/District/Facility/DPC from live data
+    safe('setMonthInputBounds', setMonthInputBounds);  // constrain the From/To month pickers
     safe('buildInfoTable', buildInfoTable);   // static, build once
     applyFilters();                           // recompute() + render everything (incl. HbA1c charts)
     safe('addSumNotes', addSumNotes);         // caption under part-of-whole charts
