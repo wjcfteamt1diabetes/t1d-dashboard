@@ -2126,7 +2126,7 @@ function recompute(){
     let cat=reg==='newly diagnosed'?'Newly Dx':(FAC[normv(p['Previous treatment facility category'])]||(normv(p['Previous treatment facility category'])?normv(p['Previous treatment facility category']).toUpperCase():null));
     if(cat)facMap[cat]=(facMap[cat]||0)+1;
     if(reg==='basal-bolus')insB++;
-    if(normv(p['Insulin regimen check'])==='basal-bolus')insL++;
+    {const tr=normv(p['Transitioned to basal-bolus insulin regimen?']);if(tr==='yes'||tr==='already on basal-bolus')insL++;}
     if(isYes(p['Follow-up visit in the last 12 months?'])){fupDen++;if(num(p['# of DKA episodes in the last 12 months'])>0)dkaN++;if(num(p['# of severe hypoglycemia episodes in the last 12 months'])>0)hypoN++;}
     const ir=normv(p['In Range?']);const grp=ag==null?null:ag<18?'ped':'adu';
     if(grp&&(ir==='below'||ir==='in range'||ir==='above')){tdd[grp].n++;if(ir==='below')tdd[grp].b++;else if(ir==='in range')tdd[grp].i++;else tdd[grp].a++;}
