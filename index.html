@@ -1817,7 +1817,7 @@ function ageTok(p){const a=num(p['Age']);return a==null?'unk':a<18?'ped':'adu';}
 function statusTok(p){return normv(p['Case Status (Active/Inactive)'])==='inactive'?'inactive':'active';}
 
 // Flexible date parser for gviz CSV strings (handles native, dd/mm/yyyy, gviz Date())
-function parseDate(v){
+function parseDate(v,conv){
   if(v instanceof Date) return isNaN(v)?null:v;
   const s=String(v).trim(); if(!s) return null;
   let m=s.match(/^Date\((\d+),(\d+),(\d+)/);            // gviz Date(y,m,d)
@@ -1826,9 +1826,26 @@ function parseDate(v){
   if(m){let a=+m[1],b=+m[2],y=+m[3];if(y<100)y+=2000;
     if(a>12&&b<=12) return new Date(y,b-1,a);            // dd/mm
     if(b>12&&a<=12) return new Date(y,a-1,b);            // mm/dd
+    if(conv==='mdy') return new Date(y,a-1,b);           // column proven mm/dd
     return new Date(y,b-1,a);                            // ambiguous → dd/mm (India)
   }
   const d=new Date(s); return isNaN(d)?null:d;          // "Oct 15 2025", ISO, etc.
+}
+
+// A d/m/y column is only ambiguous value-by-value; the column as a whole usually
+// isn't. Google Sheets renders the whole column in one locale, so a single value
+// with a part > 12 pins the convention for every other value in it. Returns
+// 'mdy' when the column is proven month-first, else null (parseDate then keeps
+// its dd/mm default). A column carrying both is left null — nothing to infer.
+function dateConv(values){
+  let mdy=false,dmy=false;
+  for(let i=0;i<values.length;i++){
+    const m=String(values[i]==null?'':values[i]).trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-]\d{2,4}$/);
+    if(!m) continue;
+    const a=+m[1],b=+m[2];
+    if(a>12&&b<=12) dmy=true; else if(b>12&&a<=12) mdy=true;
+  }
+  return (mdy&&!dmy)?'mdy':null;
 }
 
 // Month-column header ("Dec-25", "Dec 2025", ISO, gviz Date()) → {y, m} or null.
@@ -2165,6 +2182,10 @@ function recompute(){
       months.push({label:MON[dcur.getMonth()]+' '+String(dcur.getFullYear()).slice(2),y:dcur.getFullYear(),m:dcur.getMonth()});
     dcur.setMonth(dcur.getMonth()+1);
   }
+  // "Date of Operationalisation" is rendered mm/dd by the sheet's locale, so the
+  // ambiguous values in it (e.g. 1/9/2026) must not be read as dd/mm — that pushed
+  // a January clinic into September and dropped it from the line.
+  const opConv=dateConv((RAW.csFac||[]).map(x=>x['Date of Operationalisation']));
   const csCum=[],ltCum=[],clin=[],clinCs=[],clinLt=[],neCs=[],neLt=[],avg=[];let cumLt=0;
   const ltStarts=lt.opStarts||[];
   // CS cumulative is as-of each month, so LT cumulative must also carry in the
@@ -2179,7 +2200,7 @@ function recompute(){
     const eom=new Date(mo.y,mo.m+1,0,23,59,59);
     let cum=0,nw=0;enrDates.forEach(e=>{if(e&&e<=eom)cum++;if(e&&e.getFullYear()===mo.y&&e.getMonth()===mo.m)nw++;});
     csCum.push(cum);neCs.push(nw);
-    const op=csF.filter(x=>{if(!isYes(x['T1D Clinic Operational?']))return false;const o=parseDate(x['Date of Operationalisation']);return o&&o<=eom;}).length;
+    const op=csF.filter(x=>{if(!isYes(x['T1D Clinic Operational?']))return false;const o=parseDate(x['Date of Operationalisation'],opConv);return o&&o<=eom;}).length;
     // Operational clinics = complete support + light touch (same basis as the KPI card)
     const opLt=ltStarts.filter(s=>ymKey(s.y,s.m)<=ymKey(mo.y,mo.m)).length;
     clinCs.push(op);clinLt.push(opLt);clin.push(op+opLt);
