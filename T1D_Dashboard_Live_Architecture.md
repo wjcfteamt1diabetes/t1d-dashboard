@@ -161,9 +161,10 @@ Build frontend and backend against this one fixed JSON shape. It mirrors the das
   "series": {
     "months":   ["Jan 25", "...", "May 26"],
     "csCum":    [ ], "ltCum": [ ],          // ltCum starts Sep 2025; earlier months = CS only
-    "clin":     [ ],                        // operational clinics per month (Date of Operationalisation)
+    "clin":     [ ],                        // operational clinics per month = CS (Date of Operationalisation ≤ month end) + LT (from each LT facility's first reported enrolment month)
+    "clinCs":   [ ], "clinLt": [ ],         // the CS / LT split behind "clin" (tooltip breakdown)
     "newEnrCs": [ ], "newEnrLt": [ ],
-    "avgCl":    [ ]                         // avg new enrolments per operational clinic / month
+    "avgCl":    [ ]                         // avg new enrolments per operational clinic / month (CS only: CS new enrolments ÷ CS operational clinics)
   },
 
   "followup": { "mom": [ { "m": "May 26", "v": 25, "n": 1843 } ] },   // v=% Y, n=(Y+N); target line 75%
