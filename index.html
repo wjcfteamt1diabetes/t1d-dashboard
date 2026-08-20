@@ -1071,6 +1071,15 @@ function renderTrainedStaff(){
 // ═══ CHARTS ═══
 function sc2(arr,o,scale){return arr.slice(o,o+WIN).map(v=>Math.round(v*(scale||1)));}
 
+// "Mar 26 – Aug 26" for the paged window. A date range shorter than WIN months
+// leaves fewer labels than the window is wide, so clamp rather than read past
+// the end (that printed "Jan 26 – undefined").
+function winLabel(o){
+  if(!MONTHS||!MONTHS.length) return '';
+  const end=Math.min(o+WIN,MONTHS.length)-1;
+  return end>o ? MONTHS[o]+' – '+MONTHS[end] : MONTHS[o];
+}
+
 function buildC1(o){
   if(_c1)_c1.destroy();
   const lb=MONTHS.slice(o,o+WIN);
@@ -1102,7 +1111,7 @@ function buildC1(o){
       }}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
-        y:{stacked:true, display:false, suggestedMax:Math.max(...tots)*1.2},
+        y:{stacked:true, display:false, suggestedMax:tots.length?Math.max(...tots)*1.2:undefined},
         y2:{position:'right', display:false}
       }
     }
@@ -1118,7 +1127,7 @@ function buildC1(o){
       note.textContent='Note: '+miss+' of '+g.total.toLocaleString()+' complete-support PLT1D are not on this axis'+(why.length?' — '+why.join(', '):'')+'. They are still counted in the Complete support card.';
     } else note.textContent='';
   }
-  document.getElementById('nl1').textContent=MONTHS[o]+' – '+MONTHS[o+WIN-1];
+  document.getElementById('nl1').textContent=winLabel(o);
   document.getElementById('p1').disabled=o<=0;
   document.getElementById('n1').disabled=o>=MAX;
 }
@@ -1153,13 +1162,13 @@ function buildC2(o){
       }}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
-        y:{stacked:true, display:false, suggestedMax:Math.max(...tot)*1.2},
+        y:{stacked:true, display:false, suggestedMax:tot.length?Math.max(...tot)*1.2:undefined},
         y2:{position:'right', display:false}
       }
     }
   });
   _c2._tots=tot;
-  document.getElementById('nl2').textContent=MONTHS[o]+' – '+MONTHS[o+WIN-1];
+  document.getElementById('nl2').textContent=winLabel(o);
   document.getElementById('p2').disabled=o<=0;
   document.getElementById('n2').disabled=o>=MAX;
 }
