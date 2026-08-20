@@ -166,7 +166,7 @@ Build frontend and backend against this one fixed JSON shape. It mirrors the das
     "clin":     [ ],                        // operational clinics per month = CS (Date of Operationalisation ≤ month end) + LT (from each LT facility's first reported enrolment month)
     "clinCs":   [ ], "clinLt": [ ],         // the CS / LT split behind "clin" (tooltip breakdown)
     "newEnrCs": [ ], "newEnrLt": [ ],
-    "avgCl":    [ ]                         // avg new enrolments per operational clinic / month = (newEnrCs + newEnrLt) ÷ clin
+    "avgCl":    [ ]                         // avg new enrolments per operational clinic / month = (newEnrCs + newEnrLt) ÷ clin; the New-enrolments card reuses this basis for the month it names
   },
 
   "followup": { "mom": [ { "m": "May 26", "v": 25, "n": 1843 } ] },   // v=% Y, n=(Y+N); target line 75%
@@ -352,6 +352,7 @@ Implement the rest tab-by-tab from the reference. Keep helpers pure (rows in →
 
 The reference defines **eight** filter dimensions and, per indicator, exactly which ones apply: **State, Division, District, Facility, DPC, Sex, Age, Status.** This replaces the mock multiplier approach entirely. Every indicator falls into one of four response patterns:
 
+- **Pattern A is enforced by `PGEO`.** `recompute()` builds two cohorts from the surviving patients: `PGEO` (geography only) drives both enrolment charts and the new-enrolments card, and `P` (all eight filters) drives every patient-level metric. Mixing them is what Pattern A forbids: light touch carries no sex/age/status, so a sex-filtered complete-support series stacked on an unfiltered light-touch one compares two different populations. When a patient-level filter is active the charts say so in their note instead of silently ignoring it.
 - **Pattern A — Geography only** (State/Division/District/Facility/DPC; *not* Sex/Age/Status): all footprint & operations KPIs (states, districts, planned/operational facilities, LT, enrolled-vs-target, new enrolments, both enrolment charts, clinic functionality, off days, HbA1c in-house, trained staff), the active/inactive split, reasons-for-inactive, non-surviving card, **and all Capacity Building indicators**.
 - **Pattern B — Geography + Status** (Sex/Age *off*): gender distribution, age distribution, previous-treatment-facility.
 - **Pattern C — All eight filters**: every patient clinical/adherence metric — insulin regimen (baseline & current), SMBG (both), hyper/hypo, all HbA1c indicators, DKA, severe hypoglycaemia, TDD-in-range, basal-%.

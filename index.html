@@ -262,7 +262,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">New enrolments — last month</div>
-    <div class="cs">Count, among all newly enrolled PLT1D</div>
+    <div class="cs">Count, complete support + light touch</div>
     <div class="kv g2c" id="k-new">51</div>
     <div class="ks" id="k-avgclin">Avg/clinic: 0.9</div>
     <div class="ktr dn" id="k-newtrend">↓ vs 96 prior month</div>
@@ -322,6 +322,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
       <button class="nb" id="n2" onclick="shift(1,1)">Forward →</button>
     </div>
     <div style="height:170px;position:relative"><canvas id="c2"></canvas></div>
+    <div class="cs" id="c2-note" style="margin-top:6px"></div>
   </div>
 </div>
 
@@ -1071,6 +1072,26 @@ function renderTrainedStaff(){
 // ═══ CHARTS ═══
 function sc2(arr,o,scale){return arr.slice(o,o+WIN).map(v=>Math.round(v*(scale||1)));}
 
+// Both enrolment charts are geography-only, so an active sex/age/status filter
+// changes the rest of the page but not them. Say so rather than let the charts
+// look stuck.
+function filterNote(){
+  return (TREND_GAP&&TREND_GAP.patFilter)
+    ? 'Sex, age and status filters do not apply here — light touch reports no patient detail, so enrolment trends stay geography-only.'
+    : '';
+}
+
+// Patients with no usable enrolment date have no month to sit in.
+function gapNote(){
+  const g=TREND_GAP; if(!g) return '';
+  const miss=g.total-g.plotted; if(miss<=0) return '';
+  const why=[];
+  if(g.noDate) why.push(g.noDate+' with no enrolment date');
+  if(g.after)  why.push(g.after+' dated after '+g.lastLabel);
+  return 'Note: '+miss+' of '+g.total.toLocaleString()+' complete-support PLT1D are not on this axis'
+    +(why.length?' — '+why.join(', '):'')+'. They are still counted in the enrolled totals.';
+}
+
 // "Mar 26 – Aug 26" for the paged window. A date range shorter than WIN months
 // leaves fewer labels than the window is wide, so clamp rather than read past
 // the end (that printed "Jan 26 – undefined").
@@ -1118,15 +1139,7 @@ function buildC1(o){
   });
   _c1._tots=tots;
   const note=document.getElementById('c1-note');
-  if(note){
-    const g=TREND_GAP, miss=g?g.total-g.plotted:0;
-    if(miss>0){
-      const why=[];
-      if(g.noDate) why.push(g.noDate+' with no enrolment date');
-      if(g.after)  why.push(g.after+' dated after '+g.lastLabel);
-      note.textContent='Note: '+miss+' of '+g.total.toLocaleString()+' complete-support PLT1D are not on this axis'+(why.length?' — '+why.join(', '):'')+'. They are still counted in the Complete support card.';
-    } else note.textContent='';
-  }
+  if(note) note.textContent=[filterNote(),gapNote()].filter(Boolean).join(' ');
   document.getElementById('nl1').textContent=winLabel(o);
   document.getElementById('p1').disabled=o<=0;
   document.getElementById('n1').disabled=o>=MAX;
@@ -1168,6 +1181,8 @@ function buildC2(o){
     }
   });
   _c2._tots=tot;
+  const note2=document.getElementById('c2-note');
+  if(note2) note2.textContent=filterNote();
   document.getElementById('nl2').textContent=winLabel(o);
   document.getElementById('p2').disabled=o<=0;
   document.getElementById('n2').disabled=o>=MAX;
@@ -2131,10 +2146,17 @@ function recompute(){
     if(f.district!=='all'&&normv(r['District'])!==normv(f.district))return false; return true;};
 
   const survAll=RAW.enrolled.filter(p=>normv(p['Survival Status'])!=='no');
-  const P=survAll.filter(p=>geoPatient(p)&&
+  // Enrolment trends are geography-only (architecture §Pattern A): light touch
+  // contributes aggregate counts with no sex/age/status attached, so filtering the
+  // complete-support half by those would stack a filtered series on an unfiltered
+  // one. PGEO drives both enrolment charts and the new-enrolments card; P (all
+  // eight filters) drives every patient-level metric.
+  const PGEO=survAll.filter(geoPatient);
+  const P=PGEO.filter(p=>
     (f.sex==='all'||sexTok(p)===f.sex)&&
     (f.age==='all'||ageTok(p)===f.age)&&
     (f.status==='all'||statusTok(p)===f.status));
+  const patFilter=(f.sex!=='all'||f.age!=='all'||f.status!=='all');
 
   const csF =RAW.csFac.filter(geoCS);
   const capF=RAW.cap.filter(geoCap);
@@ -2164,7 +2186,7 @@ function recompute(){
   const n=P.length||1;
   const now=new Date();
   const lastM=new Date(now.getFullYear(),now.getMonth()-1,1), prevM=new Date(now.getFullYear(),now.getMonth()-2,1);
-  let male=0,female=0,oth=0,ped=0,adu=0,active=0,newLast=0,newPrev=0,insB=0,insL=0,fupDen=0,dkaN=0,hypoN=0;
+  let male=0,female=0,oth=0,ped=0,adu=0,active=0,insB=0,insL=0,fupDen=0,dkaN=0,hypoN=0;
   const facMap={},inactMap={};
   const tdd={ped:{b:0,i:0,a:0,n:0},adu:{b:0,i:0,a:0,n:0}};
   const bas=[0,0,0,0,0];let basN=0;
@@ -2187,8 +2209,6 @@ function recompute(){
     const bp=pctNum(p['Basal %']);if(bp!=null&&bp>0){basN++;if(bp<20)bas[0]++;else if(bp<30)bas[1]++;else if(bp<=50)bas[2]++;else if(bp<=60)bas[3]++;else bas[4]++;}
     if(statusTok(p)==='inactive'){const rs=String(p['Reason for marking inactive']).trim();if(rs)inactMap[rs]=(inactMap[rs]||0)+1;}
     const ed=parseDate(p['Date of enrolment']);
-    if(ed&&ed.getFullYear()===lastM.getFullYear()&&ed.getMonth()===lastM.getMonth())newLast++;
-    if(ed&&ed.getFullYear()===prevM.getFullYear()&&ed.getMonth()===prevM.getMonth())newPrev++;
   });
   const gTot=(male+female+oth)||1,aTot=(ped+adu)||1;
 
@@ -2215,7 +2235,7 @@ function recompute(){
     const firstK=ymKey(months[0].y,months[0].m);
     Object.keys(lt.monthly).forEach(lbl=>{const h=hdrMonth(lbl); if(h&&ymKey(h.y,h.m)<firstK) cumLt+=lt.monthly[lbl];});
   }
-  const enrDates=P.map(p=>parseDate(p['Date of enrolment']));
+  const enrDates=PGEO.map(p=>parseDate(p['Date of enrolment']));
   months.forEach(mo=>{
     const eom=new Date(mo.y,mo.m+1,0,23,59,59);
     let cum=0,nw=0;enrDates.forEach(e=>{if(e&&e<=eom)cum++;if(e&&e.getFullYear()===mo.y&&e.getMonth()===mo.m)nw++;});
@@ -2235,10 +2255,25 @@ function recompute(){
   // every filtered patient). Surface the difference rather than let it read as a
   // discrepancy — it clears itself when the sheet is corrected.
   const lastEom=months.length?new Date(months[months.length-1].y,months[months.length-1].m+1,0,23,59,59):null;
-  TREND_GAP={total:P.length, plotted:csCum.length?csCum[csCum.length-1]:0,
+  TREND_GAP={total:PGEO.length, plotted:csCum.length?csCum[csCum.length-1]:0, patFilter:patFilter,
              noDate:enrDates.filter(e=>!e).length,
              after:lastEom?enrDates.filter(e=>e&&e>lastEom).length:0,
              lastLabel:months.length?months[months.length-1].label:''};
+
+  // New-enrolments card: same two halves and same clinic count as the chart, so the
+  // card and the month it names always agree. Clinics are taken as-of that month
+  // rather than today's total, which is what the chart's avg line divides by.
+  const mLabel=d=>MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
+  const lastLbl=mLabel(lastM), prevLbl=mLabel(prevM);
+  let csLast=0,csPrev=0;
+  enrDates.forEach(e=>{
+    if(!e) return;
+    if(e.getFullYear()===lastM.getFullYear()&&e.getMonth()===lastM.getMonth())csLast++;
+    if(e.getFullYear()===prevM.getFullYear()&&e.getMonth()===prevM.getMonth())csPrev++;
+  });
+  const newLast=csLast+(lt.monthly[lastLbl]||0), newPrev=csPrev+(lt.monthly[prevLbl]||0);
+  const iLast=months.findIndex(m=>m.label===lastLbl);
+  const clinLast=iLast>=0?clin[iLast]:(csOp+lt.facCount);
 
   // ── Follow-up MoM (join followup sheet to filtered survivor IDs) ──
   const idSet={};P.forEach(p=>idSet[normv(p['Claude_ID'])]=true);
@@ -2290,7 +2325,7 @@ function recompute(){
   CURD={
     states:statesCount, dist, plan:csF.length+lt.facCount, op:csOp+lt.facCount, csOp, ltOp:lt.facCount,
     enr:csEnr+ltEnr, csEnr, ltEnr, target,
-    newLast, newPrev, avgClin:csOp>0?Math.round(newLast/csOp*10)/10:0,
+    newLast, newPrev, avgClin:clinLast>0?Math.round(newLast/clinLast*10)/10:0,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
     hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
     hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
