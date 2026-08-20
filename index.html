@@ -54,6 +54,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .g6{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-bottom:7px}
 .g5{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:7px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:7px}
+.dn-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:9px;font-weight:bold;white-space:nowrap}
+.dn-ok{background:#dcfce7;color:#166534}
+.dn-below{background:#fef3c7;color:#92400e}
+.dn-na{background:#f1f5f9;color:#64748b}
+.info-table tr.dn-tot td{background:#f8fafc;border-top:2px solid var(--b2)}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:7px}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
 .cs2{grid-column:span 2}.cs3{grid-column:span 3}.cs4{grid-column:span 4}
@@ -215,7 +220,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <button class="tab" onclick="switchTab(1)">Clinical Outcomes</button>
     <button class="tab" onclick="switchTab(2)">Capacity Building</button>
     <button class="tab" onclick="switchTab(3)">Stock Levels</button>
-    <button class="tab" onclick="switchTab(4)">Indicator Definitions</button>
+    <button class="tab" onclick="switchTab(4)">Donor Reporting</button>
+    <button class="tab" onclick="switchTab(5)">Indicator Definitions</button>
   </div>
 </div>
 
@@ -792,8 +798,117 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 </div></div><!-- /tab-3 -->
 
-<!-- ══════════ TAB 4 — INDICATOR DEFINITIONS ══════════ -->
+<!-- ══════════ TAB 4 — DONOR REPORTING ══════════ -->
 <div class="tc" id="tab-4">
+<div class="tc-wrap">
+
+<div class="sl">Programme at a glance</div>
+<div class="g4">
+  <div class="card">
+    <div class="ct">Implementation states</div>
+    <div class="cs">States with a live T1D programme</div>
+    <div class="kv b" id="dn-states">—</div>
+    <div class="kn" id="dn-states-n">—</div>
+  </div>
+  <div class="card">
+    <div class="ct">Districts reached</div>
+    <div class="cs">Districts with ≥1 operational T1D clinic</div>
+    <div class="kv b" id="dn-dist">—</div>
+    <div class="kn" id="dn-dist-n">—</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">T1D clinics operational</div>
+    <div class="cs">Complete support + light touch</div>
+    <div class="kv b" id="dn-clin">—</div>
+    <div class="kn" id="dn-clin-n">—</div>
+  </div>
+  <div class="card cab">
+    <div class="ct">PLT1D enrolled</div>
+    <div class="cs">Cumulative, all program sites</div>
+    <div class="kv b" id="dn-enr">—</div>
+    <div class="kn" id="dn-enr-n">—</div>
+  </div>
+</div>
+<div class="g4">
+  <div class="card">
+    <div class="ct">On basal-bolus regimen</div>
+    <div class="cs">% of enrolled PLT1D, current</div>
+    <div class="kv g2c" id="dn-bb">—</div>
+    <div class="kn" id="dn-bb-n">—</div>
+  </div>
+  <div class="card">
+    <div class="ct">Average HbA1c</div>
+    <div class="cs">Latest reading, enrolled ≥3 months</div>
+    <div class="kv g2c" id="dn-hba">—</div>
+    <div class="kn" id="dn-hba-n">—</div>
+  </div>
+  <div class="card">
+    <div class="ct">Clinicians trained</div>
+    <div class="cs">Doctors + staff nurses</div>
+    <div class="kv g2c" id="dn-clin-tr">—</div>
+    <div class="kn" id="dn-clin-tr-n">—</div>
+  </div>
+  <div class="card">
+    <div class="ct">Frontline workers oriented</div>
+    <div class="cs">On signs and symptoms of T1D</div>
+    <div class="kv g2c" id="dn-flw">—</div>
+    <div class="kn" id="dn-flw-n">—</div>
+  </div>
+</div>
+
+<div class="sl">Logframe scorecard — against Jul ’26 targets</div>
+<div class="card" style="padding:0;overflow:hidden">
+  <table class="info-table" id="dn-logframe"></table>
+</div>
+<div class="cs" id="dn-logframe-note" style="margin-top:6px"></div>
+
+<div class="sl">Programme footprint by state</div>
+<div class="card" style="padding:0;overflow:hidden">
+  <table class="info-table" id="dn-states-tbl"></table>
+</div>
+
+<div class="sl">Enrolment and clinic growth</div>
+<div class="card">
+  <div class="ct">Cumulative PLT1D enrolled by state vs clinics operational</div>
+  <div class="cs">Bars = cumulative enrolments as of each month, split by state · line = operational clinics that month</div>
+  <div class="lg" id="dn-growth-lg"></div>
+  <div style="height:230px;position:relative"><canvas id="dn-growth"></canvas></div>
+</div>
+
+<div class="sl">Quality of care</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct">Insulin regimen — at enrolment vs current</div>
+    <div class="cs">% of enrolled PLT1D on a basal-bolus regimen</div>
+    <div class="lg" style="margin-top:6px">
+      <span><span class="ld" style="background:var(--b2)"></span>Basal-bolus</span>
+      <span><span class="ld" style="background:var(--g4)"></span>Other regimen</span>
+    </div>
+    <div id="dn-regimen" style="margin-top:10px;display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Average HbA1c — baseline vs latest</div>
+    <div class="cs">By time since enrolment, among PLT1D with both readings</div>
+    <div class="lg" style="margin-top:6px">
+      <span><span class="ld" style="background:var(--g3)"></span>At enrolment</span>
+      <span><span class="ld" style="background:var(--b2)"></span>Latest reading</span>
+    </div>
+    <div style="height:190px;position:relative"><canvas id="dn-hba-dur"></canvas></div>
+  </div>
+</div>
+
+<div class="sl">Capacity building</div>
+<div class="card">
+  <div class="ct">Cadre trained / oriented, split by state</div>
+  <div class="cs">Distinct service providers in the capacity-building and orientation records</div>
+  <div class="lg" id="dn-cadre-lg"></div>
+  <div style="height:200px;position:relative"><canvas id="dn-cadre"></canvas></div>
+</div>
+
+</div></div><!-- /tab-4 -->
+
+<!-- ══════════ TAB 5 — INDICATOR DEFINITIONS ══════════ -->
+<div class="tc" id="tab-5">
 <div class="tc-wrap">
 <div class="sl">Indicator Definitions &amp; Calculation Methodology</div>
 <div class="card" style="padding:0;overflow:hidden">
@@ -813,7 +928,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <tbody id="info-tbody"></tbody>
 </table>
 </div>
-</div></div><!-- /tab-4 -->
+</div></div><!-- /tab-5 -->
 
 
 <script>
@@ -874,6 +989,7 @@ let RAW=null;          // parsed sheets: {enrolled, csFac, ltGrid, cap, orient, 
 let DATA=null;         // {demographics, insulin, capacity} for the active filter
 let CURD=null;         // merged geo+patient object consumed by renderKPIs
 let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL,TREND_GAP;
+let DONOR=null;        // everything the Donor Reporting tab renders
 let FUP_MOM,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
 let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
 // ── Date-range slicer (time-axis only): month bounds, inclusive; null = unbounded ──
@@ -906,6 +1022,25 @@ let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 let TARGETS={RJ:4000,MP:1082,UK:602,CG:270,all:5954};  // overwritten from Targets sheet at load
+
+// ── Donor logframe (Jul '26 column) ──────────────────────────────────────────
+// These are contractual targets from the grant logframe, not programme data:
+// no sheet carries them, so they live here. Editing a target means editing this
+// table. `cmp` is the direction that counts as meeting it; `fmt` how to render.
+const LOGFRAME=[
+  {n:'2.1.1', ind:'Implementation states finalised',                      key:'states',   target:4,    cmp:'gte', fmt:'int'},
+  {n:'2.1.2', ind:'Pilot districts finalised',                            key:'dist',     target:8,    cmp:'gte', fmt:'int'},
+  {n:'2.5',   ind:'T1D clinics operational at program sites',             key:'clinics',  target:8,    cmp:'gte', fmt:'int'},
+  {n:'2.2.1', ind:'Paediatricians and physicians trained',                key:'docs',     target:16,   cmp:'gte', fmt:'int'},
+  {n:'2.2.2', ind:'Staff nurses trained',                                 key:'nurses',   target:8,    cmp:'gte', fmt:'int'},
+  {n:'3.1',   ind:'PLT1D enrolled at sites',                              key:'enrolled', target:1000, cmp:'gte', fmt:'int'},
+  {n:'3.2',   ind:'PLT1D following a basal-bolus regimen',                key:'bb',       target:90,   cmp:'gte', fmt:'pct'},
+  {n:'3.3',   ind:'PLT1D monitoring blood glucose 3–4×/day (≥3 months)',  key:'smbg34',   target:75,   cmp:'gte', fmt:'pct'},
+  {n:'3.4',   ind:'PLT1D receiving routine on-site follow-up care',       key:'fup',      target:75,   cmp:'gte', fmt:'pct'},
+  {n:'3.5',   ind:'Average HbA1c of PLT1D (enrolled ≥3 months)',          key:'hba',      target:8.5,  cmp:'lte', fmt:'dec'},
+  {n:'3.6',   ind:'PLT1D with a DKA episode in the past year',            key:'dka',      target:10,   cmp:'lte', fmt:'pct'},
+  {n:'3.7',   ind:'PLT1D with a severe hypoglycaemia episode, past year', key:'hypo',     target:10,   cmp:'lte', fmt:'pct'}
+];
 
 function fval(id){const e=document.getElementById(id);return e?e.value:'all';}
 function getF(){return{
@@ -1649,6 +1784,152 @@ function addSumNotes(){
   });
 }
 
+// ═══════════ DONOR REPORTING ═══════════
+const DN_COL={MP:'#0f3460',RJ:'#1a5fa8',UK:'#2e86de',CG:'#7db8e8'};
+let _dnGrowth,_dnHba,_dnCadre;
+
+function dnFmt(v,fmt){
+  if(v==null) return '—';
+  return fmt==='pct'?v+'%' : fmt==='dec'?Number(v).toFixed(1) : Number(v).toLocaleString();
+}
+function dnMet(v,t,cmp){ return v==null?null : (cmp==='lte' ? v<=t : v>=t); }
+
+function renderDonorKPIs(){
+  const d=DONOR; if(!d) return;
+  const sv=(id,t)=>{const e=document.getElementById(id); if(e)e.textContent=t;};
+  sv('dn-states',d.states); sv('dn-states-n',d.byState.map(r=>r.st).join(' · ')||'—');
+  sv('dn-dist',d.dist);     sv('dn-dist-n','with ≥1 operational clinic');
+  sv('dn-clin',d.clinics.toLocaleString()); sv('dn-clin-n',d.byState.map(r=>r.st+' '+r.clinics).join(' · '));
+  sv('dn-enr',d.enrolled.toLocaleString()); sv('dn-enr-n','across '+d.clinics+' clinics');
+  sv('dn-bb',d.bb!=null?d.bb+'%':'—');      sv('dn-bb-n','from '+(d.bbBase!=null?d.bbBase+'%':'—')+' at enrolment');
+  sv('dn-hba',d.hba!=null?Number(d.hba).toFixed(1):'—');
+  sv('dn-hba-n',d.hbaBase!=null?'from '+Number(d.hbaBase).toFixed(1)+' at baseline':'no paired readings yet');
+  sv('dn-clin-tr',(d.docs+d.nurses).toLocaleString()); sv('dn-clin-tr-n',d.docs+' doctors · '+d.nurses+' nurses');
+  sv('dn-flw',d.flw.toLocaleString());      sv('dn-flw-n','ASHA, ASHA supervisors, CHOs');
+}
+
+function renderLogframe(){
+  const d=DONOR, t=document.getElementById('dn-logframe'); if(!d||!t) return;
+  const val={states:d.states,dist:d.dist,clinics:d.clinics,docs:d.docs,nurses:d.nurses,
+             enrolled:d.enrolled,bb:d.bb,smbg34:d.smbg34,fup:d.fup,hba:d.hba,dka:d.dka,hypo:d.hypo};
+  let h='<thead><tr><th style="width:52px">#</th><th>Indicator</th><th style="width:110px">Target (Jul ’26)</th><th style="width:100px">Current</th><th style="width:104px">Status</th></tr></thead><tbody>';
+  LOGFRAME.forEach(r=>{
+    const v=val[r.key], met=dnMet(v,r.target,r.cmp);
+    const tgt=(r.cmp==='lte'?'≤ ':'')+dnFmt(r.target,r.fmt);
+    const badge=v==null
+      ? '<span class="dn-pill dn-na">no data</span>'
+      : met ? '<span class="dn-pill dn-ok">met</span>'
+            : '<span class="dn-pill dn-below">below</span>';
+    h+='<tr><td>'+r.n+'</td><td>'+r.ind+'</td><td>'+tgt+'</td><td><b>'+dnFmt(v,r.fmt)+'</b></td><td>'+badge+'</td></tr>';
+  });
+  t.innerHTML=h+'</tbody>';
+  const note=document.getElementById('dn-logframe-note');
+  if(note){
+    const bits=['Targets are the Jul ’26 column of the grant logframe and are held in the dashboard code, not in a sheet.'];
+    if(d.filtered) bits.push('A geography filter is active — the targets below are programme-wide, so they do not apply to a filtered view.');
+    if(d.fup!=null) bits.push('Follow-up is the attendance-weighted average of the last '+d.fupMonths+' months (n='+d.fupN.toLocaleString()+' visits due).');
+    if(d.smbg34!=null) bits.push('SMBG is '+d.smbgMonth+', among PLT1D enrolled ≥3 months (n='+d.smbgN.toLocaleString()+').');
+    note.textContent=bits.join(' ');
+  }
+}
+
+function renderDonorStates(){
+  const d=DONOR, t=document.getElementById('dn-states-tbl'); if(!d||!t) return;
+  let h='<thead><tr><th>State</th><th style="width:110px">Districts</th><th style="width:130px">Clinics operational</th><th style="width:130px">PLT1D enrolled</th><th style="width:110px">% of enrolled</th></tr></thead><tbody>';
+  d.byState.forEach(r=>{
+    h+='<tr><td><b>'+r.name+'</b></td><td>'+r.districts+'</td><td>'+r.clinics+'</td><td>'+r.enrolled.toLocaleString()+'</td><td>'+r.share+'%</td></tr>';
+  });
+  h+='<tr class="dn-tot"><td><b>Total</b></td><td><b>'+d.dist+'</b></td><td><b>'+d.clinics+'</b></td><td><b>'+d.enrolled.toLocaleString()+'</b></td><td><b>100%</b></td></tr>';
+  t.innerHTML=h+'</tbody>';
+}
+
+function buildDonorGrowth(){
+  const d=DONOR; if(!d) return;
+  if(_dnGrowth)_dnGrowth.destroy();
+  const g=d.growth;
+  const lg=document.getElementById('dn-growth-lg');
+  if(lg) lg.innerHTML=g.series.map(sr=>'<span><span class="ld" style="background:'+(DN_COL[sr.st]||'#94a3b8')+'"></span>'+sr.name+'</span>').join('')
+    +'<span><span class="ldc" style="background:#d97706"></span>Clinics operational</span>';
+  const tots=g.labels.map((_,i)=>g.series.reduce((a,sr)=>a+(sr.data[i]||0),0));
+  _dnGrowth=new Chart(document.getElementById('dn-growth'),{
+    type:'bar',
+    data:{labels:g.labels,datasets:g.series.map(sr=>({
+        label:sr.name,data:sr.data,backgroundColor:DN_COL[sr.st]||'#94a3b8',stack:'s',_noLabel:true
+      })).concat([{label:'Clinics operational',data:g.clinics,type:'line',borderColor:'#d97706',
+        backgroundColor:'transparent',borderWidth:2,pointRadius:2,pointBackgroundColor:'#d97706',
+        yAxisID:'y2',_noLabel:true}])},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:14}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label(ctx){
+          if(ctx.dataset.label==='Clinics operational') return ' Clinics operational: '+ctx.parsed.y;
+          return ' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString();
+        },
+        afterBody(items){return['Total enrolled: '+tots[items[0].dataIndex].toLocaleString()];}
+      }}},
+      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{font:{size:8},maxRotation:0,autoSkip:true}},
+              y:{stacked:true,display:false,suggestedMax:tots.length?Math.max(...tots)*1.15:undefined},
+              y2:{position:'right',display:false}}}
+  });
+}
+
+function renderDonorRegimen(){
+  const d=DONOR, el=document.getElementById('dn-regimen'); if(!d||!el) return;
+  el.innerHTML='';
+  [['At enrolment',d.bbBase],['Current',d.bb]].forEach(([lbl,v])=>{
+    const bb=v==null?0:v, other=100-bb;
+    const row=document.createElement('div');
+    row.innerHTML='<div style="font-size:9px;color:var(--g2);margin-bottom:3px">'+lbl+'</div>'
+      +'<div style="display:flex;height:26px;border-radius:3px;overflow:hidden">'
+      +'<div style="width:'+bb+'%;background:var(--b2);display:flex;align-items:center;justify-content:center;color:#fff;font-size:9px;font-weight:bold">'+(bb>=8?bb+'%':'')+'</div>'
+      +'<div style="width:'+other+'%;background:var(--g4);display:flex;align-items:center;justify-content:center;color:#0f172a;font-size:9px;font-weight:bold">'+(other>=8?other+'%':'')+'</div>'
+      +'</div>';
+    el.appendChild(row);
+  });
+}
+
+function buildDonorHbaDur(){
+  const d=DONOR; if(!d) return;
+  if(_dnHba)_dnHba.destroy();
+  const h=d.hbaDur;
+  const keep=h.labels.map((l,i)=>i).filter(i=>h.n[i]>0);
+  _dnHba=new Chart(document.getElementById('dn-hba-dur'),{
+    type:'bar',
+    data:{labels:keep.map(i=>h.labels[i]),datasets:[
+      {label:'At enrolment',data:keep.map(i=>h.base[i]),backgroundColor:'#94a3b8',_pct:false,_fs:8,_minH:12,_lc:'#0f172a'},
+      {label:'Latest reading',data:keep.map(i=>h.last[i]),backgroundColor:'#1a5fa8',_pct:false,_fs:8,_minH:12}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:14}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label(ctx){return ' '+ctx.dataset.label+': '+ctx.parsed.y.toFixed(1)+'%';},
+        afterBody(items){const i=keep[items[0].dataIndex];return['n = '+h.n[i]+' PLT1D'];}
+      }}},
+      scales:{x:{grid:{display:false},border:{display:false},ticks:{font:{size:9}}},
+              y:{display:false,suggestedMin:0,suggestedMax:14}}}
+  });
+}
+
+function buildDonorCadre(){
+  const d=DONOR; if(!d) return;
+  if(_dnCadre)_dnCadre.destroy();
+  const c=d.cadre, sts=c.states.filter(k=>(c.docs[k]||c.nurses[k]||c.flw[k]));
+  const lg=document.getElementById('dn-cadre-lg');
+  if(lg) lg.innerHTML=sts.map(k=>'<span><span class="ld" style="background:'+(DN_COL[k]||'#94a3b8')+'"></span>'+sln(k)+'</span>').join('');
+  const cats=['Doctors','Staff nurses','Frontline workers'];
+  const pick=(k,i)=>i===0?(c.docs[k]||0):i===1?(c.nurses[k]||0):(c.flw[k]||0);
+  const tots=cats.map((_,i)=>sts.reduce((a,k)=>a+pick(k,i),0));
+  _dnCadre=new Chart(document.getElementById('dn-cadre'),{
+    type:'bar',
+    data:{labels:cats,datasets:sts.map(k=>({label:sln(k),data:cats.map((_,i)=>pick(k,i)),
+      backgroundColor:DN_COL[k]||'#94a3b8',stack:'s',_noLabel:true}))},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{
+        label(ctx){return ' '+ctx.dataset.label+': '+ctx.parsed.x.toLocaleString();},
+        afterBody(items){return['Total: '+tots[items[0].dataIndex].toLocaleString()];}
+      }}},
+      scales:{x:{stacked:true,display:false},y:{stacked:true,grid:{display:false},border:{display:false},ticks:{font:{size:10}}}}}
+  });
+}
+
 function applyFilters(){
   safe('syncDateRange', syncDateRange);       // read the From/To month pickers into DATE_FROM/DATE_TO
   safe('populateFilters', populateFilters);   // cascade dropdown options to current selection
@@ -1678,6 +1959,13 @@ function applyFilters(){
   safe('renderStockKPIs', renderStockKPIs);
   safe('renderStockTrend',renderStockTrend);
   safe('renderStockHeatmap', renderStockHeatmap);
+  safe('renderDonorKPIs',    renderDonorKPIs);
+  safe('renderLogframe',     renderLogframe);
+  safe('renderDonorStates',  renderDonorStates);
+  safe('buildDonorGrowth',   buildDonorGrowth);
+  safe('renderDonorRegimen', renderDonorRegimen);
+  safe('buildDonorHbaDur',   buildDonorHbaDur);
+  safe('buildDonorCadre',    buildDonorCadre);
 }
 
 // ═══════════ STOCK LEVELS ═══════════
@@ -2334,6 +2622,119 @@ function recompute(){
     nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
     flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
   };
+
+  computeDonor({f,PGEO,csF,lt,months,clin,hba,smbg,fmom,drs,nrs,oriF,csOp,
+                insBase:pctC(insB,n), insLast:pctC(insL,n),
+                dka:fupDen?pctC(dkaN,fupDen):null, hypo:fupDen?pctC(hypoN,fupDen):null});
+}
+
+// ── Donor Reporting: programme-level roll-up against the grant logframe ──
+// Everything here is derived from the same sheets the rest of the dashboard uses;
+// only the logframe targets are constants (see LOGFRAME).
+function computeDonor(x){
+  const {f,PGEO,csF,lt,months,clin,hba,smbg,fmom,drs,nrs,oriF,csOp}=x;
+  const ST=['MP','RJ','UK','CG'];
+
+  // Districts that actually have an operational clinic — the deck counts reach,
+  // not the planned list, so a planned-but-not-open district must not count.
+  const dOp={};
+  csF.forEach(r=>{ if(isYes(r['T1D Clinic Operational?'])){const d=normv(r['District']); if(d)dOp[d]=true;} });
+  const ltAll=ltRows(f);
+  ltAll.forEach(r=>{ if(r.district)dOp[normv(r.district)]=true; });
+
+  // Per-state footprint. ltData() already knows how to scope light touch to a
+  // state, so reuse it rather than re-reading the grid.
+  const stEnr={}, stCs={}, stLt={};
+  PGEO.forEach(p=>{const k=stUp(p); if(k)stCs[k]=(stCs[k]||0)+1;});
+  const byState=[];
+  ST.forEach(k=>{
+    const ltk=ltData(Object.assign({},f,{state:k}));
+    const cs=csF.filter(r=>String(r['State']||'').trim().toUpperCase()===k);
+    const clinics=cs.filter(r=>isYes(r['T1D Clinic Operational?'])).length+ltk.facCount;
+    const ds={}; cs.forEach(r=>{if(isYes(r['T1D Clinic Operational?'])){const d=normv(r['District']);if(d)ds[d]=true;}});
+    ltRows(Object.assign({},f,{state:k})).forEach(r=>{if(r.district)ds[normv(r.district)]=true;});
+    const enr=(stCs[k]||0)+ltk.totalEnr;
+    stLt[k]=ltk;
+    if(clinics||enr) byState.push({st:k,name:sln(k),districts:Object.keys(ds).length,clinics:clinics,enrolled:enr});
+  });
+  const totEnr=byState.reduce((a,b)=>a+b.enrolled,0)||1;
+  byState.forEach(r=>r.share=Math.round(r.enrolled/totEnr*100));
+
+  // Growth: cumulative enrolments per state as of each month + clinics that month
+  const stDates={}; ST.forEach(k=>stDates[k]=[]);
+  PGEO.forEach(p=>{const k=stUp(p); if(stDates[k]) stDates[k].push(parseDate(p['Date of enrolment']));});
+  const growth={labels:months.map(m=>m.label), series:[], clinics:clin.slice()};
+  const seen=byState.map(r=>r.st);
+  seen.forEach(k=>{
+    const mon=stLt[k]?stLt[k].monthly:{};
+    // light touch trimmed off the front still counts, same rule as the CS side
+    let cum=0;
+    if(months.length){const first=ymKey(months[0].y,months[0].m);
+      Object.keys(mon).forEach(l=>{const h=hdrMonth(l); if(h&&ymKey(h.y,h.m)<first)cum+=mon[l];});}
+    const row=[];
+    months.forEach(mo=>{
+      const eom=new Date(mo.y,mo.m+1,0,23,59,59);
+      cum+=(mon[mo.label]||0);
+      row.push(stDates[k].filter(e=>e&&e<=eom).length+cum);
+    });
+    growth.series.push({st:k,name:sln(k),data:row});
+  });
+
+  // Follow-up: the logframe reports a 6-month average, not a single month
+  const f6=(fmom||[]).slice(0,6);
+  const fupN=f6.reduce((a,c)=>a+(c.n||0),0);
+  const fup=fupN?Math.round(f6.reduce((a,c)=>a+c.v*(c.n||0),0)/fupN):null;
+
+  // Capacity by state
+  const cadre=(rows,col)=>{const out={},seenN={};
+    rows.forEach(r=>{const k=String(r['State']||'').trim().toUpperCase(),n=normv(r[col]);
+      if(!k||!n)return; const key=k+'|'+n; if(seenN[key])return; seenN[key]=true; out[k]=(out[k]||0)+1;});
+    return out;};
+  const docBy=cadre(drs,'Name of Service Provider'), nrsBy=cadre(nrs,'Name of Service Provider');
+  const flwBy={}; oriF.forEach(r=>{const k=String(r['State']||'').trim().toUpperCase();
+    if(k)flwBy[k]=(flwBy[k]||0)+(num(r['# of Service Providers'])||0);});
+  const sum=o=>Object.keys(o).reduce((a,k)=>a+o[k],0);
+
+  // Peer support (logframe 4.2)
+  const peerFac=csF.filter(r=>isYes(r['Peer support groups formed?'])).length;
+  const campKey=csF.length?colKey(csF[0],[/peer support camps/i]):null;
+  const peerCamps=campKey?csF.reduce((a,r)=>a+(num(r[campKey])||0),0):null;
+
+  const hbaLast=hba.avgL&&hba.avgL[0]?hba.avgL[0]:null;
+  DONOR={
+    filtered:(f.state!=='all'||f.division!=='all'||f.district!=='all'||f.facility!=='all'||f.dpc!=='all'),
+    states:byState.length, dist:Object.keys(dOp).length,
+    clinics:csOp+lt.facCount, enrolled:PGEO.length+lt.totalEnr,
+    docs:sum(docBy), nurses:sum(nrsBy), flw:sum(flwBy),
+    bb:x.insLast, bbBase:x.insBase,
+    hba:hbaLast, hbaBase:hba.avgB&&hba.avgB[0]?hba.avgB[0]:null,
+    smbg34:smbg.last?smbg.last.v[2]:null, smbgN:smbg.last?smbg.last.n:0, smbgMonth:smbg.last?smbg.last.m:'',
+    fup:fup, fupN:fupN, fupMonths:f6.length,
+    dka:x.dka, hypo:x.hypo,
+    byState:byState, growth:growth,
+    hbaDur:{labels:(hba.changeLabels||[]).slice(1).map(l=>l[0].replace(' months','m')),
+            base:(hba.avgB||[]).slice(1), last:(hba.avgL||[]).slice(1), n:(hba.changeN||[]).slice(1)},
+    cadre:{states:ST, docs:docBy, nurses:nrsBy, flw:flwBy},
+    peerFac:peerFac, peerCamps:peerCamps
+  };
+}
+
+// Light-touch rows as objects, for counts ltData() does not return
+function ltRows(f){
+  const g=RAW.ltGrid; if(!g||g.length<2) return [];
+  if(f.division!=='all'||f.dpc!=='all') return [];
+  const hr=headerRowOf(g,['Facility name','Total enrolments (autocalculated)']);
+  const h=g[hr].map(c=>String(c).trim());
+  const si=h.indexOf('State'), di=h.indexOf('District'), ni=h.indexOf('Facility name');
+  const out=[];
+  for(let r=hr+1;r<g.length;r++){const row=g[r];
+    if(ni<0||!normv(row[ni])) continue;
+    if(f.state!=='all'&&si>=0&&String(row[si]||'').trim().toUpperCase()!==f.state) continue;
+    if(f.district!=='all'&&di>=0&&normv(row[di])!==normv(f.district)) continue;
+    if(f.facility!=='all'&&normv(row[ni])!==normv(f.facility)) continue;
+    out.push({state:si>=0?String(row[si]||'').trim().toUpperCase():'',district:di>=0?String(row[di]||'').trim():'',facility:String(row[ni]).trim()});
+  }
+  return out;
 }
 
 function computeFollowup(idSet){

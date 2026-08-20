@@ -118,6 +118,14 @@ Two workbooks. Confirm exact tab names and header strings against the live files
 | `Operations_Summary` | `Facility Name`, Month/Year columns (value = % time operational: `1.0`=100%, `0.75`=75%; `NaN`=not yet operational that month) | clinic functionality MoM (threshold ≥ 0.75 = functional) |
 | `# of offs` | `Facility Name`, Month/Year columns (value = count of off days) | clinic off-days MoM (buckets 0/1/2/3/4+) |
 
+### Donor Reporting tab
+
+A programme-level roll-up against the grant logframe, built for the donor deck. `computeDonor()` derives everything from the same sheets as the rest of the dashboard and writes one `DONOR` object; only the **targets** are constants, in `LOGFRAME` — no sheet carries them, so changing a target means editing that table (a `Logframe_Targets` tab would move them into the data layer if they start changing).
+
+Two things it counts differently from the Operations tab, deliberately: **districts** are those with ≥1 *operational* clinic (reach, not the planned list), and the state roll-up calls `ltData()` once per state rather than re-reading the light-touch grid. `ltRows()` exposes the LT rows as objects for the district count, which `ltData()` does not return.
+
+Known gap: district names are not harmonised between the sheets — RJ splits Jaipur into `Jaipur I` / `Jaipur II` in `CompleteSupport_Facilities` while `Light_touch_facilities` uses plain `Jaipur`, so the district count reads 3 higher than the deck's. Fix it in the sheets, not with fuzzy matching.
+
 ### Value-encoding gotchas (read carefully)
 
 - **SMBG_Monthly cells:** `'.'` = no visit that month → **excluded from denominator**. `'0.00'` = visited but zero SMBG readings. A number = average readings/day. Buckets: **0 readings / <1 per day / 1–2 per day / >2 per day**.
