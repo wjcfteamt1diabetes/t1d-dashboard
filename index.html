@@ -306,6 +306,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
       <button class="nb" id="n1" onclick="shift(0,1)">Forward →</button>
     </div>
     <div style="height:170px;position:relative"><canvas id="c1"></canvas></div>
+    <div class="cs" id="c1-note" style="margin-top:6px"></div>
   </div>
   <div class="card">
     <div class="ct">New enrolments per month</div>
@@ -871,7 +872,7 @@ Chart.register({
 let RAW=null;          // parsed sheets: {enrolled, csFac, ltGrid, cap, orient, targets, opsGrid, offsGrid}
 let DATA=null;         // {demographics, insulin, capacity} for the active filter
 let CURD=null;         // merged geo+patient object consumed by renderKPIs
-let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL;
+let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL,TREND_GAP;
 let FUP_MOM,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
 let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
 // ── Date-range slicer (time-axis only): month bounds, inclusive; null = unbounded ──
@@ -1107,6 +1108,16 @@ function buildC1(o){
     }
   });
   _c1._tots=tots;
+  const note=document.getElementById('c1-note');
+  if(note){
+    const g=TREND_GAP, miss=g?g.total-g.plotted:0;
+    if(miss>0){
+      const why=[];
+      if(g.noDate) why.push(g.noDate+' with no enrolment date');
+      if(g.after)  why.push(g.after+' dated after '+g.lastLabel);
+      note.textContent='Note: '+miss+' of '+g.total.toLocaleString()+' complete-support PLT1D are not on this axis'+(why.length?' — '+why.join(', '):'')+'. They are still counted in the Complete support card.';
+    } else note.textContent='';
+  }
   document.getElementById('nl1').textContent=MONTHS[o]+' – '+MONTHS[o+WIN-1];
   document.getElementById('p1').disabled=o<=0;
   document.getElementById('n1').disabled=o>=MAX;
@@ -2209,6 +2220,16 @@ function recompute(){
     const totCl=op+opLt;
     avg.push(totCl>0?Math.round((nw+nl)/totCl*10)/10:0);
   });
+
+  // Patients the time axis cannot place: the cumulative bar counts only enrolments
+  // with a usable date, so it can sit below the "Complete support" KPI (which counts
+  // every filtered patient). Surface the difference rather than let it read as a
+  // discrepancy — it clears itself when the sheet is corrected.
+  const lastEom=months.length?new Date(months[months.length-1].y,months[months.length-1].m+1,0,23,59,59):null;
+  TREND_GAP={total:P.length, plotted:csCum.length?csCum[csCum.length-1]:0,
+             noDate:enrDates.filter(e=>!e).length,
+             after:lastEom?enrDates.filter(e=>e&&e>lastEom).length:0,
+             lastLabel:months.length?months[months.length-1].label:''};
 
   // ── Follow-up MoM (join followup sheet to filtered survivor IDs) ──
   const idSet={};P.forEach(p=>idSet[normv(p['Claude_ID'])]=true);
