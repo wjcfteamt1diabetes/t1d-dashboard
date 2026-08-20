@@ -309,7 +309,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">New enrolments per month</div>
-    <div class="cs">New enrolments vs average per operational clinic</div>
+    <div class="cs">New enrolments vs average per operational clinic (complete support + light touch)</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
@@ -1119,6 +1119,7 @@ function buildC2(o){
   const lt=NEWENR_LT.slice(o,o+WIN);
   const tot=cs.map((v,i)=>v+lt[i]);
   const av=AVGCL.slice(o,o+WIN);
+  const cl=CLIN.slice(o,o+WIN);
   _c2=new Chart(document.getElementById('c2'),{
     type:'bar',
     data:{labels:lb,datasets:[
@@ -1131,7 +1132,10 @@ function buildC2(o){
       responsive:true, maintainAspectRatio:false, layout:{padding:{top:20}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
         label(ctx){
-          if(ctx.dataset.label==='Avg/clinic') return ' Avg/clinic: '+ctx.parsed.y.toFixed(1);
+          if(ctx.dataset.label==='Avg/clinic'){
+            const i=ctx.dataIndex;
+            return ' Avg/clinic: '+ctx.parsed.y.toFixed(1)+(cl[i]>0?' ('+tot[i]+' ÷ '+cl[i]+' clinics)':'');
+          }
           const p=tot[ctx.dataIndex]>0?Math.round(ctx.parsed.y/tot[ctx.dataIndex]*100):0;
           return ' '+ctx.dataset.label+': '+ctx.parsed.y+' ('+p+'%)';
         }
@@ -1507,7 +1511,7 @@ function buildInfoTable(){
     {n:'5',ind:'PLT1D enrolled (total / CS / LT)',tab:'T1',type:'Absolute #',num:'Count of rows in enrolled_list · CS = facilities not in LT sheet · LT = sum of enrolments in LT sheet',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Patient ID, Facility Name'},
     {n:'6',ind:'Enrolled vs target (%)',tab:'T1',type:'%',num:'Count of all enrolled PLT1D (LT + CS)',den:'Committed target (from Targets sheet)',sheet:'enrolled_list, Targets',cols:'Patient ID'},
     {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1D (complete support) + cumulative light-touch enrolments up to each month · line = operational clinics as of that month: complete support (Operational = Yes, Date of Operationalisation ≤ month end) + light touch (from the first month the facility reports an enrolment figure)',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
-    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1D with enrolment date in that month',den:'—',sheet:'enrolled_list, CompleteSupport_Facilities',cols:'Date of enrolment, Date of operationalisation'},
+    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1D with enrolment date in that month (complete support) + light-touch enrolments reported for that month · line = avg per operational clinic: those enrolments ÷ operational clinics that month (complete support + light touch, as in 7a)',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
     {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1D by Sex column value',den:'All PLT1D enrolled',sheet:'enrolled_list',cols:'Sex'},
     {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1D with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
     {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Total PLT1D enrolled',sheet:'enrolled_list',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
@@ -2173,7 +2177,9 @@ function recompute(){
     const opLt=ltStarts.filter(s=>ymKey(s.y,s.m)<=ymKey(mo.y,mo.m)).length;
     clinCs.push(op);clinLt.push(opLt);clin.push(op+opLt);
     const nl=lt.monthly[mo.label]||0;neLt.push(nl);cumLt+=nl;ltCum.push(cumLt);
-    avg.push(op>0?Math.round(nw/op*10)/10:0);
+    // Avg per operational clinic uses the same CS + LT basis as the bars above it
+    const totCl=op+opLt;
+    avg.push(totCl>0?Math.round((nw+nl)/totCl*10)/10:0);
   });
 
   // ── Follow-up MoM (join followup sheet to filtered survivor IDs) ──
