@@ -124,6 +124,10 @@ A programme-level roll-up against the grant logframe, built for the donor deck. 
 
 Two things it counts differently from the Operations tab, deliberately: **districts** are those with ≥1 *operational* clinic (reach, not the planned list), and the state roll-up calls `ltData()` once per state rather than re-reading the light-touch grid. `ltRows()` exposes the LT rows as objects for the district count, which `ltData()` does not return.
 
+Representation choices worth keeping: one hero figure and a tile row rather than eight equal cards; the scorecard carries a progress-to-target meter per row, since a met/below pill says nothing about distance; enrolments and clinics sit in two stacked panels sharing a month axis, **not** one plot with two y-scales (thousands against ~110 on a hidden second axis manufactures a correlation); and HbA1c baseline→latest is a dumbbell, so the improvement is a length rather than a comparison of two bar heights.
+
+State hues are validated, not chosen by eye — `#1a5fa8` blue, `#1baf7a` aqua, `#4a3aa7` violet, `#e87ba4` magenta, worst adjacent pair ΔE 24.9 under protanopia. The first attempt used four steps of the dashboard blue and failed the normal-vision floor at ΔE 13: a one-hue ramp encodes magnitude, and states are identities. Amber/orange is reserved for the "below target" status and so cannot dress a state.
+
 Known gap: district names are not harmonised between the sheets — RJ splits Jaipur into `Jaipur I` / `Jaipur II` in `CompleteSupport_Facilities` while `Light_touch_facilities` uses plain `Jaipur`, so the district count reads 3 higher than the deck's. Fix it in the sheets, not with fuzzy matching.
 
 ### Value-encoding gotchas (read carefully)
