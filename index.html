@@ -2167,6 +2167,13 @@ function recompute(){
   }
   const csCum=[],ltCum=[],clin=[],clinCs=[],clinLt=[],neCs=[],neLt=[],avg=[];let cumLt=0;
   const ltStarts=lt.opStarts||[];
+  // CS cumulative is as-of each month, so LT cumulative must also carry in the
+  // enrolments from months the date slicer trimmed off the front — otherwise the
+  // LT bar restarts from zero at the range start while the CS bar does not.
+  if(months.length){
+    const firstK=ymKey(months[0].y,months[0].m);
+    Object.keys(lt.monthly).forEach(lbl=>{const h=hdrMonth(lbl); if(h&&ymKey(h.y,h.m)<firstK) cumLt+=lt.monthly[lbl];});
+  }
   const enrDates=P.map(p=>parseDate(p['Date of enrolment']));
   months.forEach(mo=>{
     const eom=new Date(mo.y,mo.m+1,0,23,59,59);
