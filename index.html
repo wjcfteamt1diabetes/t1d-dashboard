@@ -531,6 +531,20 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
 </div>
 
+<div class="sl">Current HbA1c levels — all PLT1D with ≥1 reading</div>
+<div class="card" style="max-width:680px">
+  <div class="ct">Current HbA1c levels by time since enrolment</div>
+  <div class="cs">% PLT1D by HbA1c band at most recent reading, among all PLT1D with ≥1 HbA1c recorded · by time since enrolment</div>
+  <div class="lg" style="margin-top:4px">
+    <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
+    <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
+    <span><span class="ld" style="background:#7db8e8"></span>10–13%</span>
+    <span><span class="ld" style="background:#94a3b8"></span>13–16%</span>
+    <span><span class="ld" style="background:#e2e8f0"></span>&gt;16%</span>
+  </div>
+  <div style="height:190px;position:relative;margin-top:6px"><canvas id="c-hba-all"></canvas></div>
+</div>
+
 <div class="sl">Insulin dose</div>
 <div class="g2">
   <div class="card">
@@ -549,20 +563,6 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:0" id="basal-bars"></div>
     <div style="margin-top:6px;font-size:9px;color:var(--tm)">★ Ideal range: 30–50% of TDD as basal</div>
   </div>
-</div>
-
-<div class="sl">Current HbA1c levels — all PLT1D with ≥1 reading</div>
-<div class="card" style="max-width:680px">
-  <div class="ct">Current HbA1c levels by time since enrolment</div>
-  <div class="cs">% PLT1D by HbA1c band at most recent reading, among all PLT1D with ≥1 HbA1c recorded · by time since enrolment</div>
-  <div class="lg" style="margin-top:4px">
-    <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
-    <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
-    <span><span class="ld" style="background:#7db8e8"></span>10–13%</span>
-    <span><span class="ld" style="background:#94a3b8"></span>13–16%</span>
-    <span><span class="ld" style="background:#e2e8f0"></span>&gt;16%</span>
-  </div>
-  <div style="height:190px;position:relative;margin-top:6px"><canvas id="c-hba-all"></canvas></div>
 </div>
 
 </div></div><!-- /tab-1 -->
