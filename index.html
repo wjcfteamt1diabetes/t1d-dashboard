@@ -409,6 +409,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
     <div class="ct">Follow-up attendance — month on month</div>
     <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; latest month appears once attendance is marked · Target: &gt;75%</div>
     <div style="height:195px;position:relative;margin-top:6px"><canvas id="c-fup"></canvas></div>
+    <div class="sum-note" id="fup-note"></div>
   </div>
 </div>
 
@@ -976,7 +977,7 @@ let DATA=null;         // {demographics, insulin, capacity} for the active filte
 let CURD=null;         // merged geo+patient object consumed by renderKPIs
 let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL,TREND_GAP;
 let DONOR=null;        // everything the Donor Reporting tab renders
-let FUP_MOM,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
+let FUP_MOM,FUP_PENDING,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
 let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
 // ── Date-range slicer (time-axis only): month bounds, inclusive; null = unbounded ──
 let DATE_FROM=null, DATE_TO=null;   // each: {y, m}  (m is 0-based month)
@@ -1708,8 +1709,33 @@ function buildInfoTable(){
   }).join('');
 }
 
+// "Jun 26, Jul 26 and Aug 26" up to four months, then a range — a year of
+// unentered months should not run off the card.
+function monthList(ms){
+  if(ms.length<=1) return ms[0]||'';
+  if(ms.length<=4) return ms.slice(0,-1).join(', ')+' and '+ms[ms.length-1];
+  return ms.length+' months, '+ms[0]+' through '+ms[ms.length-1];
+}
+
+// The chart can only plot months the sheet has marks for, so its axis silently
+// ends wherever data entry stopped — indistinguishable from a broken fetch. Name
+// the unmarked months so the gap reads as sheet state, not dashboard failure.
+function fupNote(){
+  const p=FUP_PENDING||[]; if(!p.length) return '';
+  const one=p.length===1;
+  const head='Note: Followup_adherence carries a column for '+monthList(p)
+    +' but no attendance is marked in '+(one?'it':'them')+' yet, so '+(one?'it has':'they have')
+    +' nothing to plot.';
+  return FUP_MOM&&FUP_MOM.length
+    ? head+' The axis ends at '+FUP_MOM[0].m+', the last month with marks. '
+      +(one?'It appears':'They appear')+' here as soon as the sheet is filled in.'
+    : head;
+}
+
 function buildFupChart(){
   if(_cfup)_cfup.destroy();
+  const note=document.getElementById('fup-note');
+  if(note) note.textContent=fupNote();
   const rev=[...FUP_MOM].reverse();
   const labs=rev.map(r=>[r.m,'n='+r.n.toLocaleString()]);
   const vals=rev.map(r=>r.v);
@@ -1840,7 +1866,7 @@ function renderLogframe(){
     const bits=[met+' of '+scored+' measurable logframe targets met.',
       'Targets are the Jul ’26 column of the grant logframe and are held in the dashboard code, not in a sheet.'];
     if(d.filtered) bits.push('A geography filter is active — targets are programme-wide, so they do not apply to a filtered view.');
-    if(d.fup!=null) bits.push('Follow-up is the attendance-weighted average of the last '+d.fupMonths+' months (n='+d.fupN.toLocaleString()+' visits due).');
+    if(d.fup!=null) bits.push('Follow-up is the attendance-weighted average of the last '+d.fupMonths+' months'+(d.fupThru?' through '+d.fupThru:'')+' (n='+d.fupN.toLocaleString()+' visits due).');
     if(d.smbg34!=null) bits.push('SMBG is '+d.smbgMonth+', among PLT1D enrolled ≥3 months (n='+d.smbgN.toLocaleString()+').');
     note.textContent=bits.join(' ');
   }
@@ -2614,7 +2640,7 @@ function recompute(){
   CS_CUM=csCum;LT_CUM=ltCum;CLIN=clin;CLIN_CS=clinCs;CLIN_LT=clinLt;NEWENR_CS=neCs;NEWENR_LT=neLt;NEWENR=neCs.map((v,i)=>v+neLt[i]);AVGCL=avg;
   MAX=Math.max(0,MONTHS.length-WIN);
   off=[off[0]==null?MAX:Math.min(off[0],MAX), off[1]==null?MAX:Math.min(off[1],MAX)];
-  FUP_MOM=fmom;
+  FUP_MOM=fmom.mom; FUP_PENDING=fmom.pending;
 
   TRAINED_STAFF=[
     {lbl:'With trained Pediatrician',v:pctC(csF.filter(x=>isYes(x['Trained pediatrician available?'])).length,csOp||1)},
@@ -2665,7 +2691,7 @@ function recompute(){
     flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
   };
 
-  computeDonor({f,PGEO,csF,lt,months,clin,hba,smbg,fmom,drs,nrs,oriF,csOp,
+  computeDonor({f,PGEO,csF,lt,months,clin,hba,smbg,fmom:fmom.mom,drs,nrs,oriF,csOp,
                 insBase:pctC(insB,n), insLast:pctC(insL,n),
                 dka:fupDen?pctC(dkaN,fupDen):null, hypo:fupDen?pctC(hypoN,fupDen):null});
 }
@@ -2751,7 +2777,7 @@ function computeDonor(x){
     bb:x.insLast, bbBase:x.insBase,
     hba:hbaLast, hbaBase:hba.avgB&&hba.avgB[0]?hba.avgB[0]:null,
     smbg34:smbg.last?smbg.last.v[2]:null, smbgN:smbg.last?smbg.last.n:0, smbgMonth:smbg.last?smbg.last.m:'',
-    fup:fup, fupN:fupN, fupMonths:f6.length,
+    fup:fup, fupN:fupN, fupMonths:f6.length, fupThru:f6.length?f6[0].m:'',
     dka:x.dka, hypo:x.hypo,
     byState:byState, growth:growth,
     hbaDur:{labels:(hba.changeLabels||[]).slice(1).map(l=>l[0].replace(' months','m')),
@@ -2780,7 +2806,7 @@ function ltRows(f){
 }
 
 function computeFollowup(idSet){
-  const g=RAW.fupGrid; if(!g||g.length<2) return [];
+  const g=RAW.fupGrid; if(!g||g.length<2) return {mom:[],pending:[]};
   const hdr=g[0];const cols=[];
   for(let i=2;i<hdr.length;i++){const hm=hdrMonth(hdr[i]);if(hm)cols.push({i:i,label:MON[hm.m]+' '+String(hm.y).slice(2),year:hm.y,month:hm.m});}
   const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
@@ -2792,8 +2818,21 @@ function computeFollowup(idSet){
   // yet (zero attendees out of thousands due doesn't happen) — hide it until
   // its first Y is entered, instead of charting a misleading 0%.
   while(wd.length&&stat[wd[wd.length-1].label].y===0) wd.pop();
-  return wd.slice(-7).reverse()
+  // Months the sheet already carries a column for, that have come and gone, and
+  // in which no one is marked as having attended — a blank column, or the all-"N"
+  // one the loop above just popped. Either way the chart has nothing to plot, so
+  // its axis simply stops, which reads as a broken dashboard rather than as
+  // unentered data. Name those months instead, so the gap points at the sheet.
+  const now=new Date(), nowK=ymKey(now.getFullYear(),now.getMonth());
+  const lastK=wd.length?ymKey(wd[wd.length-1].year,wd[wd.length-1].month):null;
+  const pending=cols.filter(c=>{const k=ymKey(c.year,c.month);
+      return k<=nowK && (lastK==null||k>lastK) && ymInRange(c.year,c.month)
+             && stat[c.label].y===0;})
+    .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month)
+    .map(c=>c.label);
+  const mom=wd.slice(-7).reverse()
     .map(c=>{const s=stat[c.label],t=s.y+s.n;return{m:c.label,v:pctC(s.y,t),n:t};});
+  return {mom:mom, pending:pending};
 }
 
 function computeCapacity(capF,oriF){
