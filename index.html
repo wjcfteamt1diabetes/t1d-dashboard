@@ -407,7 +407,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Follow-up attendance — month on month</div>
-    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; latest month appears once attendance is marked · Target: &gt;75%</div>
+    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; months with no Y/N marked are held as empty slots · Target: &gt;75%</div>
     <div style="height:195px;position:relative;margin-top:6px"><canvas id="c-fup"></canvas></div>
     <div class="sum-note" id="fup-note"></div>
   </div>
@@ -1717,19 +1717,24 @@ function monthList(ms){
   return ms.length+' months, '+ms[0]+' through '+ms[ms.length-1];
 }
 
-// The chart can only plot months the sheet has marks for, so its axis silently
-// ends wherever data entry stopped — indistinguishable from a broken fetch. Name
-// the unmarked months so the gap reads as sheet state, not dashboard failure.
+// The months with a column but no attendance marked are held on the axis as empty
+// slots, so the chart runs to the present rather than stopping at the last marked
+// month and reading as a broken fetch. This says why they are empty, and what the
+// visit records show for them — SMBG_HyperHypo covers only visits that came with
+// SMBG data, so that count is a floor on attendance, never the percentage itself.
 function fupNote(){
   const p=FUP_PENDING||[]; if(!p.length) return '';
   const one=p.length===1;
-  const head='Note: Followup_adherence carries a column for '+monthList(p)
-    +' but no attendance is marked in '+(one?'it':'them')+' yet, so '+(one?'it has':'they have')
-    +' nothing to plot.';
-  return FUP_MOM&&FUP_MOM.length
-    ? head+' The axis ends at '+FUP_MOM[0].m+', the last month with marks. '
-      +(one?'It appears':'They appear')+' here as soon as the sheet is filled in.'
-    : head;
+  const ev=p.filter(x=>x.visits>0);
+  let t='Note: '+monthList(p.map(x=>x.m))+' '+(one?'has':'have')+' a column in Followup_adherence '
+    +'but no Y/N marked in '+(one?'it':'them')+' yet, so '+(one?'it is held':'they are held')
+    +' as '+(one?'an empty slot':'empty slots')+' rather than charted as 0%.';
+  if(ev.length) t+=' Visits were recorded in '+(ev.length===p.length?(one?'it':'them'):monthList(ev.map(x=>x.m)))
+    +' though — '+ev.map(x=>x.visits.toLocaleString()+' PLT1D in '+x.m).join(', ')
+    +' have a visit logged in SMBG_HyperHypo, which counts only visits that came with SMBG data '
+    +'and so cannot stand in for the attendance denominator.';
+  t+=' The bar'+(one?'':'s')+' fill'+(one?'s':'')+' in as soon as the sheet is marked.';
+  return t;
 }
 
 function buildFupChart(){
@@ -1737,15 +1742,24 @@ function buildFupChart(){
   const note=document.getElementById('fup-note');
   if(note) note.textContent=fupNote();
   const rev=[...FUP_MOM].reverse();
-  const labs=rev.map(r=>[r.m,'n='+r.n.toLocaleString()]);
-  const vals=rev.map(r=>r.v);
+  // The note names every unmarked month; the axis holds at most a few slots, so a
+  // long-unmarked sheet cannot bury the plotted months under a wall of grey.
+  const pend=(FUP_PENDING||[]).slice(-5);
+  const labs=rev.map(r=>[r.m,'n='+r.n.toLocaleString()])
+    .concat(pend.map(p=>[p.m,'not marked']));
+  const vals=rev.map(r=>r.v).concat(pend.map(()=>null));
+  // A full-height grey slot for each unmarked month: the month is visibly on the
+  // axis and visibly unmeasured, which a missing column and a 0% bar both fail at.
+  const band=rev.map(()=>null).concat(pend.map(()=>100));
   _cfup=new Chart(document.getElementById('c-fup'),{
     type:'bar',
     data:{labels:labs, datasets:[
-      {label:'% Follow-up', data:vals,
+      {label:'% Follow-up', data:vals, stack:'s',
        backgroundColor:vals.map(v=>v>=75?'#0f3460':'#1a5fa8'),
        borderRadius:3, _minVal:1, _minH:14},
-      {label:'Target', data:rev.map(()=>75), type:'line',
+      {label:'Not marked', data:band, stack:'s',
+       backgroundColor:'#e2e8f0', borderRadius:3, _noLabel:true},
+      {label:'Target', data:labs.map(()=>75), type:'line',
        borderColor:'#d97706', borderDash:[5,5], borderWidth:1.5,
        pointRadius:0, backgroundColor:'transparent', _noLabel:true}
     ]},
@@ -1753,7 +1767,15 @@ function buildFupChart(){
       responsive:true, maintainAspectRatio:false, layout:{padding:{top:8}},
       plugins:{legend:{display:false}, tooltip:{callbacks:{
         title:items=>[items[0].label].flat().join(' '),
-        label:ctx=>ctx.dataset.label==='Target'?' Target: 75%':' Follow-up: '+ctx.parsed.y+'%'
+        label(ctx){
+          if(ctx.dataset.label==='Target') return ' Target: 75%';
+          if(ctx.dataset.label!=='Not marked') return ' Follow-up: '+ctx.parsed.y+'%';
+          const p=pend[ctx.dataIndex-rev.length];
+          return p&&p.visits
+            ? [' Attendance not marked in the sheet',
+               ' '+p.visits.toLocaleString()+' PLT1D have a visit logged (SMBG visits only)']
+            : ' Attendance not marked in the sheet';
+        }
       }}},
       scales:{
         x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:8.5}}},
@@ -2805,6 +2827,28 @@ function ltRows(f){
   return out;
 }
 
+// Distinct filtered PLT1D with at least one recorded visit in each month, read
+// from SMBG_HyperHypo. That sheet only carries visits that came with SMBG data,
+// so this is a floor on attendance, not the attendance figure itself — it is
+// evidence that a month happened, never a substitute for the Y/N marks.
+function visitsByMonth(idSet){
+  const g=RAW.hhGrid, out={}; if(!g||g.length<2) return out;
+  const hr=headerRowOf(g,['Claude ID','Claude_ID','% Hyper readings']);
+  const hdr=g[hr]; let idC=0,dateC=-1,hypoC=-1,hyperC=-1;
+  for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
+    if(/claude/i.test(h))idC=i; if(/hypo/i.test(h))hypoC=i; if(/hyper/i.test(h))hyperC=i;}
+  for(let i=0;i<hdr.length;i++){if(i===idC||i===hypoC||i===hyperC)continue; if(g[hr+1]&&parseDate(g[hr+1][i])){dateC=i;break;}}
+  if(dateC<0) return out;
+  const seen={};
+  for(let r=hr+1;r<g.length;r++){const row=g[r], id=normv(row[idC]);
+    if(!id||!idSet[id])continue;
+    const d=parseDate(row[dateC]); if(!d)continue;
+    const label=MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
+    const k=label+'|'+id; if(seen[k])continue; seen[k]=true;
+    out[label]=(out[label]||0)+1;}
+  return out;
+}
+
 function computeFollowup(idSet){
   const g=RAW.fupGrid; if(!g||g.length<2) return {mom:[],pending:[]};
   const hdr=g[0];const cols=[];
@@ -2825,11 +2869,12 @@ function computeFollowup(idSet){
   // unentered data. Name those months instead, so the gap points at the sheet.
   const now=new Date(), nowK=ymKey(now.getFullYear(),now.getMonth());
   const lastK=wd.length?ymKey(wd[wd.length-1].year,wd[wd.length-1].month):null;
+  const vis=visitsByMonth(idSet);
   const pending=cols.filter(c=>{const k=ymKey(c.year,c.month);
       return k<=nowK && (lastK==null||k>lastK) && ymInRange(c.year,c.month)
              && stat[c.label].y===0;})
     .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month)
-    .map(c=>c.label);
+    .map(c=>({m:c.label, visits:vis[c.label]||0}));
   const mom=wd.slice(-7).reverse()
     .map(c=>{const s=stat[c.label],t=s.y+s.n;return{m:c.label,v:pctC(s.y,t),n:t};});
   return {mom:mom, pending:pending};
