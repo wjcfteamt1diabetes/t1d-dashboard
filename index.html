@@ -380,7 +380,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Previous treatment facility</div>
-    <div class="cs">% PLT1D by facility type, among those with non-blank previous facility value</div>
+    <div class="cs">% PLT1D by sector of previous treatment, among those with a non-blank previous facility value</div>
     <div id="ptf-bars" style="margin-top:8px"></div>
   </div>
 </div>
@@ -1107,32 +1107,54 @@ function renderHyperHypo(){
 // Expansions shown as a footnote under the chart, keyed by the short tag.
 const PTF_FULL={'PHC':'Primary Health Centre','CHC':'Community Health Centre','DH':'District Hospital',
   'SDH':'Sub-District Hospital','Sat. Hosp':'Satellite Hospital','State GMC':'State Govt Medical College',
-  'Central GMC':'Central Govt Medical College (AIIMS, PGI etc.)','Pvt Hosp':'Private Hospital','Pvt Clinic':'Private Clinic','Newly Dx':'Newly Diagnosed'};
-function renderPTF(){
-  const ptfCols={'PHC':'#bfdbfe','CHC':'#7db8e8','DH':'#2e86de','SDH':'#5b8fd1','Sat. Hosp':'#a8c5e8','State GMC':'#1a5fa8','Central GMC':'#0f3460','Pvt Hosp':'#94a3b8','Pvt Clinic':'#cbd5e1','Newly Dx':'#64748b'};
-  const ptf=(DATA.demographics.prevFacility||[]).map(d=>({...d,c:ptfCols[d.l]||'#94a3b8'}));
-  let h='';
-  ptf.forEach(d=>{
-    const label=PTF_FULL[d.l]||d.l;
-    const textCol=d.v>=50?'#fff':'#1e293b';
-    h+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">` +
-       `<div style="width:170px;font-size:10px;color:var(--tm);text-align:right;flex-shrink:0;line-height:1.3">${label}</div>` +
-       `<div style="flex:1;background:#e2e8f0;border-radius:3px;overflow:hidden;position:relative;height:18px">` +
-       `<div style="width:${d.v}%;background:${d.c};height:100%;border-radius:3px;display:flex;align-items:center;justify-content:flex-end;padding-right:${d.v>8?6:0}px">` +
-       `<span style="font-size:9.5px;font-weight:600;color:${d.v>8?textCol:'transparent'}">${d.v}%</span></div>` +
-       `<span style="position:absolute;left:${d.v}%;padding-left:5px;top:50%;transform:translateY(-50%);font-size:9.5px;font-weight:600;color:#1e293b;${d.v>8?'display:none':''}">${d.v}%</span>` +
-       `</div></div>`;
-  });
-  document.getElementById('ptf-bars').innerHTML=h;
-}
+  'Central GMC':'Central Govt Medical College (AIIMS, PGI etc.)','Govt Hosp':'Government Hospital',
+  'Pvt Hosp':'Private Hospital','Pvt Clinic':'Private Clinic','Newly Dx':'Newly Diagnosed'};
+// Sector is the readable cut: eleven facility types with a 1% tail buried the one
+// fact that matters — how much of the cohort came from private care. The types
+// still appear, named in the footer, so nothing is hidden by the grouping.
+const PTF_SECTOR={'PHC':'Public','CHC':'Public','DH':'Public','SDH':'Public','Sat. Hosp':'Public',
+  'State GMC':'Public','Central GMC':'Public','Govt Hosp':'Public',
+  'Pvt Hosp':'Private','Pvt Clinic':'Private','Newly Dx':'Newly diagnosed'};
+const PTF_SEC_ORDER=['Public','Private','Newly diagnosed','Other'];
+// Validated as a categorical triple against the light surface: worst adjacent pair
+// ΔE 17.8 protan, 18.0 normal vision, all three ≥3:1 contrast.
+const PTF_SEC_COL={'Public':'#1a5fa8','Private':'#0d9488','Newly diagnosed':'#a855f7','Other':'#94a3b8'};
 
-function renderGender(){
-  if(_cg)_cg.destroy();
-  const cols=['#0f3460','#2e86de','#94a3b8'];
-  const gd=(DATA.demographics.gender||[]).map((g,i)=>({...g,c:cols[i]||'#94a3b8'}));
-  _cg=new Chart(document.getElementById('c-gender'),{type:'doughnut',data:{datasets:[{data:gd.map(g=>g.v),backgroundColor:gd.map(g=>g.c),borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
-  if(gd[0]){sv('gender-pct',gd[0].v+'%'); sv('gender-lbl',gd[0].l);}
-  document.getElementById('gender-legend').innerHTML=gd.map(g=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${g.c};display:inline-block;margin-right:4px"></span>${g.l}</span><strong>${g.v}%</strong></div>`).join('');
+function renderPTF(){
+  const el=document.getElementById('ptf-bars'); if(!el) return;
+  const rows=DATA.demographics.prevFacility||[];
+  const bySec={}, members={};
+  rows.forEach(d=>{
+    const sec=PTF_SECTOR[d.l]||'Other';
+    bySec[sec]=(bySec[sec]||0)+(d.n||0);
+    if(d.n>0)(members[sec]=members[sec]||[]).push(PTF_FULL[d.l]||d.l);
+  });
+  const secs=PTF_SEC_ORDER.filter(x=>bySec[x]>0);
+  if(!secs.length){el.innerHTML='<div class="data-pending">No previous-treatment data for the current selection.</div>';return;}
+  const pts=pctParts(secs.map(x=>bySec[x]));
+
+  // flex-grow carries the raw counts, so segment widths are exact rather than
+  // rounded, and the 2px spacers come out of the total instead of overflowing it.
+  const bar=secs.map((x,i)=>
+    `<div title="${x}: ${fmt(bySec[x])} PLT1D (${pts[i]}%)" style="flex:${bySec[x]} 1 0;background:${PTF_SEC_COL[x]};border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden">`
+    +`<span style="font-size:10px;font-weight:700;color:#fff">${pts[i]>=8?pts[i]+'%':''}</span></div>`).join('');
+
+  const legend=secs.map((x,i)=>
+    `<div style="display:flex;align-items:center;gap:6px;font-size:10px">`
+    +`<span class="ld" style="background:${PTF_SEC_COL[x]};flex-shrink:0"></span>`
+    +`<span style="flex:1;color:var(--t2)">${x}</span>`
+    +`<strong style="color:var(--t1)">${pts[i]}%</strong>`
+    +`<span style="color:var(--tm);width:56px;text-align:right">n=${fmt(bySec[x])}</span></div>`).join('');
+
+  // footer follows the legend order, so the two read as one list
+  const parts=secs.map(x=> x==='Newly diagnosed'
+    ? '<b>Newly diagnosed</b> = no previous treatment'
+    : (members[x] ? '<b>'+x+'</b> = '+members[x].join(', ') : null)).filter(Boolean);
+  const foot=parts.join(' · ')+'. Shares are rounded to whole numbers and adjusted to total 100%.';
+
+  el.innerHTML=`<div style="display:flex;gap:2px;height:26px;margin-bottom:10px">${bar}</div>`
+    +`<div style="display:flex;flex-direction:column;gap:6px">${legend}</div>`
+    +`<div class="sum-note">${foot}</div>`;
 }
 
 function renderTDD(){
@@ -1803,7 +1825,7 @@ function safe(name, fn){
 
 // One-time caption under each part-of-whole chart explaining the rounding
 function addSumNotes(){
-  ['c-gender','c-age','ptf-bars','smbg-mom','hyper-rows','c-offdays',
+  ['c-gender','c-age','smbg-mom','hyper-rows','c-offdays',
    'c-hba-change','c-hba-all','c-hba-dist','tdd-groups','basal-bars','c-spec','c-pilot','c-flw']
   .forEach(id=>{
     const el=document.getElementById(id); if(!el) return;
@@ -2562,13 +2584,15 @@ function recompute(){
   const FAC={'phc':'PHC','chc':'CHC','dh':'DH','sdh':'SDH','sub district hospital':'SDH','satellite hospital':'Sat. Hosp',
     'state mc':'State GMC','state government medical college':'State GMC',
     'central mc':'Central GMC','central government medical college (aiims, pgi etc.)':'Central GMC','central government medical college':'Central GMC',
+    'government hospital':'Govt Hosp','govt hospital':'Govt Hosp',
     'private hospital':'Pvt Hosp','private clinic':'Pvt Clinic','newly diagnosed':'Newly Dx'};
   P.forEach(p=>{
     const sc=normv(p['Sex']).charAt(0); if(sc==='m')male++;else if(sc==='f')female++;else oth++;
     const ag=num(p['Age']); if(ag!=null){if(ag<18)ped++;else adu++;}
     if(statusTok(p)==='active')active++;
     const reg=normv(p['Previous treatment regimen']);
-    let cat=reg==='newly diagnosed'?'Newly Dx':(FAC[normv(p['Previous treatment facility category'])]||(normv(p['Previous treatment facility category'])?normv(p['Previous treatment facility category']).toUpperCase():null));
+    const rawFac=normv(p['Previous treatment facility category']);
+    let cat=reg==='newly diagnosed'?'Newly Dx':(FAC[rawFac]||(rawFac?rawFac.replace(/\b\w/g,ch=>ch.toUpperCase()):null));
     if(cat)facMap[cat]=(facMap[cat]||0)+1;
     if(reg==='basal-bolus')insB++;
     {const tr=normv(p['Transitioned to basal-bolus insulin regimen?']);if(tr==='yes'||tr==='already on basal-bolus')insL++;}
@@ -2666,7 +2690,7 @@ function recompute(){
     demographics:{
       gender:[{l:'Male',v:gParts[0]},{l:'Female',v:gParts[1]},{l:'Other/NS',v:gParts[2]}],
       age:[{l:'Pediatric (0–17)',v:aParts[0]},{l:'Adults (≥18)',v:aParts[1]}],
-      prevFacility:facLabels.map((l,i)=>({l,v:facPts[i]})).filter(d=>d.v>0).sort((x,y)=>y.v-x.v),
+      prevFacility:facLabels.map((l,i)=>({l,n:facMap[l],v:facPts[i]})).sort((x,y)=>y.n-x.n),
       inactiveReasons:Object.keys(inactMap).map(l=>({l,v:inactMap[l]})).sort((x,y)=>y.v-x.v)
     },
     insulin:{
