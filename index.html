@@ -408,6 +408,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   <div class="card">
     <div class="ct">Follow-up attendance — month on month</div>
     <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; months with no Y/N marked are held as empty slots · Target: &gt;75%</div>
+    <div class="nr">
+      <button class="nb" id="pf" onclick="shiftFup(-1)">← Back</button>
+      <span class="nl" id="nlf"></span>
+      <button class="nb" id="nf" onclick="shiftFup(1)">Forward →</button>
+    </div>
     <div style="height:195px;position:relative;margin-top:6px"><canvas id="c-fup"></canvas></div>
     <div class="sum-note" id="fup-note"></div>
   </div>
@@ -1005,6 +1010,10 @@ let HBA_ALL_LBLS,HBA_ALL_LT7,HBA_ALL_710,HBA_ALL_1013,HBA_ALL_1316,HBA_ALL_GT16;
 
 const WIN=6;
 let MAX=0, off=[null,null];   // null = not yet positioned → defaults to latest window
+// Follow-up runs on its own axis: it only carries months the sheet has marks
+// for, so it neither starts nor ends where the enrolment months do.
+const FWIN=7;
+let FUP_MAX=0, fupOff=null;
 let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1737,20 +1746,41 @@ function fupNote(){
   return t;
 }
 
-function buildFupChart(){
+// Full follow-up axis, oldest → newest: every month with marks, then the months
+// the sheet has a column for but has not marked. Paged rather than truncated —
+// the series now runs back to Nov 24, and a fixed tail would bury that history.
+function fupAxis(){
+  return [...FUP_MOM].reverse().map(r=>({m:r.m, v:r.v, n:r.n, pending:false}))
+    .concat((FUP_PENDING||[]).slice(-5).map(p=>({m:p.m, visits:p.visits, pending:true})));
+}
+
+function shiftFup(d){
+  buildFupChart(Math.max(0,Math.min(FUP_MAX,(fupOff==null?FUP_MAX:fupOff)+d)));
+}
+
+function buildFupChart(o){
   if(_cfup)_cfup.destroy();
   const note=document.getElementById('fup-note');
   if(note) note.textContent=fupNote();
-  const rev=[...FUP_MOM].reverse();
-  // The note names every unmarked month; the axis holds at most a few slots, so a
-  // long-unmarked sheet cannot bury the plotted months under a wall of grey.
-  const pend=(FUP_PENDING||[]).slice(-5);
-  const labs=rev.map(r=>[r.m,'n='+r.n.toLocaleString()])
-    .concat(pend.map(p=>[p.m,'not marked']));
-  const vals=rev.map(r=>r.v).concat(pend.map(()=>null));
+
+  const axis=fupAxis();
+  FUP_MAX=Math.max(0,axis.length-FWIN);
+  o=(o==null)?FUP_MAX:Math.max(0,Math.min(FUP_MAX,o));
+  fupOff=o;
+  const win=axis.slice(o,o+FWIN);
+
+  const nl=document.getElementById('nlf');
+  if(nl) nl.textContent=!win.length?'' : win.length>1?win[0].m+' – '+win[win.length-1].m : win[0].m;
+  const pb=document.getElementById('pf'), nb=document.getElementById('nf');
+  if(pb) pb.disabled=o<=0;
+  if(nb) nb.disabled=o>=FUP_MAX;
+
+  const labs=win.map(r=>[r.m, r.pending?'not marked':'n='+r.n.toLocaleString()]);
+  const vals=win.map(r=>r.pending?null:r.v);
   // A full-height grey slot for each unmarked month: the month is visibly on the
   // axis and visibly unmeasured, which a missing column and a 0% bar both fail at.
-  const band=rev.map(()=>null).concat(pend.map(()=>100));
+  const band=win.map(r=>r.pending?100:null);
+
   _cfup=new Chart(document.getElementById('c-fup'),{
     type:'bar',
     data:{labels:labs, datasets:[
@@ -1770,7 +1800,7 @@ function buildFupChart(){
         label(ctx){
           if(ctx.dataset.label==='Target') return ' Target: 75%';
           if(ctx.dataset.label!=='Not marked') return ' Follow-up: '+ctx.parsed.y+'%';
-          const p=pend[ctx.dataIndex-rev.length];
+          const p=win[ctx.dataIndex];
           return p&&p.visits
             ? [' Attendance not marked in the sheet',
                ' '+p.visits.toLocaleString()+' PLT1D have a visit logged (SMBG visits only)']
@@ -2035,7 +2065,7 @@ function applyFilters(){
   safe('renderBasal',     renderBasal);
   safe('renderTrainedStaff', renderTrainedStaff);
   safe('buildStaticCharts',  buildStaticCharts);
-  safe('buildFupChart',   buildFupChart);
+  safe('buildFupChart',   ()=>buildFupChart(fupOff));
   safe('renderSmbg',      renderSmbg);
   safe('renderHyperHypo', renderHyperHypo);
   safe('computeClinicOps', computeClinicOps);  // re-window clinic-ops series to the active date range
@@ -2875,7 +2905,9 @@ function computeFollowup(idSet){
              && stat[c.label].y===0;})
     .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month)
     .map(c=>({m:c.label, visits:vis[c.label]||0}));
-  const mom=wd.slice(-7).reverse()
+  // Full series, newest first — the chart pages a window over it, and the donor
+  // tab still takes its six-month average off the head.
+  const mom=wd.slice().reverse()
     .map(c=>{const s=stat[c.label],t=s.y+s.n;return{m:c.label,v:pctC(s.y,t),n:t};});
   return {mom:mom, pending:pending};
 }
