@@ -985,7 +985,7 @@ let MAX=0, off=[null,null];   // null = not yet positioned → defaults to lates
 // Follow-up runs on its own axis: it only carries months the sheet has marks
 // for, so it neither starts nor ends where the enrolment months do.
 const FWIN=7;
-let FUP_MAX=0, fupOff=null;
+let FUP_MAX=0, fupOff=null, FUP_MATCHED=0;
 let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -1020,6 +1020,11 @@ function getD(){ return CURD; }
 function sv(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
 function sw(id,w){const e=document.getElementById(id);if(e)e.style.width=w+'%';}
 function fmt(n){return n.toLocaleString();}
+// A ratio with no denominator has no value to show — a dash, never NaN and never
+// a 0% that reads as a real measurement. Reachable from any filter that selects a
+// cohort with no patients (CG, today).
+function share(a,b){return b>0?Math.round(a/b*100):null;}
+function sharePct(a,b){const v=share(a,b);return v==null?'—':v+'%';}
 function sln(s){return{all:'All states',RJ:'Rajasthan',MP:'Madhya Pradesh',UK:'Uttarakhand',CG:'Chhattisgarh'}[s]||s;}
 
 function renderKPIs(d,f){
@@ -1028,19 +1033,27 @@ function renderKPIs(d,f){
   sv('k-dist',b.dist); sv('k-dist-n','n = '+b.dist+' districts');
   sv('k-plan',b.plan); sv('k-plan-n',b.plan+' facilities');
   sv('k-op',b.op);
-  const op=Math.round(b.op/b.plan*100);
-  const opEl=document.getElementById('k-op-pct'); if(opEl){opEl.textContent=op+'% of planned';opEl.style.color=op>=90?'var(--b2)':'var(--g2)';}
+  const op=share(b.op,b.plan);
+  const opEl=document.getElementById('k-op-pct');
+  if(opEl){opEl.textContent=op==null?'no planned facilities':op+'% of planned';
+           opEl.style.color=(op!=null&&op>=90)?'var(--b2)':'var(--g2)';}
   sv('k-cs-op',b.csOp); sv('k-lt-op',b.ltOp);
   sv('k-enr',fmt(d.enr)); sv('k-tot',fmt(d.enr)); sv('k-tot-n','n = '+fmt(d.enr)+' PLT1D');
-  const gp=Math.round(d.enr/b.target*100); sw('k-gauge',Math.min(gp,100)); sv('k-gaugeN',gp+'%'); sv('k-target','of target '+fmt(b.target));
+  const gp=share(d.enr,b.target); sw('k-gauge',gp==null?0:Math.min(gp,100));
+  sv('k-gaugeN',gp==null?'—':gp+'%'); sv('k-target',b.target>0?'of target '+fmt(b.target):'no target set');
   sv('n-tag','n = '+fmt(d.enr)+' PLT1D');
-  sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',Math.round(d.csEnr/d.enr*100)+'% of enrolled · '+b.csOp+' facilities');
-  sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',Math.round(d.ltEnr/d.enr*100)+'% of enrolled · '+b.ltOp+' facilities');
+  sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',sharePct(d.csEnr,d.enr)+' of enrolled · '+b.csOp+' facilities');
+  sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',sharePct(d.ltEnr,d.enr)+' of enrolled · '+b.ltOp+' facilities');
   const nL=d.newLast, nP=d.newPrev;
   sv('k-new',nL); sv('k-avgclin','Avg/clinic: '+(d.avgClin||0).toFixed(1));
-  const nt=document.getElementById('k-newtrend'); nt.textContent=(nL<nP?'↓':'↑')+' vs '+nP+' prior month'; nt.className='ktr '+(nL<nP?'dn':'up');
+  const nt=document.getElementById('k-newtrend');
+  nt.textContent=(nL<nP?'↓':nL>nP?'↑':'=')+' vs '+nP+' prior month';
+  nt.className='ktr '+(nL<nP?'dn':nL>nP?'up':'');
   sv('ins-base-v',d.insBase+'%'); sw('ins-base',d.insBase); sv('ins-last-v',d.insLast+'%'); sw('ins-last',d.insLast);
-  sv('ins-delta','▲ +'+(d.insLast-d.insBase)+'pp improvement from baseline');
+  const insD=d.insLast-d.insBase;
+  sv('ins-delta', insD>0 ? '▲ +'+insD+'pp improvement from baseline'
+                : insD<0 ? '▼ '+insD+'pp vs baseline'
+                         : 'No change from baseline');
   sv('hb-test',   d.hbTest!=null ? d.hbTest+'%'  : '—');
   sv('hb-test-n', d.hbTest!=null ? 'n = '+fmt(d.enr)+' enrolled' : 'Data pending — HbA1c sheet not yet populated');
   sv('hb-dec',    d.hbDec!=null  ? d.hbDec+'%'   : '—');
@@ -1062,7 +1075,7 @@ function renderKPIs(d,f){
   if(b.flwOk){
     sv('flw-ses',b.flwSes); sv('flw-hr',fmt(b.flwHr));
     sv('flw-dist',b.flwDist); sv('flw-dist-s','of '+b.flwTotDist+' pilot districts');
-    const fp=Math.round(b.flwDist/b.flwTotDist*100); sw('flw-gauge',fp); sv('flw-pct',fp+'%');
+    const fp=share(b.flwDist,b.flwTotDist); sw('flw-gauge',fp||0); sv('flw-pct',fp==null?'—':fp+'%');
   }else{
     sv('flw-ses','—'); sv('flw-hr','—'); sv('flw-dist','—');
     sv('flw-dist-s','Data pending — Orientation tab returns formula errors'); sw('flw-gauge',0); sv('flw-pct','');
@@ -1740,6 +1753,7 @@ function monthList(ms){
 // visit records show for them — SMBG_HyperHypo covers only visits that came with
 // SMBG data, so that count is a floor on attendance, never the percentage itself.
 function fupNote(){
+  if(!FUP_MATCHED) return 'No PLT1D match the current filter, so there is no attendance to show.';
   const p=FUP_PENDING||[]; if(!p.length) return '';
   const one=p.length===1;
   const ev=p.filter(x=>x.visits>0);
@@ -2693,7 +2707,7 @@ function recompute(){
   CS_CUM=csCum;LT_CUM=ltCum;CLIN=clin;CLIN_CS=clinCs;CLIN_LT=clinLt;NEWENR_CS=neCs;NEWENR_LT=neLt;NEWENR=neCs.map((v,i)=>v+neLt[i]);AVGCL=avg;
   MAX=Math.max(0,MONTHS.length-WIN);
   off=[off[0]==null?MAX:Math.min(off[0],MAX), off[1]==null?MAX:Math.min(off[1],MAX)];
-  FUP_MOM=fmom.mom; FUP_PENDING=fmom.pending;
+  FUP_MOM=fmom.mom; FUP_PENDING=fmom.pending; FUP_MATCHED=fmom.matched;
 
   TRAINED_STAFF=[
     {lbl:'With trained Pediatrician',v:pctC(csF.filter(x=>isYes(x['Trained pediatrician available?'])).length,csOp||1)},
@@ -2881,12 +2895,17 @@ function visitsByMonth(idSet){
 }
 
 function computeFollowup(idSet){
-  const g=RAW.fupGrid; if(!g||g.length<2) return {mom:[],pending:[]};
+  const g=RAW.fupGrid; if(!g||g.length<2) return {mom:[],pending:[],matched:0};
   const hdr=g[0];const cols=[];
   for(let i=2;i<hdr.length;i++){const hm=hdrMonth(hdr[i]);if(hm)cols.push({i:i,label:MON[hm.m]+' '+String(hm.y).slice(2),year:hm.y,month:hm.m});}
   const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
+  let matched=0;
   for(let r=1;r<g.length;r++){if(!idSet[normv(g[r][0])])continue;
+    matched++;
     cols.forEach(c=>{const v=normv(g[r][c.i]);if(v==='y')stat[c.label].y++;else if(v==='n')stat[c.label].n++;});}
+  // No row matched the filter: the months are not "unmarked", there is simply
+  // nobody to mark. Saying otherwise blames the sheet for a filter's doing.
+  if(!matched) return {mom:[],pending:[],matched:0};
   const wd=cols.filter(c=>stat[c.label].y+stat[c.label].n>0)
     .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
   // A trailing all-"N" month means attendance hasn't been marked in the sheet
@@ -2909,7 +2928,7 @@ function computeFollowup(idSet){
   // tab still takes its six-month average off the head.
   const mom=wd.slice().reverse()
     .map(c=>{const s=stat[c.label],t=s.y+s.n;return{m:c.label,v:pctC(s.y,t),n:t};});
-  return {mom:mom, pending:pending};
+  return {mom:mom, pending:pending, matched:matched};
 }
 
 function computeCapacity(capF,oriF){
