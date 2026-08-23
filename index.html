@@ -398,7 +398,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Follow-up attendance — month on month</div>
-    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; months with no Y/N marked are held as empty slots · Target: &gt;75%</div>
+    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; a month still in progress is drawn lighter, months with no Y/N marked are held as empty slots · Target: &gt;75%</div>
     <div class="nr">
       <button class="nb" id="pf" onclick="shiftFup(-1)">← Back</button>
       <span class="nl" id="nlf"></span>
@@ -1747,17 +1747,27 @@ function monthList(ms){
   return ms.length+' months, '+ms[0]+' through '+ms[ms.length-1];
 }
 
-// The months with a column but no attendance marked are held on the axis as empty
-// slots, so the chart runs to the present rather than stopping at the last marked
-// month and reading as a broken fetch. This says why they are empty, and what the
-// visit records show for them — SMBG_HyperHypo covers only visits that came with
-// SMBG data, so that count is a floor on attendance, never the percentage itself.
+// Two things the bars cannot say for themselves. The open month: its bar is a
+// part-month figure against a whole-month denominator, so it starts low and climbs
+// — without a word here, a 22% next to last month's 48% reads as attendance
+// collapsing. The unmarked months: they are held on the axis as empty slots so the
+// chart runs to the present rather than stopping at the last marked month and
+// reading as a broken fetch, and this says why they are empty and what the visit
+// records show for them — SMBG_HyperHypo covers only visits that came with SMBG
+// data, so that count is a floor on attendance, never the percentage itself.
 function fupNote(){
   if(!FUP_MATCHED) return 'No PLT1D match the current filter, so there is no attendance to show.';
-  const p=FUP_PENDING||[]; if(!p.length) return '';
+  const parts=[];
+  const cur=(FUP_MOM||[])[0];
+  if(cur&&cur.partial) parts.push(cur.m+' is still open, so its bar is drawn lighter and carries no target marker. '
+    +'Followup_adherence already marks the whole month\'s due list ('+(cur.n||0).toLocaleString()+' PLT1D), while only the '
+    +'visits logged so far count as attended, so the figure rises as the rest of the month is marked and is not yet '
+    +'comparable to a closed month. The donor tab\'s six-month average leaves it out for the same reason.');
+  const p=FUP_PENDING||[];
+  if(p.length){
   const one=p.length===1;
   const ev=p.filter(x=>x.visits>0);
-  let t='Note: '+monthList(p.map(x=>x.m))+' '+(one?'has':'have')+' a column in Followup_adherence '
+  let t=monthList(p.map(x=>x.m))+' '+(one?'has':'have')+' a column in Followup_adherence '
     +'but no Y/N marked in '+(one?'it':'them')+' yet, so '+(one?'it is held':'they are held')
     +' as '+(one?'an empty slot':'empty slots')+' rather than charted as 0%.';
   if(ev.length) t+=' Visits were recorded in '+(ev.length===p.length?(one?'it':'them'):monthList(ev.map(x=>x.m)))
@@ -1765,14 +1775,16 @@ function fupNote(){
     +' have a visit logged in SMBG_HyperHypo, which counts only visits that came with SMBG data '
     +'and so cannot stand in for the attendance denominator.';
   t+=' The bar'+(one?'':'s')+' fill'+(one?'s':'')+' in as soon as the sheet is marked.';
-  return t;
+  parts.push(t);
+  }
+  return parts.length?'Note: '+parts.join(' '):'';
 }
 
 // Full follow-up axis, oldest → newest: every month with marks, then the months
 // the sheet has a column for but has not marked. Paged rather than truncated —
 // the series now runs back to Nov 24, and a fixed tail would bury that history.
 function fupAxis(){
-  return [...FUP_MOM].reverse().map(r=>({m:r.m, v:r.v, n:r.n, pending:false}))
+  return [...FUP_MOM].reverse().map(r=>({m:r.m, v:r.v, n:r.n, partial:!!r.partial, pending:false}))
     .concat((FUP_PENDING||[]).slice(-5).map(p=>({m:p.m, visits:p.visits, pending:true})));
 }
 
@@ -1797,21 +1809,26 @@ function buildFupChart(o){
   if(pb) pb.disabled=o<=0;
   if(nb) nb.disabled=o>=FUP_MAX;
 
-  const labs=win.map(r=>[r.m, r.pending?'not marked':'n='+r.n.toLocaleString()]);
+  const labs=win.map(r=>[r.m, r.pending?'not marked':(r.partial?'so far · n=':'n=')+(r.n||0).toLocaleString()]);
   const vals=win.map(r=>r.pending?null:r.v);
   // A full-height grey slot for each unmarked month: the month is visibly on the
   // axis and visibly unmeasured, which a missing column and a 0% bar both fail at.
   const band=win.map(r=>r.pending?100:null);
+  // The open month is drawn in a lighter blue and carries no target marker: its
+  // denominator is the whole month's but its numerator stops at today, so holding
+  // it against a target meant for a closed month would read as a collapse in
+  // attendance rather than as a month that is three weeks in.
+  const tgt=win.map(r=>r.partial?null:75);
 
   _cfup=new Chart(document.getElementById('c-fup'),{
     type:'bar',
     data:{labels:labs, datasets:[
       {label:'% Follow-up', data:vals, stack:'s',
-       backgroundColor:vals.map(v=>v>=75?'#0f3460':'#1a5fa8'),
+       backgroundColor:win.map((r,i)=>r.partial?'#9ec9ef':(vals[i]>=75?'#0f3460':'#1a5fa8')),
        borderRadius:3, _minVal:1, _minH:14},
       {label:'Not marked', data:band, stack:'s',
        backgroundColor:'#e2e8f0', borderRadius:3, _noLabel:true},
-      {label:'Target', data:labs.map(()=>75), type:'line',
+      {label:'Target', data:tgt, type:'line',
        borderColor:'#d97706', borderDash:[5,5], borderWidth:1.5,
        pointRadius:0, backgroundColor:'transparent', _noLabel:true}
     ]},
@@ -1821,7 +1838,14 @@ function buildFupChart(o){
         title:items=>[items[0].label].flat().join(' '),
         label(ctx){
           if(ctx.dataset.label==='Target') return ' Target: 75%';
-          if(ctx.dataset.label!=='Not marked') return ' Follow-up: '+ctx.parsed.y+'%';
+          if(ctx.dataset.label!=='Not marked'){
+            const r=win[ctx.dataIndex];
+            return r&&r.partial
+              ? [' Follow-up so far: '+ctx.parsed.y+'%',
+                 ' '+r.m+' is still open — the month\'s full due list is already',
+                 ' counted, so this rises as the remaining visits are marked']
+              : ' Follow-up: '+ctx.parsed.y+'%';
+          }
           const p=win[ctx.dataIndex];
           return p&&p.visits
             ? [' Attendance not marked in the sheet',
@@ -1940,7 +1964,7 @@ function renderLogframe(){
     const bits=[met+' of '+scored+' measurable logframe targets met.',
       'Targets are the Jul ’26 column of the grant logframe and are held in the dashboard code, not in a sheet.'];
     if(d.filtered) bits.push('A geography filter is active — targets are programme-wide, so they do not apply to a filtered view.');
-    if(d.fup!=null) bits.push('Follow-up is the attendance-weighted average of the last '+d.fupMonths+' months'+(d.fupThru?' through '+d.fupThru:'')+' (n='+d.fupN.toLocaleString()+' visits due).');
+    if(d.fup!=null) bits.push('Follow-up is the attendance-weighted average of the last '+d.fupMonths+' completed months'+(d.fupThru?' through '+d.fupThru:'')+' (n='+d.fupN.toLocaleString()+' visits due).');
     if(d.smbg34!=null) bits.push('SMBG is '+d.smbgMonth+', among PLT1D enrolled ≥3 months (n='+d.smbgN.toLocaleString()+').');
     note.textContent=bits.join(' ');
   }
@@ -2815,8 +2839,11 @@ function computeDonor(x){
     growth.series.push({st:k,name:sln(k),data:row});
   });
 
-  // Follow-up: the logframe reports a 6-month average, not a single month
-  const f6=(fmom||[]).slice(0,6);
+  // Follow-up: the logframe reports a 6-month average, not a single month. A month
+  // still in progress carries the whole month's denominator against a part-month
+  // numerator, so averaging it in would drag the reported figure below what the
+  // programme actually did — take the six most recent completed months instead.
+  const f6=(fmom||[]).filter(r=>!r.partial).slice(0,6);
   const fupN=f6.reduce((a,c)=>a+(c.n||0),0);
   const fup=fupN?Math.round(f6.reduce((a,c)=>a+c.v*(c.n||0),0)/fupN):null;
 
@@ -2925,9 +2952,15 @@ function computeFollowup(idSet){
     .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month)
     .map(c=>({m:c.label, visits:vis[c.label]||0}));
   // Full series, newest first — the chart pages a window over it, and the donor
-  // tab still takes its six-month average off the head.
+  // tab takes its six-month average off the head, skipping any partial month.
+  // The current calendar month is still open, and the sheet marks the whole due
+  // cohort "N" up front and flips each to "Y" as the visit happens: its denominator
+  // is already the full month's while its numerator holds only the visits logged so
+  // far. The bar is real, but it is not comparable to a closed month and will climb
+  // until the month ends, so it is flagged rather than charted as a finished figure.
   const mom=wd.slice().reverse()
-    .map(c=>{const s=stat[c.label],t=s.y+s.n;return{m:c.label,v:pctC(s.y,t),n:t};});
+    .map(c=>{const s=stat[c.label],t=s.y+s.n;
+      return{m:c.label,v:pctC(s.y,t),n:t,partial:ymKey(c.year,c.month)===nowK};});
   return {mom:mom, pending:pending, matched:matched};
 }
 
