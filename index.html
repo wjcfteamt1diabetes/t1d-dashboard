@@ -1115,17 +1115,24 @@ const PTF_FULL={'PHC':'Primary Health Centre','CHC':'Community Health Centre','D
 const PTF_SECTOR={'PHC':'Public','CHC':'Public','DH':'Public','SDH':'Public','Sat. Hosp':'Public',
   'State GMC':'Public','Central GMC':'Public','Govt Hosp':'Public',
   'Pvt Hosp':'Private','Pvt Clinic':'Private','Newly Dx':'Newly diagnosed'};
-const PTF_SEC_ORDER=['Public','Private','Newly diagnosed','Other'];
-// Validated as a categorical triple against the light surface: worst adjacent pair
-// ΔE 17.8 protan, 18.0 normal vision, all three ≥3:1 contrast.
-const PTF_SEC_COL={'Public':'#1a5fa8','Private':'#0d9488','Newly diagnosed':'#a855f7','Other':'#94a3b8'};
+const PTF_SEC_ORDER=['Public','Private','Newly diagnosed'];
+// One hue, dark→light in magnitude order — a sequential ramp, since the three
+// sectors are being compared by size. Steps are the dashboard's own blues, OKLab
+// lightness 0.325 / 0.484 / 0.760, so adjacent pairs stay well apart (ΔL 0.16, 0.28).
+const PTF_SEC_COL={'Public':'#0f3460','Private':'#1a5fa8','Newly diagnosed':'#7db8e8'};
+// The lightest step cannot carry white text.
+const PTF_SEC_INK={'Public':'#fff','Private':'#fff','Newly diagnosed':'#0f172a'};
 
 function renderPTF(){
   const el=document.getElementById('ptf-bars'); if(!el) return;
   const rows=DATA.demographics.prevFacility||[];
   const bySec={}, members={};
+  // A facility type outside the sector map is a data-entry stray, not a sector —
+  // it is kept out of the bar and its count disclosed in the footer instead.
+  let unclassified=0;
   rows.forEach(d=>{
-    const sec=PTF_SECTOR[d.l]||'Other';
+    const sec=PTF_SECTOR[d.l];
+    if(!sec){ unclassified+=(d.n||0); return; }
     bySec[sec]=(bySec[sec]||0)+(d.n||0);
     if(d.n>0)(members[sec]=members[sec]||[]).push(PTF_FULL[d.l]||d.l);
   });
@@ -1137,7 +1144,7 @@ function renderPTF(){
   // rounded, and the 2px spacers come out of the total instead of overflowing it.
   const bar=secs.map((x,i)=>
     `<div title="${x}: ${fmt(bySec[x])} PLT1D (${pts[i]}%)" style="flex:${bySec[x]} 1 0;background:${PTF_SEC_COL[x]};border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden">`
-    +`<span style="font-size:10px;font-weight:700;color:#fff">${pts[i]>=8?pts[i]+'%':''}</span></div>`).join('');
+    +`<span style="font-size:10px;font-weight:700;color:${PTF_SEC_INK[x]}">${pts[i]>=8?pts[i]+'%':''}</span></div>`).join('');
 
   const legend=secs.map((x,i)=>
     `<div style="display:flex;align-items:center;gap:6px;font-size:10px">`
@@ -1150,7 +1157,10 @@ function renderPTF(){
   const parts=secs.map(x=> x==='Newly diagnosed'
     ? '<b>Newly diagnosed</b> = no previous treatment'
     : (members[x] ? '<b>'+x+'</b> = '+members[x].join(', ') : null)).filter(Boolean);
-  const foot=parts.join(' · ')+'. Shares are rounded to whole numbers and adjusted to total 100%.';
+  let foot=parts.join(' · ')+'.';
+  if(unclassified) foot+=' '+fmt(unclassified)+' PLT1D '+(unclassified===1?'has':'have')
+    +' a facility type outside these groups and '+(unclassified===1?'is':'are')+' not shown.';
+  foot+=' Shares are rounded to whole numbers and adjusted to total 100%.';
 
   el.innerHTML=`<div style="display:flex;gap:2px;height:26px;margin-bottom:10px">${bar}</div>`
     +`<div style="display:flex;flex-direction:column;gap:6px">${legend}</div>`
