@@ -2142,15 +2142,17 @@ const STK_COMS=[
   {name:'Short-acting Insulin',slug:'sai', color:'#d97706'}
 ];
 const STK_MON_IDX={January:0,February:1,March:2,April:3,May:4,June:5,July:6,August:7,September:8,October:9,November:10,December:11};
-// Facility names the Stock levels tab spells differently from the CS/LT
-// facility lists. Key = the stock-sheet spelling (lowercased), value = the
-// master-list spelling. Canonicalising here — rather than pinning a state —
-// lets the rows inherit the whole state/division/district/DPC record, so the
-// heatmap groups them under their state instead of "Unspecified" and the
-// Facility/District/DPC filters (populated from the master lists) reach them.
-// Drop an entry once the two tabs agree on the spelling at source.
-const STK_FAC_ALIAS={'chc agastmuni':'CHC Aagastmuni'};
-function stkFacName(v){const s=String(v==null?'':v).trim();return STK_FAC_ALIAS[s.toLowerCase()]||s;}
+// One facility, spelled differently across the sheets. Every known variant
+// (lowercased) maps to the name the programme uses, and canonFac is applied to
+// BOTH the stock rows and the facility-list records — so the facility->geo join
+// holds whichever sheet is corrected first, and keeps holding if one never is.
+// CompleteSupport_Facilities says "CHC Aagastmuni" and that is the name of
+// record; the stock sheet carries an older single-a spelling. Drop a variant
+// once no sheet uses it. facKey is the canonical lookup key: use it anywhere a
+// facility NAME becomes a facAttr key or is compared against the Facility filter.
+const FAC_CANON={'chc agastmuni':'CHC Aagastmuni'};
+function canonFac(v){const s=String(v==null?'':v).trim();return FAC_CANON[s.toLowerCase()]||s;}
+function facKey(v){return canonFac(v).toLowerCase();}
 function stkYmKey(r){return (r.year||0)*12+(STK_MON_IDX[r.month]||0);}
 function stkYmLabel(r){return r.month.slice(0,3)+' '+String(r.year).slice(2);}
 function parseStock(grid){
@@ -2165,7 +2167,7 @@ function parseStock(grid){
     const so=String(o['Stockout']==null?'':o['Stockout']).trim();
     const mt=String(o['Meet Complete Demand']==null?'':o['Meet Complete Demand']).trim();
     return {
-      fac:stkFacName(o['Facility']),
+      fac:canonFac(o['Facility']),
       commodity:String(o['Commodity']||'').trim(),
       month:String(o['Month']||'').trim(),
       year:Number(o['Year'])||null,
@@ -2180,8 +2182,8 @@ function stockFiltered(){
   const rows=RAW&&RAW.stock?RAW.stock:[];
   const f=getF(), fa=RAW.facAttr||{};
   return rows.filter(r=>{
-    if(f.facility!=='all'&&normv(r.fac)!==normv(f.facility))return false;
-    const a=fa[normv(r.fac)]||{};
+    if(f.facility!=='all'&&facKey(r.fac)!==facKey(f.facility))return false;
+    const a=fa[facKey(r.fac)]||{};
     if(f.state!=='all'&&String(a.state||'').toUpperCase()!==f.state)return false;
     if(f.division!=='all'&&normv(a.division||'')!==normv(f.division))return false;
     if(f.district!=='all'&&normv(a.district||'')!==normv(f.district))return false;
@@ -2268,7 +2270,7 @@ function renderStockHeatmap(){
     .sort((a,b)=>a.localeCompare(b));
   // Group facilities by state (joined via facility→state attribute lookup)
   const fa=RAW.facAttr||{};
-  const stateOf=fac=>{const s=(fa[normv(fac)]||{}).state; return s&&String(s).trim()?String(s).trim().toUpperCase():'UNSPECIFIED';};
+  const stateOf=fac=>{const s=(fa[facKey(fac)]||{}).state; return s&&String(s).trim()?String(s).trim().toUpperCase():'UNSPECIFIED';};
   const byState={}; facs.forEach(fac=>{const s=stateOf(fac);(byState[s]=byState[s]||[]).push(fac);});
   const states=Object.keys(byState).sort((a,b)=>{
     if(a==='UNSPECIFIED')return 1; if(b==='UNSPECIFIED')return -1; return a.localeCompare(b);});
@@ -2467,7 +2469,7 @@ function ltData(f){
     if(ni<0||!normv(row[ni])) continue;
     if(f.state!=='all'&&si>=0&&String(row[si]||'').trim().toUpperCase()!==f.state) continue;
     if(f.district!=='all'&&di>=0&&normv(row[di])!==normv(f.district)) continue;
-    if(f.facility!=='all'&&normv(row[ni])!==normv(f.facility)) continue;
+    if(f.facility!=='all'&&facKey(row[ni])!==facKey(f.facility)) continue;
     facCount++; const te=ti>=0?num(row[ti]):null; if(te!=null)totalEnr+=te;
     monthCols.forEach(mc=>{const v=num(row[mc.i]); if(v!=null)monthly[mc.label]=(monthly[mc.label]||0)+v;});
     // LT has no "Date of Operationalisation" column, so a facility counts as
@@ -2525,8 +2527,8 @@ function buildGeo(){
   const facAttr={}, geo=[];
   (RAW.csFac||[]).forEach(x=>{
     const o={state:String(x['State']||'').trim().toUpperCase(),division:String(x['Division']||'').trim(),
-             district:String(x['District']||'').trim(),dpc:String(x['DPC']||'').trim(),facility:String(x['Facility name']||'').trim()};
-    if(o.facility){facAttr[normv(o.facility)]=o; geo.push(o);}
+             district:String(x['District']||'').trim(),dpc:String(x['DPC']||'').trim(),facility:canonFac(x['Facility name'])};
+    if(o.facility){facAttr[facKey(o.facility)]=o; geo.push(o);}
   });
   // LT facilities from the grid (State, District, Facility name; no Division/DPC)
   const g=RAW.ltGrid;
@@ -2537,8 +2539,8 @@ function buildGeo(){
     for(let r=hr+1;r<g.length;r++){
       const fn=ni>=0?String(g[r][ni]||'').trim():''; if(!fn)continue;
       const o={state:si>=0?String(g[r][si]||'').trim().toUpperCase():'',division:'',
-               district:di>=0?String(g[r][di]||'').trim():'',dpc:'',facility:fn};
-      if(!facAttr[normv(fn)])facAttr[normv(fn)]=o; geo.push(o);
+               district:di>=0?String(g[r][di]||'').trim():'',dpc:'',facility:canonFac(fn)};
+      if(!facAttr[facKey(fn)])facAttr[facKey(fn)]=o; geo.push(o);
     }
   }
   // Facilities that appear in the data tabs but are missing from the CS/LT
@@ -2579,24 +2581,24 @@ function populateFilters(){
 function recompute(){
   const f=getF();
   const fa=RAW.facAttr||{};
-  const attr=name=>fa[normv(name)]||{};
+  const attr=name=>fa[facKey(name)]||{};
   // Geography matchers — patients/capacity resolve division/dpc via the facility lookup;
   // CS facilities carry all dims directly; orientation is at State+District level.
   const geoPatient=p=>{const a=attr(p['Facility Name']);
     if(f.state!=='all'&&stUp(p)!==f.state)return false;
-    if(f.facility!=='all'&&normv(p['Facility Name'])!==normv(f.facility))return false;
+    if(f.facility!=='all'&&facKey(p['Facility Name'])!==facKey(f.facility))return false;
     if(f.division!=='all'&&normv(a.division)!==normv(f.division))return false;
     if(f.district!=='all'&&normv(a.district)!==normv(f.district))return false;
     if(f.dpc!=='all'&&normv(a.dpc)!==normv(f.dpc))return false; return true;};
   const geoCS=x=>{
     if(f.state!=='all'&&String(x['State']).trim().toUpperCase()!==f.state)return false;
-    if(f.facility!=='all'&&normv(x['Facility name'])!==normv(f.facility))return false;
+    if(f.facility!=='all'&&facKey(x['Facility name'])!==facKey(f.facility))return false;
     if(f.division!=='all'&&normv(x['Division'])!==normv(f.division))return false;
     if(f.district!=='all'&&normv(x['District'])!==normv(f.district))return false;
     if(f.dpc!=='all'&&normv(x['DPC'])!==normv(f.dpc))return false; return true;};
   const geoCap=r=>{const a=attr(r['Facility Name']);
     if(f.state!=='all'&&String(r['State']).trim().toUpperCase()!==f.state)return false;
-    if(f.facility!=='all'&&normv(r['Facility Name'])!==normv(f.facility))return false;
+    if(f.facility!=='all'&&facKey(r['Facility Name'])!==facKey(f.facility))return false;
     if(f.division!=='all'&&normv(a.division)!==normv(f.division))return false;
     if(f.district!=='all'&&normv(r['District'])!==normv(f.district))return false;
     if(f.dpc!=='all'&&normv(a.dpc)!==normv(f.dpc))return false; return true;};
@@ -2904,7 +2906,7 @@ function ltRows(f){
     if(ni<0||!normv(row[ni])) continue;
     if(f.state!=='all'&&si>=0&&String(row[si]||'').trim().toUpperCase()!==f.state) continue;
     if(f.district!=='all'&&di>=0&&normv(row[di])!==normv(f.district)) continue;
-    if(f.facility!=='all'&&normv(row[ni])!==normv(f.facility)) continue;
+    if(f.facility!=='all'&&facKey(row[ni])!==facKey(f.facility)) continue;
     out.push({state:si>=0?String(row[si]||'').trim().toUpperCase():'',district:di>=0?String(row[di]||'').trim():'',facility:String(row[ni]).trim()});
   }
   return out;
