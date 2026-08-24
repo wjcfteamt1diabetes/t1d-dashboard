@@ -2142,6 +2142,15 @@ const STK_COMS=[
   {name:'Short-acting Insulin',slug:'sai', color:'#d97706'}
 ];
 const STK_MON_IDX={January:0,February:1,March:2,April:3,May:4,June:5,July:6,August:7,September:8,October:9,November:10,December:11};
+// Facility names the Stock levels tab spells differently from the CS/LT
+// facility lists. Key = the stock-sheet spelling (lowercased), value = the
+// master-list spelling. Canonicalising here — rather than pinning a state —
+// lets the rows inherit the whole state/division/district/DPC record, so the
+// heatmap groups them under their state instead of "Unspecified" and the
+// Facility/District/DPC filters (populated from the master lists) reach them.
+// Drop an entry once the two tabs agree on the spelling at source.
+const STK_FAC_ALIAS={'chc agastmuni':'CHC Aagastmuni'};
+function stkFacName(v){const s=String(v==null?'':v).trim();return STK_FAC_ALIAS[s.toLowerCase()]||s;}
 function stkYmKey(r){return (r.year||0)*12+(STK_MON_IDX[r.month]||0);}
 function stkYmLabel(r){return r.month.slice(0,3)+' '+String(r.year).slice(2);}
 function parseStock(grid){
@@ -2156,7 +2165,7 @@ function parseStock(grid){
     const so=String(o['Stockout']==null?'':o['Stockout']).trim();
     const mt=String(o['Meet Complete Demand']==null?'':o['Meet Complete Demand']).trim();
     return {
-      fac:String(o['Facility']||'').trim(),
+      fac:stkFacName(o['Facility']),
       commodity:String(o['Commodity']||'').trim(),
       month:String(o['Month']||'').trim(),
       year:Number(o['Year'])||null,
@@ -2532,10 +2541,12 @@ function buildGeo(){
       if(!facAttr[normv(fn)])facAttr[normv(fn)]=o; geo.push(o);
     }
   }
-  // Facilities that report stock but are missing from (or spelled differently
-  // in) the CS/LT facility lists — pin their state so the stock heatmap doesn't
-  // group them under "Unspecified". Remove an entry once the facility is added
-  // to a facility list tab with its State filled in.
+  // Facilities that appear in the data tabs but are missing from the CS/LT
+  // facility lists — pin their state so anything joined through facAttr doesn't
+  // fall to "Unspecified". SDH Mussoorie is a UK complete-support site that only
+  // shows up in Capacity_Building; it has no CompleteSupport_Facilities row and
+  // no Stock levels rows. Remove an entry once the facility is added to a
+  // facility list tab with its State filled in.
   const EXTRA_FAC_STATE={'sdh mussoorie':'UK'};
   Object.keys(EXTRA_FAC_STATE).forEach(k=>{
     const o=facAttr[k]||(facAttr[k]={division:'',district:'',dpc:'',facility:k});
