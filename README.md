@@ -37,7 +37,8 @@ charts instantly.**
 ├── apps-script/
 │   └── Code.gs             # Deprecated backend — kept for reference, no longer used
 ├── docs/
-│   └── ARCHITECTURE.md     # Full build spec and data contract
+│   ├── ARCHITECTURE.md     # Full build spec and data contract
+│   └── data-request/       # Patient data specification — enrolment + follow-up datasets
 ├── .gitignore
 └── README.md
 ```
@@ -45,3 +46,16 @@ charts instantly.**
 > `t1d_dashboard_22.html` is the original static mock — kept as a reference/fallback, not deployed.
 
 ---
+
+## Patient data request
+
+`docs/data-request/` specifies the patient-level data the dashboard needs, as **two
+datasets** — [enrolment](docs/data-request/enrolment-dictionary.md) (one row per patient)
+and [follow-up](docs/data-request/followup-dictionary.md) (one row per visit, missed
+appointment, or refill) — linked by a stable pseudonymous `patient_id`. It carries the
+data dictionaries, CSV templates, the capture forms and who fills each field at what
+point, and the missingness report we need alongside the extract.
+
+Those extracts are patient-level. They must never be committed to this repository or
+served from Pages — see the privacy note in that folder's
+[README](docs/data-request/README.md#privacy).

@@ -26,3 +26,11 @@ in `apps-script/Code.gs`.
 
 The dashboard hard-fails on a schema mismatch. Bump `schemaVersion` in `Code.gs` and
 update the check in `index.html` (`loadData`) whenever the contract changes.
+
+## Patient data specification
+
+The upstream data request — what the sheets should eventually carry, as an enrolment
+dataset and a follow-up dataset — is in [`data-request/`](data-request/README.md), together
+with the data dictionaries, capture forms, responsibility matrix, and missingness report
+template. It also maps each requested field onto the tabs the dashboard reads today and
+names the gaps.
