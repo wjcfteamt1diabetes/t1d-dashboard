@@ -2434,7 +2434,7 @@ const EN_CANON=['Claude_ID','State','Age','Sex','Facility Name','Date of enrolme
 const HBA_CANON=['Claude_ID','State','Age','Sex','Facility Name','Date of enrolment','Survival Status','Case Status (Active/Inactive)','Baseline HbA1c value (%)','First Hba1c','Date of first Hba1c','Time between first hba1c and enrolment','Mismatch between baseline and first hba1c (<30 days)','Latest Hba1c value','Date of latest Hba1c','Time since enrolment','Latest hba1c time bucket'];
 const HH_CANON=['Claude ID','Facility Name','Date of visit','% Hypo readings','% Hyper readings','Days since enrolment','Time bucket'];
 const CS_CANON=['','State','Division','District','Block','Facility category','Facility name','DPC','Block&FC','Directive for operationalisation issued from the state?','Directive for operationalisation issued from CS office?','T1D Clinic Operational?','Date of Operationalisation','Clinic Day','HbA1c Available?','Trained pediatrician available?','Trained MD Medicine available?','Trained Medical Officer available?','Referral pathway developed?','Peer support groups formed?'];
-const LT_CANON=['State','District','Facility category','Facility name','Total enrolments (autocalculated)'];
+const LT_CANON=['T1D Clinic Operational?','State','District','Facility category','Facility name','Total enrolments (autocalculated)'];
 const ORI_CANON=['State','District','Block','Type of Service Provider','# of Service Providers','Session #','Pilot District? (Yes/No)','Month of Orientation','Year of Orientation','Remarks'];
 
 // Capacity_Building: gviz returns BLANK headers for Training Batch / Maximum Score /
@@ -2456,21 +2456,27 @@ function ltData(f){
   const g=RAW.ltGrid; if(!g||g.length<2) return {facCount:0,totalEnr:0,monthly:{},opStarts:[]};
   const hr=headerRowOf(g,['Facility name','Total enrolments (autocalculated)']);
   const hdr=g[hr];
-  let si=-1,di=-1,ni=-1,ti=-1; const monthCols=[];
+  let si=-1,di=-1,ni=-1,ti=-1,oi=-1; const monthCols=[];
   for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
     if(h==='State')si=i; if(h==='District')di=i; if(h==='Facility name')ni=i;
     if(/total enrolments/i.test(h))ti=i;
+    if(/clinic operational/i.test(h))oi=i;
     const d=parseDate(hdr[i]); if(d&&h&&!/enrolment|facility|state|district|category|s no|^total/i.test(h)) monthCols.push({i:i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2),y:d.getFullYear(),m:d.getMonth()});
   }
   // If a Division or DPC filter is active, LT has no such attribute → exclude LT entirely.
-  if(f.division!=='all'||f.dpc!=='all') return {facCount:0,totalEnr:0,monthly:{},opStarts:[]};
-  let facCount=0,totalEnr=0;const monthly={};const opStarts=[];
+  if(f.division!=='all'||f.dpc!=='all') return {facCount:0,opCount:0,totalEnr:0,monthly:{},opStarts:[]};
+  // facCount = every light-touch site (the planned list); opCount = only those the
+  // sheet marks operational. Before the sheet carried "T1D Clinic Operational?"
+  // every listed site was a running clinic, so with the column absent (oi<0) each
+  // row still counts as operational and the two totals coincide, as they used to.
+  let facCount=0,opCount=0,totalEnr=0;const monthly={};const opStarts=[];
   for(let r=hr+1;r<g.length;r++){const row=g[r];
     if(ni<0||!normv(row[ni])) continue;
     if(f.state!=='all'&&si>=0&&String(row[si]||'').trim().toUpperCase()!==f.state) continue;
     if(f.district!=='all'&&di>=0&&normv(row[di])!==normv(f.district)) continue;
     if(f.facility!=='all'&&facKey(row[ni])!==facKey(f.facility)) continue;
-    facCount++; const te=ti>=0?num(row[ti]):null; if(te!=null)totalEnr+=te;
+    facCount++; const ltOper=oi<0?true:isYes(row[oi]); if(ltOper)opCount++;
+    const te=ti>=0?num(row[ti]):null; if(te!=null)totalEnr+=te;
     monthCols.forEach(mc=>{const v=num(row[mc.i]); if(v!=null)monthly[mc.label]=(monthly[mc.label]||0)+v;});
     // LT has no "Date of Operationalisation" column, so a facility counts as
     // operational from the first month it reports an enrolment figure (0 included —
@@ -2478,11 +2484,13 @@ function ltData(f){
     // operational thereafter. No reported month at all → operational from the first
     // month column, so the chart's latest point matches the operational-clinics KPI.
     let st=null;
-    for(let k=0;k<monthCols.length;k++){ if(num(row[monthCols[k].i])!=null){st=monthCols[k];break;} }
-    if(!st&&monthCols.length)st=monthCols[0];
-    if(st)opStarts.push({y:st.y,m:st.m});
+    if(ltOper){
+      for(let k=0;k<monthCols.length;k++){ if(num(row[monthCols[k].i])!=null){st=monthCols[k];break;} }
+      if(!st&&monthCols.length)st=monthCols[0];
+      if(st)opStarts.push({y:st.y,m:st.m});
+    }
   }
-  return {facCount,totalEnr,monthly,opStarts};
+  return {facCount,opCount,totalEnr,monthly,opStarts};
 }
 
 // ── Clinic ops (program-wide; transposed sheet) ──
@@ -2733,7 +2741,7 @@ function recompute(){
   });
   const newLast=csLast+(lt.monthly[lastLbl]||0), newPrev=csPrev+(lt.monthly[prevLbl]||0);
   const iLast=months.findIndex(m=>m.label===lastLbl);
-  const clinLast=iLast>=0?clin[iLast]:(csOp+lt.facCount);
+  const clinLast=iLast>=0?clin[iLast]:(csOp+lt.opCount);
 
   // ── Follow-up MoM (join followup sheet to filtered survivor IDs) ──
   const idSet={};P.forEach(p=>idSet[normv(p['Claude_ID'])]=true);
@@ -2783,7 +2791,7 @@ function recompute(){
   // merged object for renderKPIs (geo + patient)
   const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]||0;
   CURD={
-    states:statesCount, dist, plan:csF.length+lt.facCount, op:csOp+lt.facCount, csOp, ltOp:lt.facCount,
+    states:statesCount, dist, plan:csF.length+lt.facCount, op:csOp+lt.opCount, csOp, ltOp:lt.opCount,
     enr:csEnr+ltEnr, csEnr, ltEnr, target,
     newLast, newPrev, avgClin:clinLast>0?Math.round(newLast/clinLast*10)/10:0,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
@@ -2812,7 +2820,7 @@ function computeDonor(x){
   const dOp={};
   csF.forEach(r=>{ if(isYes(r['T1D Clinic Operational?'])){const d=normv(r['District']); if(d)dOp[d]=true;} });
   const ltAll=ltRows(f);
-  ltAll.forEach(r=>{ if(r.district)dOp[normv(r.district)]=true; });
+  ltAll.forEach(r=>{ if(r.operational&&r.district)dOp[normv(r.district)]=true; });
 
   // Per-state footprint. ltData() already knows how to scope light touch to a
   // state, so reuse it rather than re-reading the grid.
@@ -2822,9 +2830,9 @@ function computeDonor(x){
   ST.forEach(k=>{
     const ltk=ltData(Object.assign({},f,{state:k}));
     const cs=csF.filter(r=>String(r['State']||'').trim().toUpperCase()===k);
-    const clinics=cs.filter(r=>isYes(r['T1D Clinic Operational?'])).length+ltk.facCount;
+    const clinics=cs.filter(r=>isYes(r['T1D Clinic Operational?'])).length+ltk.opCount;
     const ds={}; cs.forEach(r=>{if(isYes(r['T1D Clinic Operational?'])){const d=normv(r['District']);if(d)ds[d]=true;}});
-    ltRows(Object.assign({},f,{state:k})).forEach(r=>{if(r.district)ds[normv(r.district)]=true;});
+    ltRows(Object.assign({},f,{state:k})).forEach(r=>{if(r.operational&&r.district)ds[normv(r.district)]=true;});
     const enr=(stCs[k]||0)+ltk.totalEnr;
     stLt[k]=ltk;
     if(clinics||enr) byState.push({st:k,name:sln(k),districts:Object.keys(ds).length,clinics:clinics,enrolled:enr});
@@ -2879,7 +2887,7 @@ function computeDonor(x){
   DONOR={
     filtered:(f.state!=='all'||f.division!=='all'||f.district!=='all'||f.facility!=='all'||f.dpc!=='all'),
     states:byState.length, dist:Object.keys(dOp).length,
-    clinics:csOp+lt.facCount, enrolled:PGEO.length+lt.totalEnr,
+    clinics:csOp+lt.opCount, enrolled:PGEO.length+lt.totalEnr,
     docs:sum(docBy), nurses:sum(nrsBy), flw:sum(flwBy),
     bb:x.insLast, bbBase:x.insBase,
     hba:hbaLast, hbaBase:hba.avgB&&hba.avgB[0]?hba.avgB[0]:null,
@@ -2901,13 +2909,15 @@ function ltRows(f){
   const hr=headerRowOf(g,['Facility name','Total enrolments (autocalculated)']);
   const h=g[hr].map(c=>String(c).trim());
   const si=h.indexOf('State'), di=h.indexOf('District'), ni=h.indexOf('Facility name');
+  const oi=h.findIndex(x=>/clinic operational/i.test(x));
   const out=[];
   for(let r=hr+1;r<g.length;r++){const row=g[r];
     if(ni<0||!normv(row[ni])) continue;
     if(f.state!=='all'&&si>=0&&String(row[si]||'').trim().toUpperCase()!==f.state) continue;
     if(f.district!=='all'&&di>=0&&normv(row[di])!==normv(f.district)) continue;
     if(f.facility!=='all'&&facKey(row[ni])!==facKey(f.facility)) continue;
-    out.push({state:si>=0?String(row[si]||'').trim().toUpperCase():'',district:di>=0?String(row[di]||'').trim():'',facility:String(row[ni]).trim()});
+    out.push({state:si>=0?String(row[si]||'').trim().toUpperCase():'',district:di>=0?String(row[di]||'').trim():'',facility:String(row[ni]).trim(),
+              operational:oi<0?true:isYes(row[oi])});
   }
   return out;
 }
