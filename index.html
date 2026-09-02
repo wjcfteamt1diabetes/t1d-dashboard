@@ -31,7 +31,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 .wrap{max-width:1380px;margin:0 auto}
 .fbar{background:#fff;border-bottom:1px solid var(--bdr);padding:7px 20px;position:sticky;top:0;z-index:120;box-shadow:0 1px 6px rgba(15,52,96,.08)}
-.fbar-inner{max-width:1380px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.fbar-inner{max-width:1380px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
+/* Each label travels with its own select, so a wrap never strands a label on the row above. */
+.fgrp{display:inline-flex;align-items:center;gap:5px;min-width:0}
+/* Facility and DPC hold the longest option text; cap them so one filter cannot swallow the row. */
+.fsel-w{max-width:210px}
+.fnote{font-size:10px;color:var(--tm);background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:4px 9px;margin-top:6px;width:100%;line-height:1.45}
 .flbl{font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .fsel{font-size:11px;font-family:var(--fn);padding:3px 20px 3px 6px;border:1px solid var(--bdr);border-radius:4px;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 5px center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--t1)}
 .fdiv{width:1px;height:20px;background:var(--bdr);margin:0 2px}
@@ -202,32 +207,33 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 <div class="fbar">
   <div class="fbar-inner">
-    <span class="flbl">State</span>
+    <span class="fgrp"><span class="flbl">State</span>
     <select class="fsel" id="f-state" onchange="applyFilters()">
       <option value="all">All states</option><option value="RJ">Rajasthan</option>
       <option value="MP">Madhya Pradesh</option><option value="UK">Uttarakhand</option><option value="CG">Chhattisgarh</option>
-    </select>
-    <span class="flbl">Division</span><select class="fsel" id="f-division" onchange="applyFilters()"><option value="all">All divisions</option></select>
-    <span class="flbl">District</span><select class="fsel" id="f-district" onchange="applyFilters()"><option value="all">All districts</option></select>
-    <span class="flbl">Facility</span><select class="fsel" id="f-facility" onchange="applyFilters()"><option value="all">All facilities</option></select>
-    <span class="flbl">DPC</span><select class="fsel" id="f-dpc" onchange="applyFilters()"><option value="all">All DPCs</option></select>
+    </select></span>
+    <span class="fgrp"><span class="flbl">Division</span><select class="fsel" id="f-division" onchange="applyFilters()"><option value="all">All divisions</option></select></span>
+    <span class="fgrp"><span class="flbl">District</span><select class="fsel" id="f-district" onchange="applyFilters()"><option value="all">All districts</option></select></span>
+    <span class="fgrp"><span class="flbl">Facility</span><select class="fsel fsel-w" id="f-facility" onchange="applyFilters()"><option value="all">All facilities</option></select></span>
+    <span class="fgrp"><span class="flbl">DPC</span><select class="fsel fsel-w" id="f-dpc" onchange="applyFilters()"><option value="all">All DPCs</option></select></span>
     <div class="fdiv"></div>
-    <span class="flbl">Status</span>
+    <span class="fgrp"><span class="flbl">Status</span>
     <select class="fsel" id="f-status" onchange="applyFilters()">
       <option value="all">All cases</option><option value="active">Active only</option><option value="inactive">Inactive only</option>
-    </select>
-    <span class="flbl">Sex</span>
+    </select></span>
+    <span class="fgrp"><span class="flbl">Sex</span>
     <select class="fsel" id="f-sex" onchange="applyFilters()">
       <option value="all">All</option><option value="M">Male</option><option value="F">Female</option>
-    </select>
-    <span class="flbl">Age group</span>
+    </select></span>
+    <span class="fgrp"><span class="flbl">Age group</span>
     <select class="fsel" id="f-age" onchange="applyFilters()">
       <option value="all">All</option><option value="ped">Pediatric (0–17)</option>
       <option value="adu">Adults (≥18)</option>
-    </select>
+    </select></span>
     <div class="fdiv"></div>
     <span class="ftag" id="n-tag">n = 2,216 PLT1D</span>
   </div>
+  <div class="fbar-inner"><div class="fnote" id="lt-excl" hidden></div></div>
 </div>
 
 <div class="tabs-bar">
@@ -2096,9 +2102,28 @@ function buildDonorCadre(){
   });
 }
 
+// Division and DPC exist only on the complete-support facility list. ltData() bails
+// out entirely when either is set, so light touch silently leaves every total. Say so,
+// and say how much, rather than letting the number read as the whole programme.
+function renderLtExclusionNote(){
+  const el=document.getElementById('lt-excl'); if(!el) return;
+  const f=getF(), byDiv=f.division!=='all', byDpc=f.dpc!=='all';
+  if(!byDiv&&!byDpc){ el.hidden=true; return; }
+  // What light touch would still contribute on the rest of the selection.
+  const lt=ltData(Object.assign({},f,{division:'all',dpc:'all'}));
+  if(!lt.facCount){ el.hidden=true; return; }
+  const dim=byDiv&&byDpc?'Division and DPC are recorded':(byDiv?'Division is recorded':'DPC is recorded');
+  el.textContent=dim+' for complete-support facilities only, so this view leaves out '+
+    lt.facCount+' light-touch '+(lt.facCount===1?'facility':'facilities')+
+    (lt.totalEnr?' and '+lt.totalEnr.toLocaleString()+' enrolments':'')+
+    '. Clear '+(byDiv&&byDpc?'both':'it')+' to see the full footprint.';
+  el.hidden=false;
+}
+
 function applyFilters(){
   safe('populateFilters', populateFilters);   // cascade dropdown options to current selection
   recompute();
+  safe('renderLtExclusionNote', renderLtExclusionNote);
   const f=getF(), d=getD();
   safe('renderKPIs',      ()=>renderKPIs(d,f));
   safe('buildC1',         ()=>buildC1(off[0]));
