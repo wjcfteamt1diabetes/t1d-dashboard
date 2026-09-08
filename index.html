@@ -3274,9 +3274,12 @@ async function boot(){
     fillRow(ltGrid, ['State','Facility name'],                     LT_CANON);
     fillRow(orient, ['State','Type of Service Provider','Pilot District? (Yes/No)'], ORI_CANON);
     fillRow(stkGrid,['Facility','Commodity','Month'], STK_CANON);
+    // Every row the tab returned, before we drop the blank placeholders. Kept so the
+    // guard below can tell "the tab is unreachable" apart from "the tab is empty".
+    const enrRows=toObjects(enr, ['Claude_ID','State','Survival Status']);
     RAW={
       // Keep only real patient rows — the sheet pre-fills IDs (P1..P5000) but most are blank placeholders
-      enrolled:toObjects(enr, ['Claude_ID','State','Survival Status'])
+      enrolled:enrRows
                  .filter(p=>normv(p['Sex'])||normv(p['Age'])||normv(p['Facility Name'])||normv(p['Date of enrolment'])),
       csFac:   toObjects(csFac,  ['Facility name','T1D Clinic Operational?','State']),
       ltGrid:  ltGrid,                            // kept as grid (date headers)
@@ -3288,7 +3291,9 @@ async function boot(){
       hba:     toObjects(hbaGrid, ['Claude_ID','State','Latest hba1c time bucket']),
       stock:   parseStock(stkGrid)
     };
-    if(RAW.enrolled.length<50) throw new Error('Enrolled List returned '+RAW.enrolled.length+' rows. Check the tab name / sharing.');
+    if(RAW.enrolled.length<50) throw new Error(enrRows.length<50
+      ? 'Enrolled List returned '+enrRows.length+' rows. Check the tab name / sharing.'
+      : 'Enrolled List has '+enrRows.length+' rows but only '+RAW.enrolled.length+' carry patient data — State, Age, Sex, Facility Name and Date of enrolment are blank. The tab is reachable, so this is missing data, not a connection problem: restore the sheet from File → Version history.');
     computeClinicOps();
     buildGeo();                               // facility→geo lookup + dropdown option lists
     populateFilters();                        // fill Division/District/Facility/DPC from live data
