@@ -575,7 +575,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="g4">
   <div class="card cab">
     <div class="ct">HbA1c tests done — last 3 months</div>
-    <div class="cs">% PLT1D tested for HbA1c in the last 3 months, among enrolled PLT1D</div>
+    <div class="cs">% PLT1D tested for HbA1c in the last 3 months, among enrolled complete-support PLT1D</div>
     <div class="kv b" id="hb-test">38%</div>
     <div class="ks" id="hb-test-n">n = 2,216 enrolled</div>
   </div>
@@ -1140,19 +1140,19 @@ function renderKPIs(d,f){
                 : insD<0 ? '▼ '+insD+'pp vs baseline'
                          : 'No change from baseline');
   sv('hb-test',   d.hbTest!=null ? d.hbTest+'%'  : '—');
-  sv('hb-test-n', d.hbTest!=null ? 'n = '+fmt(d.enr)+' enrolled' : 'Data pending — HbA1c sheet not yet populated');
+  sv('hb-test-n', d.hbTest!=null ? 'n = '+fmt(d.csEnr)+' complete-support enrolled' : 'Data pending — HbA1c sheet not yet populated');
   sv('hb-dec',    d.hbDec!=null  ? d.hbDec+'%'   : '—');
   sv('hb-dec-n',  d.hbDec!=null  ? 'n = '+fmt(d.hbDecN||0)+' with ≥2 readings' : 'Data pending — HbA1c sheet not yet populated');
   sv('dka',  d.dka!=null  ? d.dka+'%'  : '—');
-  sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.enr)+' · '+(d.dka<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
+  sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.fupDen)+' with follow-up · '+(d.dka<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
   sv('hypo', d.hypo!=null ? d.hypo+'%' : '—');
-  sv('hypo-n',d.hypo!=null ? 'n = '+fmt(d.enr)+' · '+(d.hypo<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
+  sv('hypo-n',d.hypo!=null ? 'n = '+fmt(d.fupDen)+' with follow-up · '+(d.hypo<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
   sv('dr-bat',b.drBat); sv('dr-tr',b.drTr); sv('dr-tr-n','across '+sln(f.state));
-  sv('ppdr-lbl','Doctors (n='+b.drTr+')'); sv('ppdr-pre',b.drPre+'%'); sv('ppdr-post',b.drPost+'%');
+  sv('ppdr-lbl','Doctors (n='+b.drScoreN+')'); sv('ppdr-pre',b.drPre+'%'); sv('ppdr-post',b.drPost+'%');
   const pdrPre=document.getElementById('pf-dr-pre'); if(pdrPre)pdrPre.style.width=b.drPre+'%'; const pdrPost=document.getElementById('pf-dr-post'); if(pdrPost)pdrPost.style.width=b.drPost+'%';
   sv('ppdr-imp','+'+(b.drPost-b.drPre)+'pp improvement');
   sv('nr-bat',b.nrBat); sv('nr-tr',b.nrTr); sv('nr-tr-n','across '+sln(f.state));
-  sv('ppnr-lbl','Staff nurses (n='+b.nrTr+')'); sv('ppnr-pre',b.nrPre+'%'); sv('ppnr-post',b.nrPost+'%');
+  sv('ppnr-lbl','Staff nurses (n='+b.nrScoreN+')'); sv('ppnr-pre',b.nrPre+'%'); sv('ppnr-post',b.nrPost+'%');
   const pnrPre=document.getElementById('pf-nr-pre'); if(pnrPre)pnrPre.style.width=b.nrPre+'%'; const pnrPost=document.getElementById('pf-nr-post'); if(pnrPost)pnrPost.style.width=b.nrPost+'%';
   sv('ppnr-imp','+'+(b.nrPost-b.nrPre)+'pp improvement');
   if(d.hba1cFacPct!=null){sv('hba1c-fac',d.hba1cFacPct+'%'); sv('hba1c-fac-n',d.hba1cFacCount+' of '+d.hba1cFacDen+' operational clinics');}
@@ -1196,7 +1196,7 @@ function renderHyperHypo(){
       const d=document.createElement('div'); d.className='mom-row';
       let segs='';
       data[i].forEach((v,j)=>{segs+=`<div class="mom-seg" style="width:${v}%;background:${cols[j]};color:${txts[j]}">${v>8?v+'%':''}</div>`;});
-      d.innerHTML=`<span class="mom-lbl">${m.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${m.n.toLocaleString()}</span>`;
+      d.innerHTML=m.n?`<span class="mom-lbl">${m.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${m.n.toLocaleString()}</span>`:`<span class="mom-lbl">${m.m}</span><div class="mom-bar">No data reported</div><span class="mom-n">n = 0</span>`;
       el.appendChild(d);
     });
   });
@@ -2478,7 +2478,11 @@ function parseCSV(text){
 }
 
 async function fetchTab(wbId,tabName){
-  const url='https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
+  // CSV export preserves rows with missing operationalisation dates. The
+  // typed gviz feed drops those facility records, breaking stock geography.
+  const url=tabName==='CompleteSupport_Facilities'
+    ? 'https://docs.google.com/spreadsheets/d/'+wbId+'/export?format=csv&gid=1253968089'
+    : 'https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
   const res=await fetch(url,{cache:'no-store'});
   if(!res.ok) throw new Error('HTTP '+res.status+' for "'+tabName+'"');
   const text=await res.text();
@@ -2746,10 +2750,11 @@ function recompute(){
   const distinct=(rows,col)=>{const s={};rows.forEach(r=>{const v=normv(r[col]);if(v)s[v]=true;});return Object.keys(s).length;};
   const distinctCombo=(rows,cols)=>{const s={};rows.forEach(r=>{if(cols.some(c=>normv(r[c]))){s[cols.map(c=>normv(r[c])).join('|')]=true;}});return Object.keys(s).length;};
   const statesCount=distinct(csF,'State');
-  const prePost=rows=>{const pr=[],po=[];rows.forEach(r=>{const a=num(r['Pre-test Score']),b=num(r['Post-test Score']),m=num(r['Maximum Score']);if(a!=null&&b!=null&&m>0){pr.push(a/m*100);po.push(b/m*100);}});const mean=x=>x.length?Math.round(x.reduce((s,y)=>s+y,0)/x.length):0;return{pre:mean(pr),post:mean(po)};};
+  const prePost=rows=>{const pr=[],po=[];rows.forEach(r=>{const a=num(r['Pre-test Score']),b=num(r['Post-test Score']),m=num(r['Maximum Score']);if(a!=null&&b!=null&&m>0){pr.push(a/m*100);po.push(b/m*100);}});const mean=x=>x.length?Math.round(x.reduce((s,y)=>s+y,0)/x.length):0;return{pre:mean(pr),post:mean(po),n:pr.length};};
   const drSc=prePost(drs),nrSc=prePost(nrs);
   const flwHr=oriF.reduce((s,r)=>s+(num(r['# of Service Providers'])||0),0);
-  const pilotSess={};oriF.forEach(r=>{const d=normv(r['District']);if(d)pilotSess[d]=true;});
+  const pilotDistricts=new Set(csF.map(r=>stUp(r)+'|'+normv(r['District'])).filter(k=>!k.endsWith('|')));
+  const pilotSess={};oriF.forEach(r=>{const k=stUp(r)+'|'+normv(r['District']);if(isYes(r['Pilot District? (Yes/No)'])&&pilotDistricts.has(k))pilotSess[k]=true;});
 
   // ── Patient metrics (all-filter-scoped) ──
   const n=P.length||1;
@@ -2841,7 +2846,7 @@ function recompute(){
   });
   const newLast=csLast+(lt.monthly[lastLbl]||0), newPrev=csPrev+(lt.monthly[prevLbl]||0);
   const iLast=months.findIndex(m=>m.label===lastLbl);
-  const clinLast=iLast>=0?clin[iLast]:(csOp+lt.opCount);
+  const clinLast=csOp+lt.opCount;
 
   // ── Follow-up MoM (join followup sheet to filtered survivor IDs) ──
   const idSet={};P.forEach(p=>idSet[normv(p['Claude_ID'])]=true);
@@ -2855,9 +2860,9 @@ function recompute(){
   FUP_MOM=fmom.mom; FUP_PENDING=fmom.pending; FUP_MATCHED=fmom.matched;
 
   TRAINED_STAFF=[
-    {lbl:'With trained Pediatrician',v:pctC(csF.filter(x=>isYes(x['Trained pediatrician available?'])).length,csOp||1)},
-    {lbl:'With trained MD Medicine', v:pctC(csF.filter(x=>isYes(x['Trained MD Medicine available?'])).length,csOp||1)},
-    {lbl:'With trained MO',          v:pctC(csF.filter(x=>isYes(x['Trained Medical Officer available?'])).length,csOp||1)}
+    {lbl:'With trained Pediatrician',v:pctC(opF.filter(x=>isYes(x['Trained pediatrician available?'])).length,csOp||1)},
+    {lbl:'With trained MD Medicine', v:pctC(opF.filter(x=>isYes(x['Trained MD Medicine available?'])).length,csOp||1)},
+    {lbl:'With trained MO',          v:pctC(opF.filter(x=>isYes(x['Trained Medical Officer available?'])).length,csOp||1)}
   ];
 
   const gParts=pctParts([male,female,oth]);
@@ -2895,12 +2900,12 @@ function recompute(){
     enr:csEnr+ltEnr, csEnr, ltEnr, target,
     newLast, newPrev, avgClin:clinLast>0?Math.round(newLast/clinLast*10)/10:0,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
-    hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
+    fupDen, hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
     hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
     dka:fupDen?pctC(dkaN,fupDen):null, hypo:fupDen?pctC(hypoN,fupDen):null,
-    drBat:distinctCombo(drs,['State','Training Batch']), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post,
-    nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post,
-    flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:dist||Object.keys(pilotSess).length
+    drBat:distinctCombo(drs,['State','Training Batch']), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post, drScoreN:drSc.n,
+    nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post, nrScoreN:nrSc.n,
+    flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:pilotDistricts.size
   };
 
   computeDonor({f,PGEO,csF,lt,months,clin,hba,smbg,fmom:fmom.mom,drs,nrs,oriF,csOp,
@@ -3032,7 +3037,8 @@ function visitsByMonth(idSet){
   const hdr=g[hr]; let idC=0,dateC=-1,hypoC=-1,hyperC=-1;
   for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
     if(/claude/i.test(h))idC=i; if(/hypo/i.test(h))hypoC=i; if(/hyper/i.test(h))hyperC=i;}
-  for(let i=0;i<hdr.length;i++){if(i===idC||i===hypoC||i===hyperC)continue; if(g[hr+1]&&parseDate(g[hr+1][i])){dateC=i;break;}}
+  dateC=hdr.findIndex(h=>/date of visit/i.test(String(h)));
+  if(dateC<0)dateC=2;
   if(dateC<0) return out;
   const seen={};
   for(let r=hr+1;r<g.length;r++){const row=g[r], id=normv(row[idC]);
@@ -3058,20 +3064,12 @@ function computeFollowup(idSet){
   if(!matched) return {mom:[],pending:[],matched:0};
   const wd=cols.filter(c=>stat[c.label].y+stat[c.label].n>0)
     .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
-  // A trailing all-"N" month means attendance hasn't been marked in the sheet
-  // yet (zero attendees out of thousands due doesn't happen) — hide it until
-  // its first Y is entered, instead of charting a misleading 0%.
-  while(wd.length&&stat[wd[wd.length-1].label].y===0) wd.pop();
-  // Months the sheet already carries a column for, that have come and gone, and
-  // in which no one is marked as having attended — a blank column, or the all-"N"
-  // one the loop above just popped. Either way the chart has nothing to plot, so
-  // its axis simply stops, which reads as a broken dashboard rather than as
-  // unentered data. Name those months instead, so the gap points at the sheet.
+  // Y and N are completed attendance marks; blanks are unreported.
   const now=new Date(), nowK=ymKey(now.getFullYear(),now.getMonth());
   const lastK=wd.length?ymKey(wd[wd.length-1].year,wd[wd.length-1].month):null;
   const vis=visitsByMonth(idSet);
   const pending=cols.filter(c=>{const k=ymKey(c.year,c.month);
-      return k<=nowK && (lastK==null||k>lastK) && stat[c.label].y===0;})
+      return k<=nowK && (lastK==null||k>lastK) && stat[c.label].y+stat[c.label].n===0;})
     .sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month)
     .map(c=>({m:c.label, visits:vis[c.label]||0}));
   // Full series, newest first — the chart pages a window over it, and the donor
@@ -3132,7 +3130,8 @@ function computeHyperHypo(idSet){
   const hdr=g[hr]; let idC=0,dateC=-1,hypoC=-1,hyperC=-1;
   for(let i=0;i<hdr.length;i++){const h=String(hdr[i]).trim();
     if(/claude/i.test(h))idC=i; if(/hypo/i.test(h))hypoC=i; if(/hyper/i.test(h))hyperC=i;}
-  for(let i=0;i<hdr.length;i++){if(i===idC||i===hypoC||i===hyperC)continue; if(g[hr+1]&&parseDate(g[hr+1][i])){dateC=i;break;}}
+  dateC=hdr.findIndex(h=>/date of visit/i.test(String(h)));
+  if(dateC<0)dateC=2;
   const bin=s=>{const x=parseFloat(String(s).replace('%',''));if(isNaN(x))return -1;return x<20?0:x<40?1:x<60?2:x<80?3:4;};
   const acc={};
   for(let r=hr+1;r<g.length;r++){const row=g[r]; if(!idSet[normv(row[idC])])continue;
@@ -3141,7 +3140,11 @@ function computeHyperHypo(idSet){
     const a=acc[label]||(acc[label]={hy:[0,0,0,0,0],ho:[0,0,0,0,0],n:0,y:d.getFullYear(),mo:d.getMonth()});
     const bh=bin(row[hyperC]),bo=bin(row[hypoC]); if(bh>=0)a.hy[bh]++; if(bo>=0)a.ho[bo]++; a.n++;
   }
-  const last3=Object.keys(acc).map(l=>acc[l]).sort((a,b)=>a.y!==b.y?a.y-b.y:a.mo-b.mo).slice(-3).reverse();
+  const now=new Date(), last3=[];
+  for(let i=1;i<=3;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1),label=MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
+    last3.push(acc[label]||{hy:[0,0,0,0,0],ho:[0,0,0,0,0],n:0,y:d.getFullYear(),mo:d.getMonth()});
+  }
   return {
     months:last3.map(a=>({m:MON[a.mo]+' '+String(a.y).slice(2),n:a.n})),
     hyper:last3.map(a=>pctParts(a.hy)),
@@ -3181,7 +3184,7 @@ function computeHba1c(idSet){
   rows.forEach(r=>{
     const base=num(r[baseK]), lat=num(r[latK]);
     const dLat=dateK?parseDate(r[dateK]):null;
-    if(dLat&&dLat>=cutoff) hbTestNum++;
+    if(lat!=null&&dLat&&dLat>=cutoff&&dLat<=now) hbTestNum++;
     // All-readings chart: any patient with a latest HbA1c value
     if(lat!=null){
       const bai=mapBAll(r[bkK]);
@@ -3296,6 +3299,15 @@ async function boot(){
       : 'Enrolled List has '+enrRows.length+' rows but only '+RAW.enrolled.length+' carry patient data — State, Age, Sex, Facility Name and Date of enrolment are blank. The tab is reachable, so this is missing data, not a connection problem: restore the sheet from File → Version history.');
     computeClinicOps();
     buildGeo();                               // facility→geo lookup + dropdown option lists
+    const enrolledIds=new Set(RAW.enrolled.map(p=>normv(p['Claude_ID'])));
+    const missingFollowupIds=new Set((RAW.fupGrid||[]).slice(1).map(r=>normv(r[0])).filter(id=>id&&!enrolledIds.has(id)));
+    const missingOpeningDates=RAW.csFac.filter(r=>isYes(r['T1D Clinic Operational?'])&&!parseDate(r['Date of Operationalisation'])).length;
+    let quality=document.getElementById('data-quality-note');
+    if(!quality){quality=document.createElement('div');quality.id='data-quality-note';quality.className='fnote';document.querySelector('.fbar-inner').appendChild(quality);}
+    const notices=[];
+    if(missingFollowupIds.size)notices.push(missingFollowupIds.size+' follow-up patient records are missing from the enrolment list; attendance rates include only matched patients.');
+    if(missingOpeningDates)notices.push(missingOpeningDates+' operational clinics have no opening date; historical clinic trends exclude them.');
+    quality.textContent=notices.join(' ');quality.style.display=notices.length?'block':'none';
     populateFilters();                        // fill Division/District/Facility/DPC from live data
     safe('buildInfoTable', buildInfoTable);   // static, build once
     applyFilters();                           // recompute() + render everything (incl. HbA1c charts)
