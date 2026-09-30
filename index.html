@@ -1121,6 +1121,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 <div class="sl">Capacity building</div>
 <div class="card">
+  <div class="ct">Capacity coverage against planned sites</div>
+  <div class="cs">Planning targets: one MD Medicine and one paediatrician per district containing a planned site; two staff nurses per planned clinic. Complete support + light touch.</div>
+  <div id="dn-capacity-targets" class="dn-slope-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:12px"></div>
+  <div class="cs" id="dn-capacity-target-note" style="margin-top:10px"></div>
+</div>
+<div class="card">
   <div class="ct">Cadre trained / oriented, split by state</div>
   <div class="cs">Doctors and nurses: distinct names within each state. Frontline workers: orientation attendances; repeat attendance may be counted.</div>
   <div class="lg" id="dn-cadre-lg"></div>
@@ -2410,6 +2416,27 @@ function renderDonorHbaDumbbell(){
   }).join('')+'</div><div class="cs" style="margin-top:12px">All cohorts use the same HbA1c scale ('+lo+'–'+hi+'%). Lower readings indicate improvement.</div>';
 }
 
+function renderDonorCapacityTargets(){
+  const d=DONOR, el=document.getElementById('dn-capacity-targets');if(!d||!el)return;
+  const c=d.capacityTargets;
+  const rows=[['MD Medicine / physician',c.md,c.districts,'districts with ≥1 recorded specialist','1 per planned-site district'],
+    ['Paediatricians',c.ped,c.districts,'districts with ≥1 recorded paediatrician','1 per planned-site district'],
+    ['Staff nurses',c.nurseSlots,2*c.sites,'nurse places covered at planned clinics','2 per planned clinic']];
+  el.innerHTML=rows.map(([label,value,target,basis,rule])=>{
+    const pct=target?Math.round(value/target*100):null;
+    return '<article class="dn-slope-card"><h3 class="dn-score-title">'+label+'</h3>'
+      +'<div class="dn-score-value">'+value.toLocaleString()+' / '+target.toLocaleString()+'</div>'
+      +'<div class="dn-meter-cap">'+basis+'</div><div class="dn-meter"><div class="dn-meter-fill" style="width:'+(pct||0)+'%;background:#7ce3de"></div></div>'
+      +'<div class="dn-meter-cap">'+(pct==null?'No planned sites in this view':pct+'% covered · '+(target-value).toLocaleString()+' remaining')+'</div>'
+      +'<div class="dn-meter-cap">'+rule+'</div></article>';
+  }).join('');
+  document.getElementById('dn-capacity-target-note').textContent=
+    c.districts+' planned-site districts · '+c.sites+' planned clinics. '+c.both+' districts have both specialist cadres recorded; '+c.nurseClinics+' clinics have at least two staff nurses recorded. '
+    +'Coverage is based on training records and recorded district/facility assignments, not confirmed current staffing. Extra specialists in one district and nurses above two at one clinic do not fill gaps elsewhere. Physician records are included under MD Medicine. '
+    +(c.unmatchedNurses?c.unmatchedNurses+' nurses could not be linked to a planned clinic and are excluded from coverage. ':'')
+    +'These planning targets are separate from the original Jul ’26 grant benchmarks above. Frontline workers remain attendance counts until a catchment roster and unique worker identifiers are available.';
+}
+
 function buildDonorCadre(){
   const d=DONOR, el=document.getElementById('dn-cadre');if(!d||!el)return;
   const c=d.cadre, states=c.states.filter(k=>c.docs[k]||c.nurses[k]||c.flw[k]);
@@ -2475,6 +2502,7 @@ function applyFilters(){
   safe('buildDonorGrowth',   buildDonorGrowth);
   safe('renderDonorRegimen', renderDonorRegimen);
   safe('renderDonorHbaDumbbell', renderDonorHbaDumbbell);
+  safe('renderDonorCapacityTargets', renderDonorCapacityTargets);
   safe('buildDonorCadre',    buildDonorCadre);
 }
 
@@ -3244,6 +3272,42 @@ function computeDonor(x){
     if(k)flwBy[k]=(flwBy[k]||0)+(num(r['# of Service Providers'])||0);});
   const sum=o=>Object.keys(o).reduce((a,k)=>a+o[k],0);
 
+  // Planning coverage uses the union of both planned-site rosters. Cap each
+  // district/cadre at one and each site at two nurses so surplus elsewhere
+  // cannot satisfy an uncovered district or clinic's target.
+  const plannedSites=new Map(), plannedDistricts=new Set();
+  const addSite=(state,district,facility)=>{
+    if(!state||!normv(facility))return;
+    const key=state+'|'+facKey(facility), dk=state+'|'+normv(district);
+    plannedSites.set(key,{state,district:dk});
+    if(normv(district))plannedDistricts.add(dk);
+  };
+  csF.forEach(r=>addSite(stUp(r),r.District,r['Facility name']));
+  ltRows(f).forEach(r=>addSite(r.state,r.district,r.facility));
+  const mdDistricts=new Set(), pedDistricts=new Set(), nurseSites=new Map();
+  drs.forEach(r=>{
+    const dk=stUp(r)+'|'+normv(r.District), role=normv(r['Designation/ Department']);
+    if(!normv(r['Name of Service Provider'])||!plannedDistricts.has(dk))return;
+    if(/^(physician|md medicine)$/.test(role))mdDistricts.add(dk);
+    if(/^(pediatrician|paediatrician|paeditrician)$/.test(role))pedDistricts.add(dk);
+  });
+  const matchedNurses=new Set(), unmatchedNurses=new Set();
+  nrs.forEach(r=>{
+    const name=normv(r['Name of Service Provider']);if(!name)return;
+    const key=stUp(r)+'|'+facKey(r['Facility Name']), person=stUp(r)+'|'+name;
+    if(!plannedSites.has(key)){unmatchedNurses.add(person);return;}
+    matchedNurses.add(person);
+    if(!nurseSites.has(key))nurseSites.set(key,new Set());
+    nurseSites.get(key).add(name);
+  });
+  matchedNurses.forEach(n=>unmatchedNurses.delete(n));
+  const nurseSlots=[...nurseSites.values()].reduce((n,names)=>n+Math.min(2,names.size),0);
+  const nurseClinics=[...nurseSites.values()].filter(names=>names.size>=2).length;
+  const capacityTargets={districts:plannedDistricts.size,sites:plannedSites.size,
+    md:mdDistricts.size,ped:pedDistricts.size,
+    both:[...plannedDistricts].filter(k=>mdDistricts.has(k)&&pedDistricts.has(k)).length,
+    nurseSlots,nurseClinics,unmatchedNurses:unmatchedNurses.size};
+
   // Peer support (logframe 4.2)
   const peerFac=csF.filter(r=>isYes(r['Peer support groups formed?'])).length;
   const campKey=csF.length?colKey(csF[0],[/peer support camps/i]):null;
@@ -3263,7 +3327,7 @@ function computeDonor(x){
     byState:byState, growth:growth,
     hbaDur:{labels:(hba.changeLabels||[]).slice(1).map(l=>l[0].replace(' months','m')),
             base:(hba.avgB||[]).slice(1), last:(hba.avgL||[]).slice(1), n:(hba.changeN||[]).slice(1)},
-    cadre:{states:ST, docs:docBy, nurses:nrsBy, flw:flwBy},
+    cadre:{states:ST, docs:docBy, nurses:nrsBy, flw:flwBy}, capacityTargets,
     peerFac:peerFac, peerCamps:peerCamps
   };
 }
