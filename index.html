@@ -300,6 +300,63 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-slope-card svg{display:block;width:100%;height:auto}
 #tab-4 .dn-slope-result{text-align:center;font-size:12px;margin-top:4px}
 @media(max-width:650px){#tab-4 .dn-heading{display:block}#tab-4 .dn-reach-visual{grid-template-columns:1fr;gap:20px;padding:18px}#tab-4 .dn-waffle{margin:auto;width:100%}#tab-4 .dn-slope-grid{grid-template-columns:1fr}}
+
+/* Compact donor view: keep figures and labels, remove unused spacing. */
+#tab-4{padding:18px 20px 24px}
+#tab-4 .dn-heading{gap:16px;margin-bottom:10px;align-items:center}
+#tab-4 .dn-heading h2{font-size:clamp(28px,3vw,40px);line-height:1.12;letter-spacing:-.7px;margin:0}
+#tab-4 .dn-intro{margin:5px 0 0;font-size:12px}
+#tab-4 .dn-report-tag{padding:5px 8px}
+#tab-4 .dn-story{font-size:20px;line-height:1.4;max-width:none;margin:0 0 12px}
+#tab-4 .sl{font-size:24px;margin:18px 0 10px}
+#tab-4 .card{padding:16px}
+#tab-4 .dn-hero-card{padding:0}
+#tab-4 .dn-hero{grid-template-columns:1fr 2.2fr}
+#tab-4 .dn-hero-fig{padding:16px 20px}
+#tab-4 .dn-hero-val{font-size:52px;line-height:1;margin:6px 0}
+#tab-4 .dn-hero-sub{line-height:1.5;max-width:none}
+#tab-4 .dn-hero-side{padding:4px 10px}
+#tab-4 .dn-hero-side>div{padding:10px}
+#tab-4 .dn-tile-v{font-size:26px;margin:3px 0}
+#tab-4 .dn-tile-l,#tab-4 .dn-tile-s{font-size:11px;line-height:1.4}
+#tab-4 .dn-score-summary{padding:10px 14px;gap:16px;margin-bottom:10px}
+#tab-4 .dn-score-number{font-size:26px}
+#tab-4 .dn-score-grid,#tab-4 .dn-reach-grid{gap:8px}
+#tab-4 .dn-score-card{padding:12px}
+#tab-4 .dn-score-top{margin-bottom:7px}
+#tab-4 .dn-score-title{min-height:0;line-height:1.4;margin:0 0 6px}
+#tab-4 .dn-score-value{font-size:28px;margin-bottom:4px}
+#tab-4 .dn-score-target{margin-bottom:7px}
+#tab-4 .dn-meter-cap{margin-top:3px;line-height:1.4}
+#tab-4 .dn-notes{margin-top:8px;line-height:1.5}
+#tab-4 .dn-reach-visual{grid-template-columns:146px minmax(0,1fr);gap:20px;padding:14px 16px;margin-bottom:10px}
+#tab-4 .dn-waffle{max-width:140px;gap:4px}
+#tab-4 .dn-waffle-label{font-size:10px;margin-top:6px}
+#tab-4 .dn-waffle-key{margin-top:10px;gap:8px 18px}
+#tab-4 .dn-state-card{padding:12px}
+#tab-4 .dn-state-name{margin:0 0 8px}
+#tab-4 .dn-state-value{font-size:28px}
+#tab-4 .dn-state-label{margin:2px 0 8px}
+#tab-4 .dn-state-foot{padding-top:8px;margin-top:8px;gap:12px}
+#tab-4 .dn-reach-total{padding-top:8px}
+#tab-4 .lg{margin:8px 0;line-height:1.4}
+#tab-4 .cs{line-height:1.5}
+#tab-4 .dn-panel-lbl{margin:10px 0 4px}
+#tab-4 .fnote{padding:4px 0;margin:4px 0}
+#tab-4 .g2{gap:12px;align-items:start}
+#tab-4 .dn-reg-row{padding:8px 0}
+#tab-4 .dn-reg-head{margin-bottom:6px}
+#tab-4 .dn-reg-head strong{font-size:28px}
+#tab-4 .dn-delta{margin-top:8px}
+#tab-4 .dn-slope-grid{gap:8px 14px}
+#tab-4 .dn-slope-card{padding:8px 0}
+#tab-4 .dn-slope-title{margin-bottom:3px}
+#tab-4 .dn-slope-card svg{height:120px}
+#tab-4 .dn-cadre-row{gap:16px;padding:10px 0}
+#tab-4 .dn-cadre-total{font-size:26px}
+#tab-4 .dn-cadre-bar{margin:4px 0 6px}
+@media(max-width:800px){#tab-4 .dn-hero{grid-template-columns:1fr 1.6fr}#tab-4 .dn-heading h2{font-size:32px}}
+@media(max-width:650px){#tab-4{padding:12px}#tab-4 .dn-heading{display:block}#tab-4 .dn-heading h2{font-size:28px}#tab-4 .dn-report-tag{margin-top:6px}#tab-4 .dn-story{font-size:17px}#tab-4 .dn-hero{grid-template-columns:1fr}#tab-4 .dn-hero-val{font-size:44px}#tab-4 .dn-hero-fig{padding:12px 16px}#tab-4 .dn-reach-visual{grid-template-columns:1fr;gap:10px}#tab-4 .dn-slope-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#tab-4 .dn-slope-title{flex-wrap:wrap}#tab-4 .dn-slope-card svg{height:auto}#tab-4 .dn-score-top{flex-direction:row}#tab-4 .dn-cadre-row{grid-template-columns:1fr;gap:4px}}
 </style>
 </head>
 <body>
@@ -960,7 +1017,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="tc" id="tab-4">
 <div class="tc-wrap">
 
-<div class="dn-heading"><div><h2>Expanding access.<br>Tracking progress in care.</h2><p class="dn-intro">Follow the programme’s reach, clinical results and progress against the grant.</p></div><span class="dn-report-tag">Current results · Jul ’26 grant benchmark</span></div>
+<div class="dn-heading"><div><h2>Expanding access. Tracking progress in care.</h2><p class="dn-intro">Follow the programme’s reach, clinical results and progress against the grant.</p></div><span class="dn-report-tag">Current results · Jul ’26 grant benchmark</span></div>
 <p class="dn-story" id="dn-story"></p>
 <div class="card dn-hero-card">
   <div class="dn-hero">
@@ -986,9 +1043,9 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   <div class="ct">Cumulative PLT1D enrolled, by state</div>
   <div class="cs">As of each month · clinics operational shown on its own scale below, so neither series distorts the other</div>
   <div class="lg" id="dn-growth-lg"></div>
-  <div style="height:240px;position:relative"><canvas id="dn-growth"></canvas></div>
+  <div style="height:190px;position:relative"><canvas id="dn-growth"></canvas></div>
   <div class="dn-panel-lbl">T1D clinics operational</div>
-  <div style="height:96px;position:relative"><canvas id="dn-clinics"></canvas></div>
+  <div style="height:80px;position:relative"><canvas id="dn-clinics"></canvas></div>
 </div>
 
 <div class="fnote" id="dn-growth-note"></div>
@@ -3412,6 +3469,7 @@ async function tryUnlock(){
 </script>
 </body>
 </html>
+
 
 
 
