@@ -1093,8 +1093,8 @@ const LOGFRAME=[
   {n:'3.3',   ind:'PLT1D monitoring blood glucose 3–4×/day (≥3 months)',  key:'smbg34',   target:75,   cmp:'gte', fmt:'pct'},
   {n:'3.4',   ind:'PLT1D receiving routine on-site follow-up care',       key:'fup',      target:75,   cmp:'gte', fmt:'pct'},
   {n:'3.5',   ind:'Average HbA1c of PLT1D (enrolled ≥3 months)',          key:'hba',      target:8.5,  cmp:'lte', fmt:'dec'},
-  {n:'3.6',   ind:'PLT1D with a DKA episode in the past year',            key:'dka',      target:10,   cmp:'lte', fmt:'pct'},
-  {n:'3.7',   ind:'PLT1D with a severe hypoglycaemia episode, past year', key:'hypo',     target:10,   cmp:'lte', fmt:'pct'}
+  {n:'3.6',   ind:'PLT1D with a DKA episode in the past year',            key:'dka',      target:10,   cmp:'lte', fmt:'pct1'},
+  {n:'3.7',   ind:'PLT1D with a severe hypoglycaemia episode, past year', key:'hypo',     target:10,   cmp:'lte', fmt:'pct1'}
 ];
 
 function fval(id){const e=document.getElementById(id);return e?e.value:'all';}
@@ -1146,9 +1146,9 @@ function renderKPIs(d,f){
   sv('hb-dec',    d.hbDec!=null  ? d.hbDec+'%'   : '—');
   sv('hb-dec-n',  d.hbDec!=null  ? 'n = '+fmt(d.hbDecN||0)+' with ≥2 readings' : 'Data pending — HbA1c sheet not yet populated');
   sv('dka',  d.dka!=null  ? d.dka+'%'  : '—');
-  sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.fupDen)+' with follow-up · '+(d.dka<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
+  sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.fupDen)+' with follow-up · '+(d.dka<=10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
   sv('hypo', d.hypo!=null ? d.hypo+'%' : '—');
-  sv('hypo-n',d.hypo!=null ? 'n = '+fmt(d.fupDen)+' with follow-up · '+(d.hypo<10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
+  sv('hypo-n',d.hypo!=null ? 'n = '+fmt(d.fupDen)+' with follow-up · '+(d.hypo<=10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
   sv('dr-bat',b.drBat); sv('dr-tr',b.drTr); sv('dr-tr-n','across '+sln(f.state));
   sv('ppdr-lbl','Doctors (n='+b.drScoreN+')'); sv('ppdr-pre',b.drPre+'%'); sv('ppdr-post',b.drPost+'%');
   const pdrPre=document.getElementById('pf-dr-pre'); if(pdrPre)pdrPre.style.width=b.drPre+'%'; const pdrPost=document.getElementById('pf-dr-post'); if(pdrPost)pdrPost.style.width=b.drPost+'%';
@@ -1996,7 +1996,7 @@ let _dnGrowth,_dnClinics,_dnCadre;
 
 function dnFmt(v,fmt){
   if(v==null) return '—';
-  return fmt==='pct'?Math.round(v)+'%' : fmt==='dec'?Number(v).toFixed(1) : Number(v).toLocaleString();
+  return fmt==='pct1'?Number(v).toFixed(1)+'%' : fmt==='pct'?Math.round(v)+'%' : fmt==='dec'?Number(v).toFixed(1) : Number(v).toLocaleString();
 }
 function dnMet(v,t,cmp){ return v==null?null : (cmp==='lte' ? v<=t : v>=t); }
 
@@ -2911,7 +2911,7 @@ function recompute(){
     insBase:pctC(insB,n), insLast:pctC(insL,n),
     fupDen, hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
     hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
-    dka:fupDen?pctC(dkaN,fupDen):null, hypo:fupDen?pctC(hypoN,fupDen):null,
+    dka:fupDen?Math.round(dkaN/fupDen*1000)/10:null, hypo:fupDen?Math.round(hypoN/fupDen*1000)/10:null,
     drBat:distinctCombo(drs,['State','Training Batch']), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post, drScoreN:drSc.n,
     nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post, nrScoreN:nrSc.n,
     flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:pilotDistricts.size
