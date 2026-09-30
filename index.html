@@ -2489,8 +2489,11 @@ function parseCSV(text){
 async function fetchTab(wbId,tabName){
   // CSV export preserves rows with missing operationalisation dates. The
   // typed gviz feed drops those facility records, breaking stock geography.
-  const url=tabName==='CompleteSupport_Facilities'
-    ? 'https://docs.google.com/spreadsheets/d/'+wbId+'/export?format=csv&gid=1253968089'
+  const csvTabs={CompleteSupport_Facilities:1253968089,'Enrolled List':0,
+    Followup_adherence:733015193,SMBG_Monthly:1620041867,
+    'Hba1c_Baseline/Latest':3339173,'SMBG_Hyper/Hypo':1524331750};
+  const url=Object.prototype.hasOwnProperty.call(csvTabs,tabName)
+    ? 'https://docs.google.com/spreadsheets/d/'+wbId+'/export?format=csv&gid='+csvTabs[tabName]
     : 'https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
   const res=await fetch(url,{cache:'no-store'});
   if(!res.ok) throw new Error('HTTP '+res.status+' for "'+tabName+'"');
