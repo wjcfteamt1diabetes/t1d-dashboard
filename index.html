@@ -1087,10 +1087,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="sl">Enrolment and clinic growth</div>
 <div class="card">
   <div class="ct">Cumulative PLT1D enrolled, by state</div>
-  <div class="cs">As of each month · clinics operational shown on its own scale below, so neither series distorts the other</div>
+  <div class="cs">Complete support + light touch · cumulative counts at month end; current month to date</div>
   <div class="lg" id="dn-growth-lg"></div>
   <div style="height:190px;position:relative"><canvas id="dn-growth"></canvas></div>
-  <div class="dn-panel-lbl">T1D clinics operational</div>
+  <div class="dn-panel-lbl">Clinics operational — dated history</div>
   <div style="height:80px;position:relative"><canvas id="dn-clinics"></canvas></div>
 </div>
 
@@ -2341,7 +2341,7 @@ function buildDonorGrowth(){
   const gap=d.enrolled-(g.series.reduce((a,sr)=>a+(sr.data[sr.data.length-1]||0),0));
   const clinicGap=d.clinics-(g.clinics[g.clinics.length-1]||0);
   const note=document.getElementById('dn-growth-note');
-  if(note)note.textContent=(gap>0?gap.toLocaleString()+' enrolments are in the headline total but cannot be placed on this time axis (missing dates or light-touch monthly totals that do not reconcile). ':'')+(clinicGap>0?clinicGap+' operational clinics have no dated opening on this axis.':'');
+  if(note)note.textContent=(gap>0?gap.toLocaleString()+' enrolments are in the headline total but cannot be placed on this time axis (undated enrolments or unreconciled monthly records). ':'')+(clinicGap>0?clinicGap+' operational clinics lack opening dates and are included in the headline total.':'');
   if(lg) lg.innerHTML=g.series.map(sr=>'<span><span class="ld" style="background:'+(DN_COL[sr.st]||'#94a3b8')+'"></span>'+sr.name+'</span>').join('');
   const tots=g.labels.map((_,i)=>g.series.reduce((a,sr)=>a+(sr.data[i]||0),0));
   const pad={left:6,right:6,top:14,bottom:0};
@@ -2355,8 +2355,8 @@ function buildDonorGrowth(){
         label(ctx){return ' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString();},
         afterBody(items){return['Total enrolled: '+tots[items[0].dataIndex].toLocaleString()];}
       }}},
-      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{display:false}},
-              y:{afterFit(axis){axis.width=44;},stacked:true,display:true,beginAtZero:true,ticks:{color:'#b9c6df',font:{size:10}},grid:{color:'#314453'},border:{display:false},suggestedMax:tots.length?Math.max(...tots)*1.12:undefined}}}
+      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{color:'#b9c6df',font:{size:9},maxRotation:0,autoSkip:true}},
+              y:{title:{display:true,text:'People enrolled (count)',color:'#b9c6df',font:{size:11}},afterFit(axis){axis.width=64;},stacked:true,display:true,beginAtZero:true,ticks:{color:'#b9c6df',font:{size:10}},grid:{color:'#314453'},border:{display:false},suggestedMax:tots.length?Math.max(...tots)*1.12:undefined}}}
   });
   _dnClinics=new Chart(document.getElementById('dn-clinics'),{
     type:'line',
@@ -2366,8 +2366,8 @@ function buildDonorGrowth(){
     options:{animation:false,responsive:true,maintainAspectRatio:false,layout:{padding:{left:6,right:6,top:6,bottom:0}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
         label(ctx){return ' Clinics operational: '+ctx.parsed.y;}}}},
-      scales:{x:{offset:true,grid:{display:false},border:{display:false},ticks:{color:'#b9c6df',font:{size:8},maxRotation:0,autoSkip:true}},
-              y:{afterFit(axis){axis.width=44;},display:true,beginAtZero:true,ticks:{color:'#b9c6df',font:{size:10},maxTicksLimit:3,precision:0},grid:{color:'#314453'},border:{display:false}}}}
+      scales:{x:{title:{display:true,text:'Month',color:'#b9c6df',font:{size:10}},offset:false,grid:{display:false},border:{display:false},ticks:{color:'#b9c6df',font:{size:8},maxRotation:0,autoSkip:true}},
+              y:{title:{display:true,text:'Clinics (count)',color:'#b9c6df',font:{size:10}},afterFit(axis){axis.width=64;},display:true,beginAtZero:true,ticks:{color:'#b9c6df',font:{size:10},maxTicksLimit:3,precision:0},grid:{color:'#314453'},border:{display:false}}}}
   });
 }
 
@@ -2669,6 +2669,17 @@ function parseDate(v,conv){
     if(conv==='mdy') return new Date(y,a-1,b);           // column proven mm/dd
     return new Date(y,b-1,a);                            // ambiguous → dd/mm (India)
   }
+  // Parse the sheet's written month names explicitly; Safari does not reliably
+  // accept strings such as 'Sep 2026' or '16 April 2025'.
+  m=s.match(/^(?:(\d{1,2})[\s\-]+)?([A-Za-z]{3,9})[\s\-]+(\d{2}|\d{4})$/);
+  if(m){
+    const mi=MON.findIndex(x=>x.toLowerCase()===m[2].slice(0,3).toLowerCase());
+    let y=+m[3]; if(y<100)y+=2000;
+    const day=m[1]?+m[1]:1;
+    if(mi<0)return null;
+    const d=new Date(y,mi,day);
+    return d.getFullYear()===y&&d.getMonth()===mi&&d.getDate()===day?d:null;
+  }
   const d=new Date(s); return isNaN(d)?null:d;          // "Oct 15 2025", ISO, etc.
 }
 
@@ -2813,7 +2824,7 @@ function ltData(f){
     if(h==='State')si=i; if(h==='District')di=i; if(h==='Facility name')ni=i;
     if(/total enrolments/i.test(h))ti=i;
     if(/clinic operational/i.test(h))oi=i;
-    const d=parseDate(hdr[i]); if(d&&h&&!/enrolment|facility|state|district|category|s no|^total/i.test(h)) monthCols.push({i:i,label:MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2),y:d.getFullYear(),m:d.getMonth()});
+    const hm=hdrMonth(hdr[i]); if(hm&&h&&!/enrolment|facility|state|district|category|s no|^total/i.test(h)) monthCols.push({i:i,label:MON[hm.m]+' '+String(hm.y).slice(2),y:hm.y,m:hm.m});
   }
   // If a Division or DPC filter is active, LT has no such attribute → exclude LT entirely.
   if(f.division!=='all'||f.dpc!=='all') return {facCount:0,opCount:0,totalEnr:0,monthly:{},opStarts:[]};
