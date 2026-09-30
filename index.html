@@ -942,11 +942,13 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   <div style="height:96px;position:relative"><canvas id="dn-clinics"></canvas></div>
 </div>
 
+<div class="fnote" id="dn-growth-note"></div>
 <div class="sl">Quality of care</div>
+<div class="fnote">Clinical indicators cover complete-support patients; light-touch enrolments have no individual clinical records.</div>
 <div class="g2">
   <div class="card">
     <div class="ct">Insulin regimen — at enrolment vs current</div>
-    <div class="cs">% of enrolled PLT1D on a basal-bolus regimen</div>
+    <div class="cs">% of complete-support PLT1D on a basal-bolus regimen</div>
     <div class="lg" style="margin-top:6px">
       <span><span class="ld" style="background:var(--b2)"></span>Basal-bolus</span>
       <span><span class="ld" style="background:var(--g4)"></span>Other regimen</span>
@@ -956,7 +958,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">Average HbA1c — enrolment to latest reading</div>
-    <div class="cs">By time since enrolment · each row spans a cohort’s baseline to its current average</div>
+    <div class="cs">By time since enrolment at the latest test · paired baseline and latest readings only</div>
     <div class="lg" style="margin-top:6px">
       <span><span class="ld" style="background:var(--g3)"></span>At enrolment</span>
       <span><span class="ld" style="background:var(--b2)"></span>Latest reading</span>
@@ -1084,7 +1086,7 @@ const LOGFRAME=[
   {n:'2.1.1', ind:'Implementation states finalised',                      key:'states',   target:4,    cmp:'gte', fmt:'int'},
   {n:'2.1.2', ind:'Pilot districts finalised',                            key:'dist',     target:8,    cmp:'gte', fmt:'int'},
   {n:'2.5',   ind:'T1D clinics operational at program sites',             key:'clinics',  target:8,    cmp:'gte', fmt:'int'},
-  {n:'2.2.1', ind:'Paediatricians and physicians trained',                key:'docs',     target:16,   cmp:'gte', fmt:'int'},
+  {n:'2.2.1', ind:'Paediatricians and physicians trained',                key:'specialists',     target:16,   cmp:'gte', fmt:'int'},
   {n:'2.2.2', ind:'Staff nurses trained',                                 key:'nurses',   target:8,    cmp:'gte', fmt:'int'},
   {n:'3.1',   ind:'PLT1D enrolled at sites',                              key:'enrolled', target:1000, cmp:'gte', fmt:'int'},
   {n:'3.2',   ind:'PLT1D following a basal-bolus regimen',                key:'bb',       target:90,   cmp:'gte', fmt:'pct'},
@@ -2028,7 +2030,7 @@ function renderDonorKPIs(){
 
 function renderLogframe(){
   const d=DONOR, el=document.getElementById('dn-logframe'); if(!d||!el) return;
-  const values={states:d.states,dist:d.dist,clinics:d.clinics,docs:d.docs,nurses:d.nurses,
+  const values={states:d.states,dist:d.pilotDist,clinics:d.clinics,docs:d.docs,specialists:d.specialists,nurses:d.nurses,
     enrolled:d.enrolled,bb:d.bb,smbg34:d.smbg34,fup:d.fup,hba:d.hba,dka:d.dka,hypo:d.hypo};
   let met=0,scored=0; const marks=[];
   el.innerHTML=LOGFRAME.map(r=>{
@@ -2041,13 +2043,14 @@ function renderLogframe(){
     const pill=!assessed?'dn-na':ok?'dn-ok':'dn-below';
     const target=(r.cmp==='lte'?'≤ ':'≥ ')+dnFmt(r.target,r.fmt)+(r.key==='hba'?'%':'');
     const actual=dnFmt(v,r.fmt)+(r.key==='hba'&&v!=null?'%':'');
+    const scope={states:'Programme states',dist:'Complete-support roster',clinics:'Complete support + light touch',docs:'Distinct names within each state',specialists:'Paediatrician / physician / MD Medicine · distinct names within state',nurses:'Distinct names within each state',enrolled:'Complete support + light touch',bb:'Complete support · n='+CURD.csEnr,smbg34:d.smbgMonth+' · reported n='+d.smbgN,fup:'Pooled '+d.fupMonths+' completed months · n='+d.fupN+' patient-months due',hba:'Latest test ≥3 months after enrolment · n='+d.hbaN,dka:'Follow-up in past year · n='+CURD.fupDen,hypo:'Follow-up in past year · n='+CURD.fupDen}[r.key];
     const caption=progress==null?'Programme-wide target':ok&&r.cmp==='gte'&&v/r.target>=1.1
       ?(v/r.target).toFixed(1)+'× target':progress+'% towards target';
     return '<article class="dn-score-card"><div class="dn-score-top"><span class="dn-score-id">Logframe '+r.n+'</span>'
       +'<span class="dn-pill '+pill+'">'+status+'</span></div><h3 class="dn-score-title">'+r.ind+'</h3>'
       +'<div class="dn-score-value">'+actual+'</div><div class="dn-score-target">Target '+target+'</div>'
       +(progress==null?'':'<div class="dn-meter"><div class="dn-meter-fill" style="width:'+progress+'%;background:'+color+'"></div></div>')
-      +'<div class="dn-meter-cap">'+caption+'</div></article>';
+      +'<div class="dn-meter-cap">'+caption+'</div><div class="dn-meter-cap">'+scope+'</div></article>';
   }).join('');
   const summary=document.getElementById('dn-score-summary');
   if(summary)summary.innerHTML=d.filtered
@@ -2061,6 +2064,8 @@ function renderLogframe(){
       'Targets use the Jul ’26 grant logframe benchmark. Current values reflect the available source data, not a frozen July snapshot.'];
     if(d.filtered)bits.push('Targets apply to the whole programme. Clear all filters to assess them.');
     if(d.fup!=null)bits.push('Follow-up pools attended and due visits across the last '+d.fupMonths+' completed months'+(d.fupThru?' through '+d.fupThru:'')+' (n='+d.fupN.toLocaleString()+' visits due).');
+    bits.push('Pilot districts finalised counts the complete-support facility roster; districts reached counts districts with an operational clinic, including light touch. Clinical measures use complete-support patient records only. The enrolment target in this tab is the July grant benchmark of 1,000; the programme target in Operations is '+(TARGETS.all||0).toLocaleString()+'.');
+    if(d.hba!=null)bits.push('Average HbA1c uses all '+d.hbaN+' valid latest readings in the ≥3-month test-time cohort; the comparison chart requires paired baseline and latest readings.');
     if(d.smbg34!=null)bits.push('SMBG is '+d.smbgMonth+', among PLT1D enrolled ≥3 months (n='+d.smbgN.toLocaleString()+').');
     bits.push('Enrolment and reach use geography filters only. Clinical measures also use sex, age and status filters. Status uses unrounded values; displayed values are rounded.');
     note.textContent=bits.join(' ');
@@ -2071,7 +2076,7 @@ function renderDonorStates(){
   const d=DONOR, el=document.getElementById('dn-states-tbl'); if(!d||!el)return;
   const total=d.byState.reduce((sum,r)=>sum+r.enrolled,0);
   el.innerHTML='<div class="dn-reach-grid">'+d.byState.map(r=>{
-    const color=DN_COL[r.st]||'#64748b', share=total?r.enrolled/total*100:0;
+    const color=DN_COL[r.st]||'#64748b', share=r.share;
     return '<article class="dn-state-card" style="--state-color:'+color+'"><h3 class="dn-state-name">'+r.name+'</h3>'
       +'<div class="dn-state-value">'+r.enrolled.toLocaleString()+'</div><div class="dn-state-label">PLT1D enrolled</div>'
       +'<div class="dn-meter"><div class="dn-meter-fill" style="width:'+share+'%;background:'+color+'"></div></div>'
@@ -2091,6 +2096,10 @@ function buildDonorGrowth(){
   if(_dnClinics)_dnClinics.destroy();
   const g=d.growth;
   const lg=document.getElementById('dn-growth-lg');
+  const gap=d.enrolled-(g.series.reduce((a,sr)=>a+(sr.data[sr.data.length-1]||0),0));
+  const clinicGap=d.clinics-(g.clinics[g.clinics.length-1]||0);
+  const note=document.getElementById('dn-growth-note');
+  if(note)note.textContent=(gap>0?gap.toLocaleString()+' enrolments are in the headline total but cannot be placed on this time axis (missing dates or light-touch monthly totals that do not reconcile). ':'')+(clinicGap>0?clinicGap+' operational clinics have no dated opening on this axis.':'');
   if(lg) lg.innerHTML=g.series.map(sr=>'<span><span class="ld" style="background:'+(DN_COL[sr.st]||'#94a3b8')+'"></span>'+sr.name+'</span>').join('');
   const tots=g.labels.map((_,i)=>g.series.reduce((a,sr)=>a+(sr.data[i]||0),0));
   const pad={left:6,right:6,top:14,bottom:0};
@@ -2744,9 +2753,9 @@ function recompute(){
   const dists={};csF.forEach(x=>{const d=normv(x['District']);if(d)dists[d]=true;});
   const dist=Object.keys(dists).length;
   const drs=capF.filter(r=>normv(r['Type of Service Provider'])==='doctor');
-  const drNames={};drs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)drNames[n]=true;});
+  const drNames={};drs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)drNames[stUp(r)+'|'+n]=true;});
   const nrs=capF.filter(r=>{const t=normv(r['Type of Service Provider']);return t==='staff nurse'||t==='nurse';});
-  const nrNames={};nrs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)nrNames[n]=true;});
+  const nrNames={};nrs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)nrNames[stUp(r)+'|'+n]=true;});
   const distinct=(rows,col)=>{const s={};rows.forEach(r=>{const v=normv(r[col]);if(v)s[v]=true;});return Object.keys(s).length;};
   const distinctCombo=(rows,cols)=>{const s={};rows.forEach(r=>{if(cols.some(c=>normv(r[c]))){s[cols.map(c=>normv(r[c])).join('|')]=true;}});return Object.keys(s).length;};
   const statesCount=distinct(csF,'State');
@@ -2943,7 +2952,8 @@ function computeDonor(x){
     if(clinics||enr) byState.push({st:k,name:sln(k),districts:Object.keys(ds).length,clinics:clinics,enrolled:enr});
   });
   const totEnr=byState.reduce((a,b)=>a+b.enrolled,0)||1;
-  byState.forEach(r=>r.share=Math.round(r.enrolled/totEnr*100));
+  const stateShares=pctParts(byState.map(r=>r.enrolled));
+  byState.forEach((r,i)=>r.share=stateShares[i]);
 
   // Growth: cumulative enrolments per state as of each month + clinics that month
   const stDates={}; ST.forEach(k=>stDates[k]=[]);
@@ -2978,6 +2988,7 @@ function computeDonor(x){
     rows.forEach(r=>{const k=String(r['State']||'').trim().toUpperCase(),n=normv(r[col]);
       if(!k||!n)return; const key=k+'|'+n; if(seenN[key])return; seenN[key]=true; out[k]=(out[k]||0)+1;});
     return out;};
+  const specialistBy=cadre(drs.filter(r=>/^(pediatrician|paediatrician|paeditrician|physician|md medicine)$/.test(normv(r['Designation/ Department']))),'Name of Service Provider');
   const docBy=cadre(drs,'Name of Service Provider'), nrsBy=cadre(nrs,'Name of Service Provider');
   const flwBy={}; oriF.forEach(r=>{const k=String(r['State']||'').trim().toUpperCase();
     if(k)flwBy[k]=(flwBy[k]||0)+(num(r['# of Service Providers'])||0);});
@@ -2991,11 +3002,11 @@ function computeDonor(x){
   const hbaLast=hba.rawAvgLatest??null;
   DONOR={
     filtered:Object.values(f).some(v=>v!=='all'),
-    states:byState.length, dist:Object.keys(dOp).length,
+    states:byState.length, dist:Object.keys(dOp).length, pilotDist:new Set(csF.map(r=>stUp(r)+'|'+normv(r['District'])).filter(k=>!k.endsWith('|'))).size,
     clinics:csOp+lt.opCount, enrolled:PGEO.length+lt.totalEnr,
-    docs:sum(docBy), nurses:sum(nrsBy), flw:sum(flwBy),
+    docs:sum(docBy), specialists:sum(specialistBy), nurses:sum(nrsBy), flw:sum(flwBy),
     bb:x.insLast, bbBase:x.insBase,
-    hba:hbaLast, hbaBase:hba.avgB&&hba.avgB[0]?hba.avgB[0]:null,
+    hba:hbaLast, hbaN:hba.latestN||0, hbaBase:hba.avgB&&hba.avgB[0]?hba.avgB[0]:null,
     smbg34:smbg.last&&smbg.last.n>0?smbg.last.count34/smbg.last.n*100:null, smbgN:smbg.last?smbg.last.n:0, smbgMonth:smbg.last?smbg.last.m:'',
     fup:fup, fupN:fupN, fupMonths:f6.length, fupThru:f6.length?f6[0].m:'',
     dka:x.dka, hypo:x.hypo,
@@ -3179,7 +3190,7 @@ function computeHba1c(idSet){
   const sumB=[0,0,0,0,0,0,0],cntB=[0,0,0,0,0,0,0],sumL=[0,0,0,0,0,0,0]; // for averages incl Overall
   const dist=[[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]; // per bucket 5 bins
   const distN=[0,0,0,0,0,0], latSum=[0,0,0,0,0,0];
-  let hbTestNum=0, decDen=0, decNum=0;
+  let hbTestNum=0, decDen=0, decNum=0, latestSum=0, latestN=0;
   const now=new Date(), cutoff=new Date(now.getFullYear(),now.getMonth(),now.getDate()-90);
   rows.forEach(r=>{
     const base=num(r[baseK]), lat=num(r[latK]);
@@ -3191,15 +3202,19 @@ function computeHba1c(idSet){
       if(bai>=0){const lb2=lat<7?0:lat<10?1:lat<13?2:lat<16?3:4; allDist[bai][lb2]++; allDistN[bai]++;}
     }
     const bi=mapB(r[bkK]);
-    if(base==null||lat==null||bi<0) return;     // need both readings + a >3m bucket
+    if(lat>0&&bi>=0){
+      latestSum+=lat;latestN++;
+      const lb=lat<7?0:lat<10?1:lat<13?2:lat<16?3:4;
+      dist[bi][lb]++;distN[bi]++;latSum[bi]+=lat;
+    }
+    if(!(base>0)||!(lat>0)||bi<0) return;     // need both readings + a >3m bucket
     const ch=base-lat;                            // positive = improvement
     decDen++; if(lat<base) decNum++;
     const put=g=>{const c=C[g];c.n++;
       if(ch>=4)c.i4++;else if(ch>=2)c.i2++;else if(ch>0)c.iL++;else if(ch===0)c.nc++;else if(ch>-2)c.wL++;else if(ch>-4)c.w2++;else c.w4++;};
     put(0); put(bi+1);
     sumB[0]+=base;sumL[0]+=lat;cntB[0]++; sumB[bi+1]+=base;sumL[bi+1]+=lat;cntB[bi+1]++;
-    const lb=lat<7?0:lat<10?1:lat<13?2:lat<16?3:4;
-    dist[bi][lb]++; distN[bi]++; latSum[bi]+=lat;
+
   });
   const lblN=i=>(C[i].n?'(n='+C[i].n+')':'');
   // Per-bucket largest-remainder so each bucket's 7 change-categories / 5 bands sum to 100
@@ -3212,7 +3227,7 @@ function computeHba1c(idSet){
     changeN:C.map(c=>c.n),
     i4:chgPts.map(p=>p[0]), i2:chgPts.map(p=>p[1]), iL:chgPts.map(p=>p[2]),
     nc:chgPts.map(p=>p[3]), wL:chgPts.map(p=>p[4]), w2:chgPts.map(p=>p[5]), w4:chgPts.map(p=>p[6]),
-    rawAvgLatest:cntB[0]?sumL[0]/cntB[0]:null,
+    rawAvgLatest:latestN?latestSum/latestN:null, latestN,
     avgB:cntB.map((c,i)=>c?Math.round(sumB[i]/c*10)/10:0),
     avgL:cntB.map((c,i)=>c?Math.round(sumL[i]/c*10)/10:0),
     distLabels:LBL.map((l,i)=>[l.replace(' months','m').replace('–','–'),(distN[i]?'(n='+distN[i]+')':'')]),
@@ -3357,3 +3372,4 @@ async function tryUnlock(){
 </script>
 </body>
 </html>
+
