@@ -3301,11 +3301,13 @@ async function boot(){
     buildGeo();                               // facility→geo lookup + dropdown option lists
     const enrolledIds=new Set(RAW.enrolled.map(p=>normv(p['Claude_ID'])));
     const missingFollowupIds=new Set((RAW.fupGrid||[]).slice(1).map(r=>normv(r[0])).filter(id=>id&&!enrolledIds.has(id)));
+    const missingEnrolmentDates=RAW.enrolled.filter(p=>!parseDate(p['Date of enrolment'])).length;
     const missingOpeningDates=RAW.csFac.filter(r=>isYes(r['T1D Clinic Operational?'])&&!parseDate(r['Date of Operationalisation'])).length;
     let quality=document.getElementById('data-quality-note');
     if(!quality){quality=document.createElement('div');quality.id='data-quality-note';quality.className='fnote';document.querySelector('.fbar-inner').appendChild(quality);}
     const notices=[];
     if(missingFollowupIds.size)notices.push(missingFollowupIds.size+' follow-up patient records are missing from the enrolment list; attendance rates include only matched patients.');
+    if(missingEnrolmentDates)notices.push(missingEnrolmentDates+' patients have no enrolment date; enrolment trends and monthly follow-up eligibility exclude undated records.');
     if(missingOpeningDates)notices.push(missingOpeningDates+' operational clinics have no opening date; historical clinic trends exclude them.');
     quality.textContent=notices.join(' ');quality.style.display=notices.length?'block':'none';
     populateFilters();                        // fill Division/District/Facility/DPC from live data
