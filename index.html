@@ -606,25 +606,25 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g6">
   <div class="card">
     <div class="ct">Implementation states</div>
-    <div class="cs">Count, among all program states</div>
+    <div class="cs">Programme states</div>
     <div class="kv b" id="k-states">4</div>
     <div class="kn" id="k-states-n">RJ · MP · UK · CG</div>
   </div>
   <div class="card">
     <div class="ct">Pilot districts</div>
-    <div class="cs">Count, among all pilot districts</div>
+    <div class="cs">Complete-support pilot districts</div>
     <div class="kv b" id="k-dist">46</div>
     <div class="kn" id="k-dist-n">n = 46 districts</div>
   </div>
   <div class="card">
     <div class="ct">Planned facilities</div>
-    <div class="cs">Count, complete support + light touch</div>
+    <div class="cs">Complete support + light touch</div>
     <div class="kv b" id="k-plan">58</div>
     <div class="kn" id="k-plan-n">58 facilities</div>
   </div>
   <div class="card cab">
     <div class="ct">Operational clinics</div>
-    <div class="cs">% of planned, among all planned facilities</div>
+    <div class="cs">Operational / planned facilities</div>
     <div class="kv b" id="k-op">56</div>
     <div class="ks" id="k-op-pct" style="color:var(--b2)">96.6% of planned</div>
     <div class="sp">
@@ -634,14 +634,14 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card cab">
     <div class="ct">PLT1D enrolled</div>
-    <div class="cs">% of target, among all PLT1D enrolled</div>
+    <div class="cs">Progress towards programme enrolment target</div>
     <div class="kv b" id="k-enr">2,216</div>
     <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="k-gauge" style="width:72%"></div></div><div class="gauge-pct" id="k-gaugeN">72%</div></div>
     <div class="kn" id="k-target">of target 3,080</div>
   </div>
   <div class="card">
     <div class="ct">New enrolments — last month</div>
-    <div class="cs">Count, complete support + light touch</div>
+    <div class="cs">Complete support + light touch</div>
     <div class="kv g2c" id="k-new">51</div>
     <div class="ks" id="k-avgclin">Avg/clinic: 0.9</div>
     <div class="ktr dn" id="k-newtrend">↓ vs 96 prior month</div>
@@ -651,19 +651,19 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g3">
   <div class="card">
     <div class="ct">Total enrolled</div>
-    <div class="cs">Absolute count, all states · all support types</div>
+    <div class="cs">Complete support + light touch</div>
     <div class="kv" id="k-tot">2,216</div>
     <div class="kn" id="k-tot-n">n = 2,216 PLT1D</div>
   </div>
   <div class="card cab">
     <div class="ct">Complete support</div>
-    <div class="cs">% of enrolled, RJ complete + MP + UK + CG</div>
+    <div class="cs">Share of total enrolment · RJ, MP, UK and CG</div>
     <div class="kv b" id="k-cs">1,647</div>
     <div class="ks" id="k-cs-pct">74.3% of enrolled · 38 facilities</div>
   </div>
   <div class="card">
     <div class="ct">Light touch</div>
-    <div class="cs">% of enrolled, RJ additional districts only</div>
+    <div class="cs">Share of total enrolment · Rajasthan only</div>
     <div class="kv g2c" id="k-lt">569</div>
     <div class="ks" id="k-lt-pct">25.7% of enrolled · 18 facilities</div>
   </div>
@@ -672,8 +672,8 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">Enrolment trends</div>
 <div class="g2">
   <div class="card">
-    <div class="ct">Cumulative enrolments & documented clinic activity</div>
-    <div class="cs">Bars: cumulative enrolments · line: clinics with a dated opening or first light-touch monthly report; history is incomplete</div>
+    <div class="ct">Enrolment & documented clinic activity</div>
+    <div class="cs">Bars: cumulative enrolments · line: dated clinic activity (incomplete history)</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
@@ -689,7 +689,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card">
     <div class="ct">New enrolments per month</div>
-    <div class="cs">Bars: monthly enrolments · line: enrolments divided by the current operational-clinic count (complete support + light touch)</div>
+    <div class="cs">Bars: new enrolments · line: enrolments per currently operational clinic</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
@@ -709,7 +709,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g3">
   <div class="card">
     <div class="ct">Gender distribution</div>
-    <div class="cs">% PLT1D, among all PLT1D enrolled (CS only)</div>
+    <div class="cs">Complete-support patients</div>
     <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
       <div style="position:relative;width:100px;height:100px;flex-shrink:0">
         <canvas id="c-gender" width="100" height="100"></canvas>
@@ -723,7 +723,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card">
     <div class="ct">Age distribution</div>
-    <div class="cs">% PLT1D by age group, among all PLT1D enrolled (CS only)</div>
+    <div class="cs">Complete-support patients</div>
     <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
       <div style="position:relative;width:100px;height:100px;flex-shrink:0">
         <canvas id="c-age" width="100" height="100"></canvas>
@@ -737,7 +737,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card">
     <div class="ct">Previous treatment facility</div>
-    <div class="cs">% PLT1D by sector of previous treatment, among those with a non-blank previous facility value</div>
+    <div class="cs">Patients with a recorded previous-treatment facility</div>
     <div id="ptf-bars" style="margin-top:8px"></div>
   </div>
 </div>
@@ -746,7 +746,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g2" style="align-items:start">
   <div class="card cab">
     <div class="ct">Insulin regimen — basal-bolus</div>
-    <div class="cs">% PLT1D on basal-bolus regimen, among all PLT1D enrolled · Target: 100%</div>
+    <div class="cs">Complete-support patients on basal-bolus · target: 100%</div>
     <div style="margin-top:10px">
       <div class="pr"><div class="pl">Baseline</div><div class="pb"><div class="pf" id="ins-base" style="width:44%;background:#7db8e8"><span class="pv" id="ins-base-v">44%</span></div></div></div>
       <div class="pr"><div class="pl">Current</div><div class="pb"><div class="pf" id="ins-last" style="width:96%;background:var(--b1)"><span class="pv" id="ins-last-v">96%</span></div></div></div>
@@ -754,8 +754,8 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
     </div>
   </div>
   <div class="card">
-    <div class="ct">Follow-up attendance — month on month</div>
-    <div class="cs">% PLT1D attending ≥1 follow-up visit, among those due in the given month (Y+N) · excludes dots; a month still in progress is drawn lighter, months with no Y/N marked are held as empty slots · Target: &gt;75%</div>
+    <div class="ct">Monthly follow-up attendance</div>
+    <div class="cs">Attended / due (Y + N) · dots excluded · target: &gt;75%</div>
     <div class="nr">
       <button class="nb" id="pf" onclick="shiftFup(-1)">← Back</button>
       <span class="nl" id="nlf"></span>
@@ -769,22 +769,22 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g2">
   <div class="card">
     <div class="ct">SMBG frequency per day</div>
-    <div class="cs">% PLT1D by monitoring frequency, among PLT1D with SMBG data · bottom row = enrolled &gt;3 months only</div>
+    <div class="cs">Patients with SMBG data · last row: enrolled &gt;3 months</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:var(--g4)"></span>Not monitoring</span>
       <span><span class="ld" style="background:var(--b4)"></span>&lt;3 per day</span>
       <span><span class="ld" style="background:var(--b2)"></span>3–4 per day</span>
       <span><span class="ld" style="background:var(--b1)"></span>&gt;4 per day</span>
     </div>
-    <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:5px">All enrolled — month on month</div>
+    <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:5px">All enrolled · monthly</div>
     <div id="smbg-mom"></div>
     <hr class="row-div">
     <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:5px">Enrolled &gt;3 months — last month</div>
     <div id="smbg-last"></div>
   </div>
   <div class="card">
-    <div class="ct">% Hyper &amp; Hypo readings — last 3 months</div>
-    <div class="cs">% follow-up visits by reading bucket, among visits with SMBG data in the month</div>
+    <div class="ct">Hyper/hypoglycaemic readings — last 3 months</div>
+    <div class="cs">Share of visits with SMBG data, by reading band</div>
     <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:4px">% Hyper readings</div>
     <div class="lg" style="margin-bottom:4px">
       <span><span class="ld" style="background:var(--b2)"></span>0–20%</span>
@@ -803,26 +803,26 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">Clinic operations</div>
 <div class="g2" style="margin-bottom:7px;align-items:start">
   <div class="card cab">
-    <div class="ct">In-house HbA1c testing facility</div>
-    <div class="cs">% operational clinics with on-site HbA1c testing, among all operational clinics</div>
+    <div class="ct">On-site HbA1c testing</div>
+    <div class="cs">Share of operational clinics</div>
     <div class="kv b" id="hba1c-fac">—</div>
     <div class="ks" id="hba1c-fac-n">of operational clinics</div>
   </div>
   <div class="card" style="align-self:start" id="trained-staff-card">
-    <div class="ct">Trained clinical staff at T1D clinics</div>
-    <div class="cs">% operational clinics with trained specialist on-site, among all operational clinics</div>
+    <div class="ct">Trained staff at clinics</div>
+    <div class="cs">Operational clinics with each trained cadre</div>
     <div id="trained-bars" style="margin-top:10px"></div>
   </div>
 </div>
 <div class="g2" style="align-items:start">
   <div class="card">
-    <div class="ct">Clinic functionality — month on month</div>
-    <div class="cs">% clinics functional &gt;75% of designated days, among all operational clinics · Target: 100%</div>
+    <div class="ct">Monthly clinic functionality</div>
+    <div class="cs">Reporting clinics open &gt;75% of scheduled days · target: 100%</div>
     <div style="height:155px;position:relative;margin-top:6px"><canvas id="c-clinops"></canvas></div>
   </div>
   <div class="card">
-    <div class="ct">Clinic off days — month on month</div>
-    <div class="cs">% clinics by number of off days, among all operational clinics</div>
+    <div class="ct">Monthly clinic off days</div>
+    <div class="cs">Reporting clinics, by days closed</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:#dbeafe"></span>0 offs</span>
       <span><span class="ld" style="background:var(--b3)"></span>1 off</span>
@@ -843,26 +843,26 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">Glycaemic control — overview</div>
 <div class="g4">
   <div class="card cab">
-    <div class="ct">HbA1c tests done — last 3 months</div>
-    <div class="cs">% PLT1D tested for HbA1c in the last 3 months, among enrolled complete-support PLT1D</div>
+    <div class="ct">HbA1c testing — last 3 months</div>
+    <div class="cs">Tested / complete-support patients enrolled</div>
     <div class="kv b" id="hb-test">38%</div>
     <div class="ks" id="hb-test-n">n = 2,216 enrolled</div>
   </div>
   <div class="card cab">
     <div class="ct">Improving HbA1c trend</div>
-    <div class="cs">% PLT1D improved vs baseline, among those with ≥2 readings enrolled &gt;3 months</div>
+    <div class="cs">Lower HbA1c / patients with paired readings, enrolled &gt;3 months</div>
     <div class="kv b" id="hb-dec">61%</div>
     <div class="ks" id="hb-dec-n">n = 843 with ≥2 readings</div>
   </div>
   <div class="card cao">
     <div class="ct">DKA — last 12 months</div>
-    <div class="cs">% PLT1D with ≥1 DKA episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
+    <div class="cs">≥1 DKA episode / patients with follow-up in past year · target: &lt;10%</div>
     <div class="kv g2c" id="dka">8%</div>
     <div class="ks" id="dka-n">n = 2,216 · ✓ on target</div>
   </div>
   <div class="card cao">
-    <div class="ct">Hypoglycaemia — last 12 months</div>
-    <div class="cs">% PLT1D with ≥1 hypoglycaemia episode, among those with ≥1 follow-up visit in last 12 months · Target: &lt;10%</div>
+    <div class="ct">Severe hypoglycaemia — last 12 months</div>
+    <div class="cs">≥1 severe episode / patients with follow-up in past year · target: &lt;10%</div>
     <div class="kv g2c" id="hypo">11%</div>
     <div class="ks" id="hypo-n">n = 2,216 · ⚠ above target</div>
   </div>
@@ -871,22 +871,22 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">HbA1c change from baseline</div>
 <div class="g2">
   <div class="card">
-    <div class="ct">Change in HbA1c — first test to most recent test</div>
-    <div class="cs">% PLT1D by change category, among those enrolled &gt;3 months with both baseline and latest reading · n-sizes shown below each bucket</div>
+    <div class="ct">HbA1c change — baseline to latest</div>
+    <div class="cs">Paired readings · enrolled &gt;3 months · change in percentage points</div>
     <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:var(--hI4)"></span>Improved ≥4%</span>
-      <span><span class="ld" style="background:var(--hI2)"></span>Improved 2–4%</span>
-      <span><span class="ld" style="background:var(--hIL)"></span>Improved &lt;2%</span>
+      <span><span class="ld" style="background:var(--hI4)"></span>Improved ≥4 pp</span>
+      <span><span class="ld" style="background:var(--hI2)"></span>Improved 2–4 pp</span>
+      <span><span class="ld" style="background:var(--hIL)"></span>Improved &lt;2 pp</span>
       <span><span class="ld" style="background:var(--hNC)"></span>No change</span>
-      <span><span class="ld" style="background:var(--hWL)"></span>Worsened &lt;2%</span>
-      <span><span class="ld" style="background:var(--hW2)"></span>Worsened 2–4%</span>
-      <span><span class="ld" style="background:var(--hW4)"></span>Worsened ≥4%</span>
+      <span><span class="ld" style="background:var(--hWL)"></span>Worsened &lt;2 pp</span>
+      <span><span class="ld" style="background:var(--hW2)"></span>Worsened 2–4 pp</span>
+      <span><span class="ld" style="background:var(--hW4)"></span>Worsened ≥4 pp</span>
     </div>
     <div style="height:260px;position:relative"><canvas id="c-hba-change"></canvas></div>
   </div>
   <div class="card">
-    <div class="ct">Average HbA1c — baseline vs last available</div>
-    <div class="cs">Average HbA1c value, among PLT1D enrolled &gt;3 months with both baseline and latest values · Target: &lt;8.5</div>
+    <div class="ct">Average HbA1c — baseline vs latest</div>
+    <div class="cs">Paired readings · enrolled &gt;3 months · target: &lt;8.5%</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:#7db8e8"></span>Baseline</span>
       <span><span class="ld" style="background:#0f3460"></span>Last available</span>
@@ -898,8 +898,8 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">HbA1c distribution &amp; latest values</div>
 <div class="g2">
   <div class="card">
-    <div class="ct">HbA1c distribution — last test (≥3 months post enrolment)</div>
-    <div class="cs">% PLT1D by HbA1c bucket at last test, among PLT1D enrolled ≥3 months with HbA1c done post enrolment · by time bucket</div>
+    <div class="ct">Latest HbA1c distribution — enrolled ≥3 months</div>
+    <div class="cs">Latest post-enrolment reading, by time since enrolment</div>
     <div class="lg" style="margin-top:4px">
       <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
       <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
@@ -911,15 +911,15 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card">
     <div class="ct">Average HbA1c — latest test (enrolled ≥3 months)</div>
-    <div class="cs">Average HbA1c at most recent test, among PLT1D enrolled ≥3 months with at least one HbA1c recorded · by time since enrolment</div>
+    <div class="cs">Latest recorded HbA1c, by time since enrolment</div>
     <div style="height:200px;position:relative;margin-top:28px"><canvas id="c-hba-latest"></canvas></div>
   </div>
 </div>
 
-<div class="sl">Current HbA1c levels — all PLT1D with ≥1 reading</div>
+<div class="sl">Latest HbA1c — all patients with a reading</div>
 <div class="card" style="max-width:680px">
   <div class="ct">Current HbA1c levels by time since enrolment</div>
-  <div class="cs">% PLT1D by HbA1c band at most recent reading, among all PLT1D with ≥1 HbA1c recorded · by time since enrolment</div>
+  <div class="cs">Latest recorded HbA1c, by time since enrolment · all patients with data</div>
   <div class="lg" style="margin-top:4px">
     <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
     <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
@@ -934,7 +934,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g2">
   <div class="card">
     <div class="ct">TDD ranges — last visit</div>
-    <div class="cs">% PLT1D by range, among those with TDD recorded · Pediatric 0–17: 0.7–1.0 u/kg · Adults ≥18: 1.0–1.5 u/kg</div>
+    <div class="cs">Recorded TDD · ages 0–17: 0.7–1.0 U/kg · adults: 1.0–1.5 U/kg</div>
     <div class="lg" style="margin-top:6px">
       <span><span class="ld" style="background:var(--g2)"></span>Below range</span>
       <span><span class="ld" style="background:var(--b2)"></span>In range</span>
@@ -944,9 +944,9 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card">
     <div class="ct">Basal dose as % of TDD — last visit</div>
-    <div class="cs">% PLT1D by bucket, among those with TDD data at last visit · Ideal: 30–50%</div>
+    <div class="cs">Patients with recorded basal share · reference range: 30–50%</div>
     <div style="margin-top:10px;display:flex;flex-direction:column;gap:0" id="basal-bars"></div>
-    <div style="margin-top:6px;font-size:9px;color:var(--tm)">★ Ideal range: 30–50% of TDD as basal</div>
+    <div style="margin-top:6px;font-size:9px;color:var(--tm)">Basal share = basal dose / total daily dose.</div>
   </div>
 </div>
 
@@ -960,18 +960,18 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g4">
   <div class="card">
     <div class="ct">Batches held</div>
-    <div class="cs">Count, among all doctor training batches</div>
+    <div class="cs">Doctor training batches</div>
     <div class="kv b" id="dr-bat">11</div>
   </div>
   <div class="card cab">
     <div class="ct">Doctors trained</div>
-    <div class="cs">Distinct count, among doctors attending ≥1 session</div>
+    <div class="cs">Unique names per state · ≥1 session</div>
     <div class="kv b" id="dr-tr">387</div>
     <div class="kn" id="dr-tr-n">across all states</div>
   </div>
   <div class="card" style="grid-column:span 2">
     <div class="ct">Facility type — pilot vs non-pilot</div>
-    <div class="cs">% doctors, among all doctors trained</div>
+    <div class="cs">Share of trained doctors</div>
     <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
       <div style="position:relative;width:80px;height:80px;flex-shrink:0">
         <canvas id="c-pilot" width="80" height="80"></canvas>
@@ -987,7 +987,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g2">
   <div class="card">
     <div class="ct">Specialty of doctors trained</div>
-    <div class="cs">% doctors, among all doctors trained</div>
+    <div class="cs">Share of trained doctors</div>
     <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
       <div style="position:relative;width:100px;height:100px;flex-shrink:0">
         <canvas id="c-spec" width="100" height="100"></canvas>
@@ -1000,7 +1000,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card">
     <div class="ct">Pre vs post-test scores — doctors</div>
-    <div class="cs">Average score, among doctors with test scores recorded</div>
+    <div class="cs">Doctors with recorded test scores</div>
     <div style="margin-top:10px">
       <div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:6px" id="ppdr-lbl">Doctors (n=387)</div>
       <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-dr-pre" style="width:62%;background:var(--g3)"><span class="pv" id="ppdr-pre">62%</span></div></div></div>
@@ -1014,18 +1014,18 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g4">
   <div class="card">
     <div class="ct">Batches held</div>
-    <div class="cs">Count, among all nurse training batches</div>
+    <div class="cs">Nurse training batches</div>
     <div class="kv b" id="nr-bat">4</div>
   </div>
   <div class="card">
     <div class="ct">Nurses trained</div>
-    <div class="cs">Distinct count, among nurses attending ≥1 session</div>
+    <div class="cs">Unique names per state · ≥1 session</div>
     <div class="kv b" id="nr-tr">60</div>
     <div class="kn" id="nr-tr-n">across all states</div>
   </div>
   <div class="card cs2">
     <div class="ct">Pre vs post-test scores — staff nurses</div>
-    <div class="cs">Average score, among nurses with test scores recorded</div>
+    <div class="cs">Nurses with recorded test scores</div>
     <div style="margin-top:8px">
       <div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:6px" id="ppnr-lbl">Staff nurses (n=60)</div>
       <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-nr-pre" style="width:79%;background:var(--g3)"><span class="pv" id="ppnr-pre">79%</span></div></div></div>
@@ -1039,25 +1039,25 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g3">
   <div class="card">
     <div class="ct">Clinical experts engaged</div>
-    <div class="cs">Count, among all experts in pool</div>
+    <div class="cs">Expert pool</div>
     <div class="kv b">12</div><div class="ks">Expert pool identified &amp; engaged</div>
   </div>
   <div class="card cao">
     <div class="ct">Doctor mentoring sessions</div>
-    <div class="cs">Count, among all doctor mentoring sessions held</div>
-    <div class="data-pending">Data pending — no source in reference</div>
+    <div class="cs">Doctor mentoring sessions</div>
+    <div class="data-pending">No source data available</div>
   </div>
   <div class="card cao">
     <div class="ct">Nurse mentoring sessions</div>
-    <div class="cs">Count, among all nurse mentoring sessions held</div>
-    <div class="data-pending">Data pending — no source in reference</div>
+    <div class="cs">Nurse mentoring sessions</div>
+    <div class="data-pending">No source data available</div>
   </div>
 </div>
 <div style="margin-bottom:7px">
   <div class="card" style="max-width:50%">
     <div class="ct">Mentoring sessions by month</div>
     <div class="cs">Count of sessions by cadre</div>
-    <div class="data-pending">Data pending — no source in reference</div>
+    <div class="data-pending">No source data available</div>
   </div>
 </div>
 
@@ -1065,18 +1065,18 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g3">
   <div class="card">
     <div class="ct">Orientation sessions held</div>
-    <div class="cs">Count, among all FLW orientation sessions</div>
+    <div class="cs">Frontline-worker orientation sessions</div>
     <div class="kv b" id="flw-ses">73</div>
   </div>
   <div class="card">
-    <div class="ct">Health workers oriented</div>
-    <div class="cs">Count, among all FLW health workers attending</div>
+    <div class="ct">FLW orientation attendances</div>
+    <div class="cs">Attendances · repeat participation may be included</div>
     <div class="kv b" id="flw-hr">12,817</div>
     <div class="ks">ANM · ASHA · BCM · BPM · CHO…</div>
   </div>
   <div class="card">
     <div class="ct">Pilot districts with ≥1 session</div>
-    <div class="cs">% of pilot districts, among all pilot districts</div>
+    <div class="cs">Districts with sessions / pilot districts</div>
     <div class="kv b" id="flw-dist">15</div>
     <div class="ks" id="flw-dist-s">of 46 pilot districts</div>
     <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="flw-gauge" style="width:33%"></div></div><div class="gauge-pct" id="flw-pct">33%</div></div>
@@ -1084,8 +1084,8 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 </div>
 <div style="margin-bottom:7px">
   <div class="card" style="max-width:50%">
-    <div class="ct">Type of service providers oriented</div>
-    <div class="cs">% service providers by cadre, among all health workers oriented</div>
+    <div class="ct">FLW attendances by cadre</div>
+    <div class="cs">Share of orientation attendances</div>
     <div style="display:flex;align-items:center;gap:7px;margin-top:4px">
       <div style="position:relative;width:100px;height:100px;flex-shrink:0">
         <canvas id="c-flw" width="100" height="100"></canvas>
@@ -1109,34 +1109,34 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g4">
   <div class="card cab">
     <div class="ct">Glucometer</div>
-    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="cs">Mean demand coverage · reporting facilities</div>
     <div class="kv b" id="stk-glm-cov">—</div>
     <div class="ks" id="stk-glm-stk">—</div>
   </div>
   <div class="card cab">
     <div class="ct">Glucostrips</div>
-    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="cs">Mean demand coverage · reporting facilities</div>
     <div class="kv b" id="stk-gst-cov">—</div>
     <div class="ks" id="stk-gst-stk">—</div>
   </div>
   <div class="card cab">
     <div class="ct">Long-acting insulin</div>
-    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="cs">Mean demand coverage · reporting facilities</div>
     <div class="kv b" id="stk-lai-cov">—</div>
     <div class="ks" id="stk-lai-stk">—</div>
   </div>
   <div class="card cab">
     <div class="ct">Short-acting insulin</div>
-    <div class="cs">Avg % coverage · stockout rate · among reporting facilities</div>
+    <div class="cs">Mean demand coverage · reporting facilities</div>
     <div class="kv b" id="stk-sai-cov">—</div>
     <div class="ks" id="stk-sai-stk">—</div>
   </div>
 </div>
 
-<div class="sl">Coverage trend — month on month</div>
+<div class="sl">Monthly stock coverage</div>
 <div class="card">
-  <div class="ct">Average % coverage across reporting facilities</div>
-  <div class="cs">% of demand met · one line per commodity · among facilities reporting in each month</div>
+  <div class="ct">Average demand coverage</div>
+  <div class="cs">Demand met across reporting facilities · one line per commodity</div>
   <div class="lg">
     <span><span class="ld" style="background:var(--b1)"></span>Glucometer</span>
     <span><span class="ld" style="background:var(--b2)"></span>Glucostrips</span>
@@ -1151,7 +1151,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
     <div>
       <div class="ct" style="margin-bottom:0">Monthly stockouts &amp; coverage by facility</div>
-      <div class="cs">Each cell = one facility-month · green = full coverage · red = stockout</div>
+      <div class="cs">One cell per facility-month · hover for details</div>
     </div>
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px">
       <span class="flbl">Commodity</span>
@@ -1181,7 +1181,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="tc" id="tab-4">
 <div class="tc-wrap">
 
-<div class="dn-heading"><div><h2>Expanding access. Tracking progress in care.</h2><p class="dn-intro">Follow the programme’s reach, clinical results and progress against the grant.</p></div><span class="dn-report-tag">Current results · Jul ’26 grant benchmark</span></div>
+<div class="dn-heading"><div><h2>Expanding access. Tracking progress in care.</h2><p class="dn-intro">Programme reach, care and grant progress.</p></div><span class="dn-report-tag">Current results · Jul ’26 grant benchmark</span></div>
 <p class="dn-story" id="dn-story"></p>
 <div class="card dn-hero-card">
   <div class="dn-hero">
@@ -1199,14 +1199,14 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">Progress against the grant</div>
 <div id="dn-score-summary" class="dn-score-summary"></div>
 <div id="dn-logframe" class="dn-score-grid"></div>
-<details class="dn-notes"><summary>Reporting scope &amp; calculation notes</summary><div id="dn-logframe-note"></div></details>
+<details class="dn-notes"><summary>Reporting details</summary><div id="dn-logframe-note"></div></details>
 
 
 
 <div class="sl">Enrolment and clinic growth</div>
 <div class="card">
   <div class="ct">Cumulative PLT1D enrolled, by state</div>
-  <div class="cs">Complete support + light touch · cumulative counts at month end; current month to date</div>
+  <div class="cs">Both support models · month-end totals; current month to date</div>
   <div class="lg" id="dn-growth-lg"></div>
   <div style="height:190px;position:relative"><canvas id="dn-growth"></canvas></div>
   <div class="dn-panel-lbl">Documented clinic activity — incomplete history</div>
@@ -1215,11 +1215,11 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 
 <div class="fnote" id="dn-growth-note"></div>
 <div class="sl">Quality of care</div>
-<div class="fnote">Clinical indicators cover complete-support patients; light-touch enrolments have no individual clinical records.</div>
+<div class="fnote">Clinical results: complete-support patients only.</div>
 <div class="g2">
   <div class="card">
     <div class="ct">Insulin regimen — at enrolment vs current</div>
-    <div class="cs">% of complete-support PLT1D on a basal-bolus regimen</div>
+    <div class="cs">Complete-support patients on basal-bolus</div>
     <div class="lg" style="margin-top:6px">
       <span><span class="ld" style="background:var(--b2)"></span>Basal-bolus</span>
       <span><span class="ld" style="background:var(--g4)"></span>Other regimen</span>
@@ -1229,7 +1229,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   </div>
   <div class="card">
     <div class="ct">Average HbA1c — enrolment to latest reading</div>
-    <div class="cs">By time since enrolment at the latest test · paired baseline and latest readings only</div>
+    <div class="cs">Paired readings, grouped by time since enrolment at latest test</div>
     <div class="lg" style="margin-top:6px">
       <span><span class="ld" style="background:var(--g3)"></span>At enrolment</span>
       <span><span class="ld" style="background:var(--b2)"></span>Latest reading</span>
@@ -1241,13 +1241,13 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">Capacity building</div>
 <div class="card">
   <div class="ct">Capacity coverage against planned sites</div>
-  <div class="cs">Targets: 1 MD Medicine + 1 paediatrician per planned-site district; 2 nurses per planned clinic.</div>
+  <div class="cs">Target: 1 physician + 1 paediatrician per planned-site district; 2 nurses per planned clinic.</div>
   <div id="dn-capacity-targets" class="dn-slope-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:12px"></div>
   <div class="cs" id="dn-capacity-target-summary" style="margin-top:8px"></div>
   <details class="dn-notes"><summary>Coverage details</summary><div id="dn-capacity-target-note" style="margin-top:6px"></div></details>
 </div>
 <div class="card">
-  <div class="ct">Cadre trained / oriented, split by state</div>
+  <div class="ct">Training and orientation by state</div>
   <div class="cs">Doctors &amp; nurses: unique names per state · FLWs: attendances, including repeats.</div>
   <div class="lg" id="dn-cadre-lg"></div>
   <div id="dn-cadre"></div>
@@ -1258,7 +1258,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <!-- ══════════ TAB 5 — INDICATOR DEFINITIONS ══════════ -->
 <div class="tc" id="tab-5">
 <div class="tc-wrap">
-<div class="sl">Indicator Definitions &amp; Calculation Methodology</div>
+<div class="sl">Indicator definitions</div><details class="card" style="padding:10px"><summary>Abbreviations</summary><p class="cs">PLT1D: people living with type 1 diabetes · SMBG: self-monitoring of blood glucose · DKA: diabetic ketoacidosis · TDD: total daily insulin dose · FLW: frontline worker · pp: percentage points.</p></details>
 <div class="card" style="padding:0;overflow:hidden">
 <table class="info-table">
 <thead>
@@ -1269,7 +1269,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
   <th style="width:80px">Type</th>
   <th>Numerator</th>
   <th>Denominator</th>
-  <th style="width:160px">Sheet (tab name)</th>
+  <th style="width:160px">Source sheet</th>
   <th style="width:160px">Columns used</th>
 </tr>
 </thead>
@@ -1420,9 +1420,9 @@ function renderKPIs(d,f){
                 : insD<0 ? '▼ '+insD+'pp vs baseline'
                          : 'No change from baseline');
   sv('hb-test',   d.hbTest!=null ? d.hbTest+'%'  : '—');
-  sv('hb-test-n', d.hbTest!=null ? 'n = '+fmt(d.csEnr)+' complete-support enrolled' : 'Data pending — HbA1c sheet not yet populated');
+  sv('hb-test-n', d.hbTest!=null ? 'n = '+fmt(d.csEnr)+' complete-support enrolled' : 'No HbA1c source data');
   sv('hb-dec',    d.hbDec!=null  ? d.hbDec+'%'   : '—');
-  sv('hb-dec-n',  d.hbDec!=null  ? 'n = '+fmt(d.hbDecN||0)+' with ≥2 readings' : 'Data pending — HbA1c sheet not yet populated');
+  sv('hb-dec-n',  d.hbDec!=null  ? 'n = '+fmt(d.hbDecN||0)+' with ≥2 readings' : 'No HbA1c source data');
   sv('dka',  d.dka!=null  ? d.dka+'%'  : '—');
   sv('dka-n', d.dka!=null  ? 'n = '+fmt(d.fupDen)+' with follow-up · '+(d.dka<=10?'✓ on target':'⚠ above target') : 'No follow-up-visit data in sheet');
   sv('hypo', d.hypo!=null ? d.hypo+'%' : '—');
@@ -1515,7 +1515,7 @@ function renderPTF(){
     if(d.n>0)(members[sec]=members[sec]||[]).push(PTF_FULL[d.l]||d.l);
   });
   const secs=PTF_SEC_ORDER.filter(x=>bySec[x]>0);
-  if(!secs.length){el.innerHTML='<div class="data-pending">No previous-treatment data for the current selection.</div>';return;}
+  if(!secs.length){el.innerHTML='<div class="data-pending">No previous-treatment data in this view.</div>';return;}
   const pts=pctParts(secs.map(x=>bySec[x]));
 
   // flex-grow carries the raw counts, so segment widths are exact rather than
@@ -1542,7 +1542,7 @@ function renderPTF(){
 
   el.innerHTML=`<div style="display:flex;gap:2px;height:26px;margin-bottom:10px">${bar}</div>`
     +`<div style="display:flex;flex-direction:column;gap:6px">${legend}</div>`
-    +`<div class="sum-note">${foot}</div>`;
+    +`<details class="sum-note"><summary>Category details</summary>${foot}</details>`;
 }
 
 function renderGender(){
@@ -1767,7 +1767,7 @@ function hbaPending(canvasId){
       var msg=document.createElement('div');
       msg.className='hba-pending data-pending';
       msg.style.cssText='margin:12px 0;text-align:center;padding:14px;';
-      msg.textContent='HbA1c data pending — Hba1c_Baseline/Latest sheet not yet populated';
+      msg.textContent='No HbA1c source data';
       wrap.appendChild(msg);
     }
   } else {
@@ -1783,13 +1783,13 @@ function buildHbaChange(){
   if(_chc)_chc.destroy();
   if(hbaPending('c-hba-change')) return;
   const defs=[
-    {l:'Improved ≥4%', d:HBA_I4, c:'#276749', lc:'#fff'},
-    {l:'Improved 2–4%', d:HBA_I2, c:'#52a87a', lc:'#fff'},
-    {l:'Improved <2%',  d:HBA_IL, c:'#a8d5b5', lc:'#0f172a'},
+    {l:'Improved ≥4 pp', d:HBA_I4, c:'#276749', lc:'#fff'},
+    {l:'Improved 2–4 pp', d:HBA_I2, c:'#52a87a', lc:'#fff'},
+    {l:'Improved <2 pp',  d:HBA_IL, c:'#a8d5b5', lc:'#0f172a'},
     {l:'No change',     d:HBA_NC, c:'#b0bac9', lc:'#0f172a'},
-    {l:'Worsened <2%',  d:HBA_WL, c:'#f0b8b8', lc:'#0f172a'},
-    {l:'Worsened 2–4%',d:HBA_W2,c:'#d97070', lc:'#fff'},
-    {l:'Worsened ≥4%',d:HBA_W4,c:'#b33a3a', lc:'#fff'},
+    {l:'Worsened <2 pp',  d:HBA_WL, c:'#f0b8b8', lc:'#0f172a'},
+    {l:'Worsened 2–4 pp',d:HBA_W2,c:'#d97070', lc:'#fff'},
+    {l:'Worsened ≥4 pp',d:HBA_W4,c:'#b33a3a', lc:'#fff'},
   ];
   _chc=new Chart(document.getElementById('c-hba-change'),{
     type:'bar',
@@ -2080,38 +2080,38 @@ function buildInfoTable(){
     {n:'4',ind:'Operational clinics',tab:'T1',type:'Absolute # + %',num:'Facilities marked operational in the complete-support and light-touch rosters',den:'Total planned facilities',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name, Operational Status'},
     {n:'5',ind:'PLT1D enrolled (total / CS / LT)',tab:'T1',type:'Absolute #',num:'Count of rows in enrolled_list · CS = facilities not in LT sheet · LT = sum of enrolments in LT sheet',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Patient ID, Facility Name'},
     {n:'6',ind:'Enrolled vs target (%)',tab:'T1',type:'%',num:'Count of all enrolled PLT1D (LT + CS)',den:'Committed target (from Targets sheet)',sheet:'enrolled_list, Targets',cols:'Patient ID'},
-    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1D (complete support) + cumulative light-touch enrolments up to each month · line = documented clinic activity as of that month (incomplete opening history): complete support (Operational = Yes, Date of Operationalisation ≤ month end) + light touch (from the first month the facility reports an enrolment figure)',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
-    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1D with enrolment date in that month (complete support) + light-touch enrolments reported for that month · line = monthly enrolments ÷ the current operational-clinic roster (complete support + light touch); current month excluded from the line',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
-    {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1D by Sex column value',den:'All PLT1D enrolled',sheet:'enrolled_list',cols:'Sex'},
-    {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1D with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
-    {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Total PLT1D enrolled',sheet:'enrolled_list',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
+    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Bars: cumulative dated complete-support + reported light-touch enrolments. Line: operational CS clinics with opening dates + LT clinics from first monthly report. History is incomplete.',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
+    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'Bars: dated CS + reported LT monthly enrolments. Line: monthly enrolments / current operational clinics; current month excluded.',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
+    {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1D by Sex column value',den:'Complete-support PLT1D enrolled',sheet:'Enrolled List',cols:'Sex'},
+    {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1D with non-blank previous facility value',sheet:'Enrolled List',cols:'Previous treatment regimen, Previous treatment facility category'},
+    {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Complete-support PLT1D enrolled',sheet:'Enrolled List',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
     {n:'11',ind:'Follow-up attendance (MoM)',tab:'T1',type:'%',num:'PLT1D marked Y in the given month',den:'PLT1D marked Y + N in that month (excludes dots = not due/inactive)',sheet:'Followup_adherence',cols:'All columns (each month is a column)'},
     {n:'12a',ind:'SMBG frequency (all enrolled, MoM)',tab:'T1',type:'%',num:'Count by SMBG category: not monitoring / <3/day / 3–4/day / >4/day',den:'PLT1D with non-dot value in that month',sheet:'SMBG_Monthly',cols:'All (each column = a month)'},
     {n:'12b',ind:'SMBG frequency (>3m enrolled, last month)',tab:'T1',type:'%',num:'Same as 12a but restricted to PLT1D enrolled for >3 months',den:'PLT1D enrolled >3 months with non-dot value in last month',sheet:'SMBG_Monthly',cols:'All'},
-    {n:'13a/b',ind:'% Hyper / Hypo readings (last 3 months)',tab:'T1',type:'%',num:'Visits by bucket: 0-20% / 20-40% / 40-60% / 60-80% / 80-100% hyper or hypo readings',den:'Visits with SMBG reading in that month',sheet:'SMBG_HyperHypo',cols:'% Hyper readings, % Hypo readings, Date of visit'},
+    {n:'13a/b',ind:'% Hyper / Hypo readings (last 3 months)',tab:'T1',type:'%',num:'Visits by bucket: 0-20% / 20-40% / 40-60% / 60-80% / 80-100% hyper or hypo readings',den:'Visits with SMBG reading in that month',sheet:'SMBG_Hyper/Hypo',cols:'% Hyper readings, % Hypo readings, Date of visit'},
     {n:'14a',ind:'Clinic functionality (MoM)',tab:'T1',type:'%',num:'Clinics functional >75% of designated days in the month',den:'Operational clinics with non-blank values in that month',sheet:'Operations_Summary',cols:'All'},
     {n:'14b',ind:'Clinic off days',tab:'T1',type:'%',num:'Clinics with exactly 0/1/2/3/4+ off days in the month',den:'Clinics with a non-blank value in that month',sheet:'# of offs',cols:'All (each column = a facility)'},
     {n:'14c',ind:'Trained clinical staff at clinic',tab:'T1',type:'%',num:'Clinics with a trained Pediatrician / MD Medicine / MO on-site',den:'Total operational clinics',sheet:'CompleteSupport_Facilities, Capacity_Building',cols:'Facility Name, Designation/Department, Trained = Yes'},
     {sec:'TAB 2 — Clinical Outcomes'},
-    {n:'15',ind:'HbA1c testing rate',tab:'T2',type:'%',num:'PLT1D with HbA1c test in last 3 months',den:'Total PLT1D enrolled',sheet:'Hba1c_BaselineLatest',cols:'Patient ID, Date of latest Hba1c, Latest hba1c time bucket'},
-    {n:'16',ind:'Improving HbA1c trend',tab:'T2',type:'%',num:'PLT1D enrolled >3m with latest HbA1c lower than baseline',den:'PLT1D enrolled >3m with both baseline and latest reading',sheet:'Hba1c_BaselineLatest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket'},
+    {n:'15',ind:'HbA1c testing rate',tab:'T2',type:'%',num:'PLT1D with HbA1c test in last 3 months',den:'Complete-support PLT1D enrolled',sheet:'Hba1c_Baseline/Latest',cols:'Patient ID, Date of latest Hba1c, Latest hba1c time bucket'},
+    {n:'16',ind:'Improving HbA1c trend',tab:'T2',type:'%',num:'PLT1D enrolled >3m with latest HbA1c lower than baseline',den:'PLT1D enrolled >3m with both baseline and latest reading',sheet:'Hba1c_Baseline/Latest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket'},
     {n:'17',ind:'DKA episode — last 12 months',tab:'T2',type:'%',num:'PLT1D with ≥1 DKA episode in last 12 months',den:'PLT1D enrolled with ≥1 follow-up visit in last 12 months',sheet:'Enrolled List',cols:'# of DKA episodes in the last 12 months, Follow-up visit in the last 12 months?'},
-    {n:'18',ind:'Hypoglycaemia — last 12 months',tab:'T2',type:'%',num:'PLT1D with ≥1 hypoglycaemia episode in last 12 months',den:'PLT1D enrolled with ≥1 follow-up visit in last 12 months',sheet:'Enrolled List',cols:'# of severe hypoglycemia episodes in the last 12 months'},
-    {n:'19',ind:'HbA1c change (stacked bar)',tab:'T2',type:'%',num:'PLT1D by change bucket: Worsened ≥4% / 2-4% / <2% / No change / Improved <2% / 2-4% / ≥4%',den:'PLT1D enrolled >3m with both baseline and latest HbA1c (min 2 month gap)',sheet:'Hba1c_BaselineLatest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket since enrolment'},
-    {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1D enrolled >3m with both values. Target: <8.5',sheet:'Hba1c_BaselineLatest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
+    {n:'18',ind:'Severe hypoglycaemia — last 12 months',tab:'T2',type:'%',num:'PLT1D with ≥1 severe hypoglycaemia episode in last 12 months',den:'PLT1D enrolled with ≥1 follow-up visit in last 12 months',sheet:'Enrolled List',cols:'# of severe hypoglycemia episodes in the last 12 months'},
+    {n:'19',ind:'HbA1c change (stacked bar)',tab:'T2',type:'%',num:'PLT1D by change bucket: Worsened ≥4 pp / 2-4% / <2% / No change / Improved <2 pp / 2-4% / ≥4%',den:'PLT1D enrolled >3m with both baseline and latest HbA1c (min 2 month gap)',sheet:'Hba1c_Baseline/Latest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket since enrolment'},
+    {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1D enrolled >3m with both values. Target: <8.5',sheet:'Hba1c_Baseline/Latest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
     {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1D by TDD/kg range: below/in/above · Pediatric 0–17: 0.7-1.0 u/kg · Adults ≥18: 1.0-1.5 u/kg',den:'PLT1D with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
     {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1D by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1D with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
     {sec:'TAB 3 — Capacity Building'},
     {n:'23',ind:'Batches held — doctors / nurses',tab:'T3',type:'Absolute #',num:'Count of distinct training batches by date and state',den:'—',sheet:'Capacity_Building',cols:'Training Batch, Type of Service Provider'},
-    {n:'24',ind:'Doctors / nurses trained',tab:'T3',type:'Absolute #',num:'Count of distinct participants attending ≥1 session',den:'—',sheet:'Capacity_Building',cols:'Name of Service Provider, Type of Service Provider'},
+    {n:'24',ind:'Doctors / nurses trained',tab:'T3',type:'Absolute #',num:'Distinct participant names within each state; ≥1 session',den:'—',sheet:'Capacity_Building',cols:'Name of Service Provider, Type of Service Provider'},
     {n:'25',ind:'Pre/post-test scores',tab:'T3',type:'Average %',num:'Mean pre-test score · Mean post-test score',den:'Participants with both scores recorded',sheet:'Capacity_Building',cols:'Pre-test Score, Post-test Score, Maximum Score'},
     {n:'26',ind:'Specialty of doctors trained',tab:'T3',type:'%',num:'Count by Designation/Department',den:'Total doctors trained',sheet:'Capacity_Building',cols:'Designation/ Department'},
     {n:'27',ind:'Pilot vs non-pilot facility',tab:'T3',type:'%',num:'Doctors from pilot site facilities vs non-pilot',den:'Total doctors trained',sheet:'Capacity_Building',cols:'Pilot facility? (Yes/No)'},
     {n:'28',ind:'Mentoring sessions',tab:'T3',type:'Absolute #',num:'No backing indicator in reference workbook',den:'—',sheet:'— (data pending)',cols:'—'},
     {n:'29',ind:'FLW orientation sessions',tab:'T3',type:'Absolute #',num:'Count of sessions by session ID and state',den:'—',sheet:'Orientation_T1D signs',cols:'Session #, State'},
-    {n:'30',ind:'Health workers oriented',tab:'T3',type:'Absolute #',num:'Sum of # of Service Providers column',den:'—',sheet:'Orientation_T1D signs',cols:'# of Service Providers'},
+    {n:'30',ind:'FLW orientation attendances',tab:'T3',type:'Absolute #',num:'Sum of # of Service Providers column',den:'—',sheet:'Orientation_T1D signs',cols:'# of Service Providers'},
     {n:'31',ind:'Pilot districts with ≥1 FLW session',tab:'T3',type:'% + #',num:'Distinct pilot districts with ≥1 session held',den:'Total pilot districts',sheet:'Orientation_T1D signs',cols:'District, Pilot District? (Yes/No)'},
-    {n:'32',ind:'Type of service providers oriented',tab:'T3',type:'%',num:'Count by cadre type (ANM/ASHA/BCM/BPM/CHO…)',den:'Total health workers oriented',sheet:'Orientation_T1D signs',cols:'Type of Service Provider'},
+    {n:'32',ind:'FLW attendances by cadre',tab:'T3',type:'%',num:'Count by cadre type (ANM/ASHA/BCM/BPM/CHO…)',den:'Total health workers oriented',sheet:'Orientation_T1D signs',cols:'Type of Service Provider'},
   ];
   const tbody=document.getElementById('info-tbody');
   const tabCol={T1:'b-t1',T2:'b-t2',T3:'b-t3'};
@@ -2139,28 +2139,13 @@ function monthList(ms){
 // records show for them — SMBG_HyperHypo covers only visits that came with SMBG
 // data, so that count is a floor on attendance, never the percentage itself.
 function fupNote(){
-  if(!FUP_MATCHED) return 'No PLT1D match the current filter, so there is no attendance to show.';
-  const parts=[];
-  const cur=(FUP_MOM||[])[0];
-  if(cur&&cur.partial) parts.push(cur.m+' is still open, so its bar is drawn lighter and carries no target marker. '
-    +'Followup_adherence already marks the whole month\'s due list ('+(cur.n||0).toLocaleString()+' PLT1D), while only the '
-    +'visits logged so far count as attended, so the figure rises as the rest of the month is marked and is not yet '
-    +'comparable to a closed month. The donor tab\'s six-month average leaves it out for the same reason.');
-  const p=FUP_PENDING||[];
-  if(p.length){
-  const one=p.length===1;
-  const ev=p.filter(x=>x.visits>0);
-  let t=monthList(p.map(x=>x.m))+' '+(one?'has':'have')+' a column in Followup_adherence '
-    +'but no Y/N marked in '+(one?'it':'them')+' yet, so '+(one?'it is held':'they are held')
-    +' as '+(one?'an empty slot':'empty slots')+' rather than charted as 0%.';
-  if(ev.length) t+=' Visits were recorded in '+(ev.length===p.length?(one?'it':'them'):monthList(ev.map(x=>x.m)))
-    +' though — '+ev.map(x=>x.visits.toLocaleString()+' PLT1D in '+x.m).join(', ')
-    +' have a visit logged in SMBG_HyperHypo, which counts only visits that came with SMBG data '
-    +'and so cannot stand in for the attendance denominator.';
-  t+=' The bar'+(one?'':'s')+' fill'+(one?'s':'')+' in as soon as the sheet is marked.';
-  parts.push(t);
-  }
-  return parts.length?'Note: '+parts.join(' '):'';
+  if(!FUP_MATCHED) return 'No matching patients in this view.';
+  const parts=[],cur=(FUP_MOM||[])[0];
+  if(cur&&cur.partial) parts.push(cur.m+' is incomplete: attendance to date / '+(cur.n||0).toLocaleString()+' due. Excluded from donor average.');
+  const pending=FUP_PENDING||[];
+  if(pending.length) parts.push(monthList(pending.map(x=>x.m))+': not marked Y/N; blank means unreported, not 0%.');
+  if(pending.some(x=>x.visits>0)) parts.push('SMBG visits exist but do not establish the attendance denominator.');
+  return parts.join(' ');
 }
 
 // Full follow-up axis, oldest → newest: every month with marks, then the months
@@ -2272,7 +2257,7 @@ function addSumNotes(){
     const card=el.closest('.card'); if(!card||card.querySelector('.sum-note')) return;
     const n=document.createElement('div');
     n.className='sum-note';
-    n.textContent='Note: shares are rounded to whole numbers and adjusted to total 100%.';
+    n.textContent='Rounded shares total 100%.';
     card.appendChild(n);
   });
 }
@@ -2339,7 +2324,7 @@ function renderLogframe(){
   const counts={all:rows.length,met,needs:scored-met,na:rows.length-scored};
   const summary=document.getElementById('dn-score-summary');
   if(summary)summary.innerHTML='<div class="dn-grant-ring" style="--met-angle:'+met/rows.length*360+'deg;--assessed-angle:'+scored/rows.length*360+'deg" role="img" aria-label="'+met+' of '+scored+' measurable targets met; '+counts.needs+' need attention; '+counts.na+' not assessed"><div><strong>'+(d.filtered?'—':met+' / '+scored)+'</strong><small>'+(d.filtered?'not assessed':'targets met')+'</small></div></div>'
-    +'<div class="dn-grant-overview"><h3>'+(d.filtered?'Explore filtered results':'Grant achievement explorer')+'</h3><div class="dn-score-caption">'+(d.filtered?'Whole-programme grant targets are not assessed for filtered results.':'Jul ’26 grant benchmarks · latest available results')+'</div><div class="dn-score-caption" style="margin-top:4px">'+counts.needs+' need attention · '+counts.na+' not assessed. Each indicator counts once.</div>'
+    +'<div class="dn-grant-overview"><h3>'+(d.filtered?'Explore filtered results':'Grant progress')+'</h3><div class="dn-score-caption">'+(d.filtered?'Grant targets apply to the whole programme; clear filters to assess.':'Jul ’26 grant benchmarks · latest available results')+'</div><div class="dn-score-caption" style="margin-top:4px">'+counts.needs+' need attention · '+counts.na+' not assessed.</div>'
     +'<div class="dn-status-filters" role="group" aria-label="Filter grant indicators">'+[['all','All'],['needs','Needs attention'],['met','Met'],['na','Not assessed']].map(([key,label])=>'<button class="dn-status-filter" data-grant-filter="'+key+'" aria-controls="dn-logframe" aria-pressed="'+(DN_GRANT_FILTER===key)+'" onclick="setDonorGrantFilter(\''+key+'\')">'+label+' '+counts[key]+'</button>').join('')+'</div></div>';
   const shown=rows.filter(r=>DN_GRANT_FILTER==='all'||r.status===DN_GRANT_FILTER).sort((a,b)=>({needs:0,na:1,met:2}[a.status]-{needs:0,na:1,met:2}[b.status]));
   const groups=[['Quality of care',['bb','smbg34','fup','hba','dka','hypo']],['Programme reach',['states','dist','clinics','enrolled']],['Workforce training',['specialists','nurses']]];
@@ -2355,9 +2340,9 @@ function renderLogframe(){
     const caption=!assessed?(d.filtered?'Programme-wide target':'No result available'):ok?(r.cmp==='gte'&&v/r.target>=1.1?(v/r.target).toFixed(1)+'× target':r.cmp==='lte'?(gap===0?'At target ceiling':gapText+' below ceiling'):'Target achieved'):(r.cmp==='lte'?gapText+' above ceiling':gapText+' short of target');
     return '<details class="dn-grant-indicator" data-grant-status="'+r.status+'" data-grant-key="'+r.key+'" style="--result-color:'+color+'"><summary><div class="dn-grant-top"><span>Logframe '+r.n+'</span><span class="dn-pill '+(!assessed?'dn-na':ok?'dn-ok':'dn-below')+'">'+status+'</span></div><div class="dn-grant-title">'+r.ind+'</div><div class="dn-grant-numbers"><strong>'+actual+'</strong><span>Target '+target+'</span></div>'
       +(v==null?'':'<div class="dn-target-rail" aria-hidden="true"><div class="dn-target-fill" style="width:'+pos(v)+'%"></div><i class="dn-target-marker" style="left:'+pos(r.target)+'%"></i><i class="dn-result-dot" style="left:'+pos(v)+'%"></i></div>')
-      +'<div class="dn-grant-caption"><b>'+caption+'</b><span class="dn-expand-cue">Details +</span></div></summary><div class="dn-grant-detail"><p><strong>Population / denominator:</strong> '+scopes[r.key]+'</p><p><strong>Benchmark:</strong> Jul ’26 whole-programme grant target. '+(r.cmp==='lte'?'Lower is better.':'Higher is better.')+'</p><p>Rail: line = target; dot = actual. Each rail has its own scale'+(v==null?'.':' (0–'+dnFmt(max,percent?'pct':'dec')+').')+' Status uses unrounded results.</p>'+(d.filtered?'<p>Clear the dashboard filters to assess programme-wide achievement.</p>':'')+'</div></details>';
+      +'<div class="dn-grant-caption"><b>'+caption+'</b><span class="dn-expand-cue">Details +</span></div></summary><div class="dn-grant-detail"><p><strong>Denominator:</strong> '+scopes[r.key]+'</p><p><strong>Benchmark:</strong> Jul ’26 whole-programme grant target. '+(r.cmp==='lte'?'Lower is better.':'Higher is better.')+'</p><p>Rail: line = target; dot = actual. Each rail has its own scale'+(v==null?'.':' (0–'+dnFmt(max,percent?'pct':'dec')+').')+' Status uses unrounded results.</p>'+(d.filtered?'<p>Clear the dashboard filters to assess programme-wide achievement.</p>':'')+'</div></details>';
   };
-  el.innerHTML=groups.map(([name,keys])=>{const items=shown.filter(r=>keys.includes(r.key));return items.length?'<section class="dn-grant-group"><h3>'+name+'<small>'+items.length+' indicators</small></h3><div class="dn-grant-items">'+items.map(render).join('')+'</div></section>':'';}).join('')||'<div class="dn-grant-empty" role="status">No indicators in this category for the current view. Select All to see every result.</div>';
+  el.innerHTML=groups.map(([name,keys])=>{const items=shown.filter(r=>keys.includes(r.key));return items.length?'<section class="dn-grant-group"><h3>'+name+'<small>'+items.length+' indicators</small></h3><div class="dn-grant-items">'+items.map(render).join('')+'</div></section>':'';}).join('')||'<div class="dn-grant-empty" role="status">No indicators in this category. Select All.</div>';
   const note=document.getElementById('dn-logframe-note');
   if(note){
     const bits=[d.filtered?'Target assessment is disabled for filtered views.':met+' of '+scored+' measurable logframe targets met.',
@@ -2614,7 +2599,7 @@ function renderDonorRegimen(){
 function renderDonorHbaDumbbell(){
   const d=DONOR, el=document.getElementById('dn-hba-dumb'); if(!d||!el)return;
   const h=d.hbaDur, keep=h.labels.map((_,i)=>i).filter(i=>h.n[i]>0&&h.base[i]>0&&h.last[i]>0);
-  if(!keep.length){el.innerHTML='<div class="cs">No cohort has both a baseline and a latest reading yet.</div>';return;}
+  if(!keep.length){el.innerHTML='<div class="cs">No paired HbA1c readings in this view.</div>';return;}
   const vals=keep.flatMap(i=>[h.base[i],h.last[i]]);
   const lo=Math.floor(Math.min(...vals))-1, hi=Math.ceil(Math.max(...vals))+1;
   const y=v=>140-(v-lo)/(hi-lo)*100;
@@ -2630,15 +2615,15 @@ function renderDonorHbaDumbbell(){
       +'<text x="222" y="'+(y(l)-13)+'" text-anchor="middle" fill="#0077a8" font-size="16">'+l.toFixed(1)+'%</text>'
       +'<text x="38" y="172" text-anchor="middle" fill="#506779" font-size="11">At enrolment</text><text x="222" y="172" text-anchor="middle" fill="#506779" font-size="11">Latest</text></svg>'
       +'<div class="dn-slope-result" style="color:'+color+'">'+(change<0?'−':change>0?'+':'')+Math.abs(change).toFixed(1)+' percentage points</div></div>';
-  }).join('')+'</div><div class="cs" style="margin-top:12px">All cohorts use the same HbA1c scale ('+lo+'–'+hi+'%). Lower readings indicate improvement.</div>';
+  }).join('')+'</div><div class="cs" style="margin-top:12px">Shared HbA1c scale ('+lo+'–'+hi+'%). Lower is better.</div>';
 }
 
 function renderDonorCapacityTargets(){
   const d=DONOR, el=document.getElementById('dn-capacity-targets');if(!d||!el)return;
   const c=d.capacityTargets;
-  const rows=[['MD Medicine / physician',c.md,c.districts,'districts with ≥1 recorded specialist','1 per planned-site district'],
-    ['Paediatricians',c.ped,c.districts,'districts with ≥1 recorded paediatrician','1 per planned-site district'],
-    ['Staff nurses',c.nurseSlots,2*c.sites,'nurse places covered at planned clinics','2 per planned clinic']];
+  const rows=[['MD Medicine / physician',c.md,c.districts,'districts with a trained physician','1 per planned-site district'],
+    ['Paediatricians',c.ped,c.districts,'districts with a trained paediatrician','1 per planned-site district'],
+    ['Staff nurses',c.nurseSlots,2*c.sites,'trained nurse places at planned clinics','2 per planned clinic']];
   el.innerHTML=rows.map(([label,value,target,basis,rule])=>{
     const pct=target?Math.round(value/target*100):null;
     return '<article class="dn-slope-card"><h3 class="dn-score-title">'+label+'</h3>'
@@ -2650,9 +2635,9 @@ function renderDonorCapacityTargets(){
   document.getElementById('dn-capacity-target-summary').textContent=c.districts+' districts · '+c.sites+' planned clinics · based on training records.';
   document.getElementById('dn-capacity-target-note').textContent=
     c.districts+' planned-site districts · '+c.sites+' planned clinics. '+c.both+' districts have both specialist cadres recorded; '+c.nurseClinics+' clinics have at least two staff nurses recorded. '
-    +'Coverage is based on training records and recorded district/facility assignments, not confirmed current staffing. Extra specialists in one district and nurses above two at one clinic do not fill gaps elsewhere. Physician records are included under MD Medicine. '
+    +'Training coverage, not verified current staffing. Each district counts once per specialist; nurses are capped at 2 per clinic. Physicians count under MD Medicine. '
     +(c.unmatchedNurses?c.unmatchedNurses+' nurses could not be linked to a planned clinic and are excluded from coverage. ':'')
-    +'These planning targets are separate from the original Jul ’26 grant benchmarks above. Frontline workers remain attendance counts until a catchment roster and unique worker identifiers are available.';
+    +'Planning targets differ from Jul ’26 grant benchmarks. FLW targets await a catchment roster and unique worker IDs.';
 }
 
 function buildDonorCadre(){
