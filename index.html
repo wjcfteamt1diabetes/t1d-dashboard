@@ -521,6 +521,17 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 #tab-4 .dn-district-layout .dn-map-panel svg{height:520px}
 @media(max-width:1050px){#tab-4 .dn-map-layout{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}#tab-4 .dn-map-plan{grid-column:1/-1}}
 @media(max-width:700px){#tab-4 .dn-map-layout,#tab-4 .dn-district-layout{grid-template-columns:minmax(0,1fr)}#tab-4 .dn-map-plan{grid-column:auto}#tab-4 .dn-map-panel svg,#tab-4 .dn-district-layout .dn-map-panel svg{height:420px}#tab-4 .dn-hero-val{font-size:40px}}
+
+/* Peer-support camps: facility totals, geography filters only. */
+.peer-camps-layout{display:flex;align-items:center;gap:24px;margin:10px 0;max-width:650px}
+.peer-camps-chart{position:relative;width:136px;height:136px;flex:0 0 136px}
+.peer-camps-centre{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;color:var(--b1)}
+.peer-camps-centre strong{font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.peer-camps-centre span{font-size:10px;color:var(--t2)}
+.peer-camps-legend{flex:1;min-width:0;font-size:11px}
+.peer-camps-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)}
+.peer-camps-row .peer-state{flex:1}.peer-camps-row small{color:var(--tm);font-size:9px}
+@media(max-width:420px){.peer-camps-layout{gap:12px}.peer-camps-chart{width:112px;height:112px;flex-basis:112px}.peer-camps-row{flex-wrap:wrap}.peer-camps-row small{width:100%;padding-left:16px}}
 </style>
 </head>
 <body>
@@ -832,6 +843,17 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
     </div>
     <div style="height:135px;position:relative"><canvas id="c-offdays"></canvas></div>
   </div>
+</div>
+
+<div class="sl">Peer support</div>
+<div class="card" id="peer-support-card">
+  <div class="ct">Peer-support camps conducted</div>
+  <div class="cs">Recorded facility totals · complete support only</div>
+  <div class="peer-camps-layout">
+    <div class="peer-camps-chart"><canvas id="c-peer-camps" role="img" aria-label="Peer-support camps by state"></canvas><div class="peer-camps-centre"><strong id="peer-camps-total">—</strong><span>camps</span></div></div>
+    <div id="peer-camps-legend" class="peer-camps-legend"></div>
+  </div>
+  <div class="cs" id="peer-camps-coverage"></div>
 </div>
 
 </div></div><!-- /tab-0 -->
@@ -1582,6 +1604,36 @@ function renderBasal(){
   });
 }
 
+let PEER_SUPPORT=null, _peerCamps;
+function computePeerSupport(rows){
+  const states=new Map();
+  for(const r of rows){
+    if(!normv(r['Facility name']))continue;
+    const st=String(r.State||'').trim().toUpperCase()||'UNSPECIFIED';
+    if(!states.has(st))states.set(st,{st,camps:0,reported:0,facilities:0});
+    const group=states.get(st);group.facilities++;
+    const key=colKey(r,[/peer support camps/i]),value=key?num(r[key]):null;
+    // Missing, negative or fractional counts are unreported, not zero camps.
+    if(value!=null&&Number.isInteger(value)&&value>=0){group.camps+=value;group.reported++;}
+  }
+  const order=['MP','RJ','UK','CG'];
+  const groups=[...states.values()].sort((a,b)=>{
+    const ai=order.indexOf(a.st),bi=order.indexOf(b.st);return (ai<0?99:ai)-(bi<0?99:bi)||a.st.localeCompare(b.st);
+  });
+  return {groups,total:groups.reduce((n,g)=>n+g.camps,0),reported:groups.reduce((n,g)=>n+g.reported,0),facilities:groups.reduce((n,g)=>n+g.facilities,0)};
+}
+function renderPeerSupport(){
+  const d=PEER_SUPPORT,canvas=document.getElementById('c-peer-camps');if(!d||!canvas)return;
+  if(_peerCamps)_peerCamps.destroy();
+  sv('peer-camps-total',d.reported?fmt(d.total):'—');
+  canvas.setAttribute('aria-label',d.reported?'Peer-support camps: '+d.total+'. '+d.groups.map(g=>sln(g.st)+': '+g.camps+' recorded').join('; '):'No peer-support camp counts reported');
+  const active=d.groups.filter(g=>g.camps>0);
+  _peerCamps=new Chart(canvas,{type:'doughnut',data:{labels:active.length?active.map(g=>sln(g.st)):['No recorded camps'],datasets:[{data:active.length?active.map(g=>g.camps):[1],backgroundColor:active.length?active.map(g=>DN_COL[g.st]||'#94a3b8'):['#e2e8f0'],borderWidth:2,borderColor:'#fff',_noLabel:true}]},options:{responsive:true,maintainAspectRatio:false,cutout:'74%',plugins:{legend:{display:false},tooltip:{enabled:active.length>0,callbacks:{label:c=>c.label+': '+c.raw+' camps'}}}}});
+  document.getElementById('peer-camps-legend').innerHTML=d.groups.map(g=>'<div class="peer-camps-row"><i class="ld" style="background:'+(DN_COL[g.st]||'#94a3b8')+'"></i><span class="peer-state">'+dnEscape(sln(g.st))+'</span><strong>'+ (g.reported?fmt(g.camps):'—')+'</strong><small>'+g.reported+'/'+g.facilities+' facilities reporting</small></div>').join('')||'<div class="data-pending">No complete-support facilities in this view.</div>';
+  const missing=d.facilities-d.reported;
+  sv('peer-camps-coverage',d.facilities?d.reported+'/'+d.facilities+' facilities reporting'+(missing?' · '+missing+' unreported':'')+' · geography filters only':'No complete-support facilities in this view.');
+}
+
 function renderTrainedStaff(){
   const el=document.getElementById('trained-bars'); el.innerHTML='';
   (TRAINED_STAFF||[]).forEach(r=>{
@@ -2092,6 +2144,7 @@ function buildInfoTable(){
     {n:'14a',ind:'Clinic functionality (MoM)',tab:'T1',type:'%',num:'Clinics functional >75% of designated days in the month',den:'Operational clinics with non-blank values in that month',sheet:'Operations_Summary',cols:'All'},
     {n:'14b',ind:'Clinic off days',tab:'T1',type:'%',num:'Clinics with exactly 0/1/2/3/4+ off days in the month',den:'Clinics with a non-blank value in that month',sheet:'# of offs',cols:'All (each column = a facility)'},
     {n:'14c',ind:'Trained clinical staff at clinic',tab:'T1',type:'%',num:'Clinics with a trained Pediatrician / MD Medicine / MO on-site',den:'Total operational clinics',sheet:'CompleteSupport_Facilities, Capacity_Building',cols:'Facility Name, Designation/Department, Trained = Yes'},
+    {n:'14d',ind:'Peer-support camps conducted',tab:'T1',type:'Count',num:'Sum of valid non-negative integer facility camp totals, by state; blank/invalid values unreported',den:'— (reporting coverage shown separately)',sheet:'CompleteSupport_Facilities',cols:'State, Facility name, Number of peer support camps held'},
     {sec:'TAB 2 — Clinical Outcomes'},
     {n:'15',ind:'HbA1c testing rate',tab:'T2',type:'%',num:'PLT1D with HbA1c test in last 3 months',den:'Complete-support PLT1D enrolled',sheet:'Hba1c_Baseline/Latest',cols:'Patient ID, Date of latest Hba1c, Latest hba1c time bucket'},
     {n:'16',ind:'Improving HbA1c trend',tab:'T2',type:'%',num:'PLT1D enrolled >3m with latest HbA1c lower than baseline',den:'PLT1D enrolled >3m with both baseline and latest reading',sheet:'Hba1c_Baseline/Latest',cols:'Baseline, First HbA1c, Latest HbA1c, time bucket'},
@@ -2684,6 +2737,7 @@ function applyFilters(){
   safe('renderTDD',       renderTDD);
   safe('renderBasal',     renderBasal);
   safe('renderTrainedStaff', renderTrainedStaff);
+  safe('renderPeerSupport', renderPeerSupport);
   safe('buildStaticCharts',  buildStaticCharts);
   safe('buildFupChart',   ()=>buildFupChart(fupOff));
   safe('renderSmbg',      renderSmbg);
@@ -3052,7 +3106,7 @@ function fillRow(grid,anchors,canon){
 const EN_CANON=['Claude_ID','State','Age','Sex','Facility Name','Date of enrolment','Survival Status','Case Status (Active/Inactive)','Date of Marking Inactive','Reason for marking inactive','Month of diagnosis','Year of diagnosis','Previous treatment regimen','Previous treatment facility category','Transitioned to basal-bolus insulin regimen?','Baseline HbA1c value (%)','ID card','SMBG Logbook','Glucometer','Lancing Device','Insulin Pen','Linked to peer support group','Date of most recent visit','Weight (kg)','Height (cm)','Prescribed regimen','Units of basal insulin','Units of bolus insulin','Total Insulin prescribed','Insulin regimen check','BB Split check','Basal %','Age group','Weight available?','Actual TDD','Ideal TDD (Min)','Ideal TDD (Max)','In Range?','Follow-up visit in the last 12 months?','# of DKA episodes in the last 12 months','# of severe hypoglycemia episodes in the last 12 months'];
 const HBA_CANON=['Claude_ID','State','Age','Sex','Facility Name','Date of enrolment','Survival Status','Case Status (Active/Inactive)','Baseline HbA1c value (%)','First Hba1c','Date of first Hba1c','Time between first hba1c and enrolment','Mismatch between baseline and first hba1c (<30 days)','Latest Hba1c value','Date of latest Hba1c','Time since enrolment','Latest hba1c time bucket'];
 const HH_CANON=['Claude ID','Facility Name','Date of visit','% Hypo readings','% Hyper readings','Days since enrolment','Time bucket'];
-const CS_CANON=['','State','Division','District','Block','Facility category','Facility name','DPC','Block&FC','Directive for operationalisation issued from the state?','Directive for operationalisation issued from CS office?','T1D Clinic Operational?','Date of Operationalisation','Clinic Day','HbA1c Available?','Trained pediatrician available?','Trained MD Medicine available?','Trained Medical Officer available?','Referral pathway developed?','Peer support groups formed?'];
+const CS_CANON=['','State','Division','District','Block','Facility category','Facility name','DPC','Block&FC','Directive for operationalisation issued from the state?','Directive for operationalisation issued from CS office?','T1D Clinic Operational?','Date of Operationalisation','Clinic Day','HbA1c Available?','Trained pediatrician available?','Trained MD Medicine available?','Trained Medical Officer available?','Referral pathway developed?','Peer support groups formed?','Number of peer support camps held'];
 const LT_CANON=['T1D Clinic Operational?','State','District','Facility category','Facility name','Total enrolments (autocalculated)'];
 const ORI_CANON=['State','District','Block','Type of Service Provider','# of Service Providers','Session #','Pilot District? (Yes/No)','Month of Orientation','Year of Orientation','Remarks'];
 
@@ -3246,6 +3300,7 @@ function recompute(){
   const patFilter=(f.sex!=='all'||f.age!=='all'||f.status!=='all');
 
   const csF =RAW.csFac.filter(geoCS);
+  PEER_SUPPORT=computePeerSupport(csF);
   const capF=RAW.cap.filter(geoCap);
   const oriF=RAW.orient.filter(geoOri);
   const lt  =ltData(f);
