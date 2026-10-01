@@ -45,7 +45,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .fdiv{width:1px;height:20px;background:var(--bdr);margin:0 2px}
 .ftag{font-size:10px;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:3px 8px;font-weight:600}
 
-.tabs-bar{background:#fff;border-bottom:1px solid var(--bdr);position:sticky;top:44px;z-index:110;box-shadow:0 1px 4px rgba(15,52,96,.06)}
+.tabs-bar{background:#fff;border-bottom:1px solid var(--bdr);position:sticky;top:var(--filter-bar-height,44px);z-index:110;box-shadow:0 1px 4px rgba(15,52,96,.06)}
 .tabs-inner{max-width:1380px;margin:0 auto;padding:0 20px;display:flex}
 .tab{padding:9px 16px;font-size:12px;font-weight:600;color:var(--tm);cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;white-space:nowrap;font-family:var(--fn)}
 .tab:hover{color:var(--b2)}.tab.active{color:var(--b2);border-bottom-color:var(--b2)}
@@ -451,6 +451,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-grant-empty{padding:20px;background:white;border:1px solid #cbdde8;border-radius:8px;color:#506779;font-size:13px}
 @media(max-width:650px){#tab-4 .dn-grant-items{grid-template-columns:1fr}#tab-4 .dn-score-summary{gap:14px;padding:14px}#tab-4 .dn-grant-ring{width:100px;height:100px;flex-basis:100px}#tab-4 .dn-grant-ring>div{width:80px;height:80px}#tab-4 .dn-grant-ring strong{font-size:22px}#tab-4 .dn-grant-overview{min-width:190px}}
 @media(prefers-reduced-motion:no-preference){#tab-4 .dn-status-filter{transition:background .15s,color .15s}#tab-4 .dn-grant-indicator summary:hover{background:#f5faff}}
+
+/* Keep navigation below the actual filter height, including wrapped rows. */
+html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-height,35px) + 10px)}
+.tc .sl,.tc .ct,.dn-grant-indicator summary{scroll-margin-top:10px}
 </style>
 </head>
 <body>
@@ -1908,6 +1912,20 @@ function buildStaticCharts(){
 
 function shift(c,d){off[c]=Math.max(0,Math.min(MAX,off[c]+d));c===0?buildC1(off[0]):buildC2(off[1]);}
 function switchTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',i===j));}
+
+// Sticky offsets follow filter wrapping and source-warning height changes.
+(function alignDashboardNavigation(){
+  const filters=document.querySelector('.fbar'),tabs=document.querySelector('.tabs-bar');
+  if(!filters||!tabs)return;
+  const sync=()=>{
+    document.documentElement.style.setProperty('--filter-bar-height',filters.getBoundingClientRect().height+'px');
+    document.documentElement.style.setProperty('--tab-bar-height',tabs.getBoundingClientRect().height+'px');
+  };
+  sync();
+  if(typeof ResizeObserver!=='undefined'){
+    const observer=new ResizeObserver(sync);observer.observe(filters);observer.observe(tabs);
+  }else window.addEventListener('resize',sync);
+})();
 
 // ═══ PDF EXPORT — one page per tab, single file, reflects active filters ═══
 // Reads the currently-selected (non-default) filters as a human-readable line.
