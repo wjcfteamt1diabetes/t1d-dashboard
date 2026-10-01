@@ -295,8 +295,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-hero-lbl,#tab-4 .dn-tile-l{font-size:13px}
 #tab-4 .dn-tile-s,#tab-4 .dn-hero-sub{font-size:12px}
 #tab-4 .dn-hero-val{font-weight:500;color:#0077a8}
-#tab-4 .dn-pill.dn-ok{background:#deeee8;color:#276b52}
-#tab-4 .dn-pill.dn-below{background:#fff0d6;color:#8d5b12}
+#tab-4 .dn-pill.dn-ok{background:#dcecf5;color:#003b71}
+#tab-4 .dn-pill.dn-below{background:#e5edf3;color:#506779}
 #tab-4 .dn-pill.dn-na{background:#e5edf3;color:#274e68}
 #tab-4 .dn-db-dot{box-shadow:0 0 0 2px #ffffff}
 #tab-4 .dn-score-card h3{margin-top:0}
@@ -438,7 +438,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 /* Interactive grant scorecard: status overview and compact target comparisons. */
 #tab-4 .dn-score-summary{display:flex;gap:22px;align-items:center;flex-wrap:wrap;padding:18px}
-#tab-4 .dn-grant-ring{flex:0 0 118px;width:118px;height:118px;border-radius:50%;background:conic-gradient(#276b52 0 var(--met-angle),#b37a26 var(--met-angle) var(--assessed-angle),#d5e3ec var(--assessed-angle) 360deg);display:grid;place-items:center}
+#tab-4 .dn-grant-ring{flex:0 0 118px;width:118px;height:118px;border-radius:50%;background:conic-gradient(#003b71 0 var(--met-angle),#79a6c1 var(--met-angle) var(--assessed-angle),#d5e3ec var(--assessed-angle) 360deg);display:grid;place-items:center}
 #tab-4 .dn-grant-ring>div{width:94px;height:94px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
 #tab-4 .dn-grant-ring strong{font-size:24px;line-height:1.15;white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums}
 #tab-4 .dn-grant-ring small{font-size:11px;color:#506779}
@@ -489,7 +489,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 #tab-4 .dn-district-button[hidden]{display:none}
 #tab-4 .dn-district-button strong,#tab-4 .dn-facility-button strong{font-size:12px;line-height:1.4}
 #tab-4 .dn-district-button span,#tab-4 .dn-facility-button small{font-size:10px;color:#506779;line-height:1.5}
-#tab-4 .dn-district-button small{font-size:9px;color:#8d5b12}
+#tab-4 .dn-district-button small{font-size:9px;color:#506779}
 #tab-4 .dn-district-button[aria-pressed=true],#tab-4 .dn-facility-button[aria-pressed=true]{background:#dcecf5;border-color:#0077a8}
 #tab-4 .dn-district-button:hover,#tab-4 .dn-facility-button:hover{border-color:#0077a8}
 #tab-4 .dn-district-button:focus-visible,#tab-4 .dn-facility-button:focus-visible,#tab-4 .dn-district-search:focus-visible{outline:2px solid #0077a8;outline-offset:2px}
@@ -2279,7 +2279,7 @@ function addSumNotes(){
 
 // ═══════════ DONOR REPORTING ═══════════
 // CHAI-inspired blue-led categorical colours; labels identify each state.
-const DN_COL={MP:'#003b71',RJ:'#007faf',UK:'#087e85',CG:'#6474ad'};
+const DN_COL={MP:'#003b71',RJ:'#0077a8',UK:'#548bae',CG:'#a3c6df'};
 let _dnGrowth,_dnClinics,_dnCadre;
 
 function dnFmt(v,fmt){
@@ -2344,7 +2344,7 @@ function renderLogframe(){
   const shown=rows.filter(r=>DN_GRANT_FILTER==='all'||r.status===DN_GRANT_FILTER).sort((a,b)=>({needs:0,na:1,met:2}[a.status]-{needs:0,na:1,met:2}[b.status]));
   const groups=[['Quality of care',['bb','smbg34','fup','hba','dka','hypo']],['Programme reach',['states','dist','clinics','enrolled']],['Workforce training',['specialists','nurses']]];
   const render=r=>{
-    const {v,ok,assessed}=r,color=!assessed?'#577286':ok?'#276b52':'#8d5b12';
+    const {v,ok,assessed}=r,color=!assessed?'#577286':ok?'#003b71':'#506779';
     const status=d.filtered?'Not assessed':v==null?'No data':ok?'✓ Met':'Needs attention';
     const target=(r.cmp==='lte'?'≤ ':'≥ ')+dnFmt(r.target,r.fmt)+(r.key==='hba'?'%':'');
     const actual=dnFmt(v,r.fmt)+(r.key==='hba'&&v!=null?'%':'');
@@ -2619,7 +2619,7 @@ function renderDonorHbaDumbbell(){
   const lo=Math.floor(Math.min(...vals))-1, hi=Math.ceil(Math.max(...vals))+1;
   const y=v=>140-(v-lo)/(hi-lo)*100;
   el.innerHTML='<div class="dn-slope-grid">'+keep.map(i=>{
-    const b=h.base[i],l=h.last[i],change=l-b,color=change<=0?'#276b52':'#8d5b12';
+    const b=h.base[i],l=h.last[i],change=l-b,color=change<=0?'#003b71':'#506779';
     const label=h.labels[i]+': baseline '+b.toFixed(1)+'%, latest '+l.toFixed(1)+'%, paired n='+h.n[i];
     return '<div class="dn-slope-card"><div class="dn-slope-title"><span>'+h.labels[i]+'</span><small>n = '+h.n[i].toLocaleString()+'</small></div>'
       +'<svg viewBox="0 0 260 182" role="img" aria-label="'+label+'"><title>'+label+'</title>'
