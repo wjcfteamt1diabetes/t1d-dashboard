@@ -1516,21 +1516,21 @@ function buildC1(o){
     data:{labels:lb,datasets:[
       {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16},
       {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:16},
-      {label:'Clinics',data:cl,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
+      {label:'Documented clinics',data:cl,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
        borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false, layout:{padding:{top:22}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
         label(ctx){
-          if(ctx.dataset.label==='Clinics'){
+          if(ctx.dataset.label==='Documented clinics'){
             const i=ctx.dataIndex, a=clCs[i], b=clLt[i];
-            return ' Clinics: '+ctx.parsed.y+(a==null||b==null?'':' (CS '+a+' · LT '+b+')');
+            return ' Documented clinics: '+ctx.parsed.y+(a==null||b==null?'':' (dated CS '+a+' · reporting LT '+b+')');
           }
           const p=tots[ctx.dataIndex]>0?Math.round(ctx.parsed.y/tots[ctx.dataIndex]*100):0;
           return ' '+ctx.dataset.label+': '+ctx.parsed.y+' ('+p+'%)';
         },
-        afterBody(items){return['Total: '+tots[items[0].dataIndex].toLocaleString()];}
+        afterBody(items){return['Total enrolled: '+tots[items[0].dataIndex].toLocaleString()];}
       }}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
@@ -2366,12 +2366,12 @@ function buildDonorGrowth(){
   });
   _dnClinics=new Chart(document.getElementById('dn-clinics'),{
     type:'line',
-    data:{labels:g.labels,datasets:[{label:'Clinics operational',data:g.clinics,
+    data:{labels:g.labels,datasets:[{label:'Documented clinic activity',data:g.clinics,
       borderColor:'#d97706',backgroundColor:'rgba(217,119,6,0.10)',fill:true,stepped:'before',
       borderWidth:2,pointRadius:2,pointBackgroundColor:'#d97706',_noLabel:true}]},
     options:{animation:false,responsive:true,maintainAspectRatio:false,layout:{padding:{left:6,right:6,top:6,bottom:0}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
-        label(ctx){return ' Clinics operational: '+ctx.parsed.y;}}}},
+        label(ctx){return ' Documented clinic activity: '+ctx.parsed.y;}}}},
       scales:{x:{title:{display:true,text:'Month',color:'#b9c6df',font:{size:10}},offset:false,grid:{display:false},border:{display:false},ticks:{color:'#b9c6df',font:{size:8},maxRotation:0,autoSkip:true}},
               y:{title:{display:true,text:'Clinics (count)',color:'#b9c6df',font:{size:10}},afterFit(axis){axis.width=64;},display:true,beginAtZero:true,ticks:{color:'#b9c6df',font:{size:10},maxTicksLimit:3,precision:0},grid:{color:'#314453'},border:{display:false}}}}
   });
