@@ -684,7 +684,6 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="g2">
   <div class="card">
     <div class="ct">Cumulative enrolments & complete-support clinics</div><div class="cs" id="c1-clinics"></div>
-    <div class="cs">Bars: all enrolments · line: complete-support clinics open by month</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
@@ -696,11 +695,11 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
       <button class="nb" id="n1" onclick="shift(0,1)">Forward →</button>
     </div>
     <div style="height:170px;position:relative"><canvas id="c1"></canvas></div>
-    <details class="cs" style="margin-top:6px"><summary>History scope</summary><span id="c1-note"></span></details>
+    <span id="c1-note" hidden></span>
   </div>
   <div class="card">
     <div class="ct">Monthly complete-support enrolments</div>
-    <div class="cs">Complete support only · average uses clinics open in each month · * partial month</div>
+    <div class="cs">Complete support only · * partial month</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ldc" style="background:#d97706"></span>Enrolments/open CS clinic</span>
@@ -711,7 +710,7 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
       <button class="nb" id="n2" onclick="shift(1,1)">Forward →</button>
     </div>
     <div style="height:170px;position:relative"><canvas id="c2"></canvas></div>
-    <details class="cs" style="margin-top:6px"><summary>Average scope</summary><span id="c2-note"></span></details>
+    <span id="c2-note" hidden></span>
   </div>
 </div>
 
@@ -1697,7 +1696,7 @@ function buildC1(o){
     data:{labels:lb,datasets:[
       {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16},
       {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:16},
-      {label:'CS clinics open',data:cl,type:'line',borderColor:'#d97706',backgroundColor:'transparent',borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
+      {label:'CS clinics open',data:cl,type:'line',order:-1,borderColor:'#d97706',backgroundColor:'transparent',borderWidth:3.5,pointRadius:4.5,pointHoverRadius:6,pointBorderColor:'#fff',pointBorderWidth:1.5,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false, _absoluteTotals:true, _clinicLabels:true, layout:{padding:{top:22}},
@@ -1707,7 +1706,7 @@ function buildC1(o){
           const p=tots[ctx.dataIndex]>0?Math.round(ctx.parsed.y/tots[ctx.dataIndex]*100):0;
           return ' '+ctx.dataset.label+': '+ctx.parsed.y+' ('+p+'%)';
         },
-        afterBody(items){return['Total enrolled: '+tots[items[0].dataIndex].toLocaleString()];}
+        afterBody(items){const gap=Math.max(0,CURD.enr-(CS_CUM.at(-1)||0)-(LT_CUM.at(-1)||0));return ['Total enrolled: '+tots[items[0].dataIndex].toLocaleString(),...(gap?[gap+' enrolments outside dated history']:[])];}
       }}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
@@ -1720,7 +1719,7 @@ function buildC1(o){
   const note=document.getElementById('c1-note');
   const gap=Math.max(0,CURD.enr-(CS_CUM.at(-1)||0)-(LT_CUM.at(-1)||0));
   if(note) note.textContent=gap.toLocaleString()+' enrolments are included in the headline total but cannot be placed in monthly history. The clinic line counts complete-support sites with a usable opening date; light touch is excluded.';
-  document.getElementById('c1-clinics').textContent=CURD.csOp.toLocaleString()+' operational CS clinics now'+(CS_UNKNOWN_OPEN?' · '+CS_UNKNOWN_OPEN+' missing opening year/date':'');
+  document.getElementById('c1-clinics').textContent='CS clinics: '+CURD.csOp.toLocaleString()+(CS_UNKNOWN_OPEN?' · '+CS_UNKNOWN_OPEN+' undated':'');
   document.getElementById('nl1').textContent=winLabel(o);
   document.getElementById('p1').disabled=o<=0;
   document.getElementById('n1').disabled=o>=MAX;
@@ -1738,8 +1737,8 @@ function buildC2(o){
     type:'bar',
     data:{labels:lb,datasets:[
       {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_noLabel:true,_pct:false,_fs:8,_minVal:1,_minH:12},
-      {label:'Enrolments/open CS clinic',data:av,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
-       borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
+      {label:'Enrolments/open CS clinic',data:av,type:'line',order:-1,borderColor:'#d97706',backgroundColor:'transparent',
+       borderWidth:3.5,pointRadius:4.5,pointHoverRadius:6,pointBorderColor:'#fff',pointBorderWidth:1.5,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false, _absoluteTotals:true, _averageLabels:true, layout:{padding:{top:20}},
@@ -1764,6 +1763,7 @@ function buildC2(o){
   _c2._tots=tot;
   const note2=document.getElementById('c2-note');
   if(note2) note2.textContent='Average = monthly enrolments at complete-support clinics open by month-end ÷ those clinics. Missing opening dates, unmatched facilities and enrolments at sites not yet open are excluded from the average, but retained in the bars. Current month average is withheld.';
+  document.getElementById('c2').title=note2?note2.textContent:'';
   document.getElementById('nl2').textContent=winLabel(o);
   document.getElementById('p2').disabled=o<=0;
   document.getElementById('n2').disabled=o>=MAX;
