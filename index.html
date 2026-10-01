@@ -1175,15 +1175,16 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">Capacity building</div>
 <div class="card">
   <div class="ct">Capacity coverage against planned sites</div>
-  <div class="cs">Planning targets: one MD Medicine and one paediatrician per district containing a planned site; two staff nurses per planned clinic. Complete support + light touch.</div>
+  <div class="cs">Targets: 1 MD Medicine + 1 paediatrician per planned-site district; 2 nurses per planned clinic.</div>
   <div id="dn-capacity-targets" class="dn-slope-grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:12px"></div>
-  <div class="cs" id="dn-capacity-target-note" style="margin-top:10px"></div>
+  <div class="cs" id="dn-capacity-target-summary" style="margin-top:8px"></div>
+  <details class="dn-notes"><summary>Coverage details</summary><div id="dn-capacity-target-note" style="margin-top:6px"></div></details>
 </div>
 <div class="card">
   <div class="ct">Cadre trained / oriented, split by state</div>
-  <div class="cs">Doctors and nurses: distinct names within each state. Frontline workers: orientation attendances; repeat attendance may be counted.</div>
+  <div class="cs">Doctors &amp; nurses: unique names per state · FLWs: attendances, including repeats.</div>
   <div class="lg" id="dn-cadre-lg"></div>
-  <div class="cs">Each bar shows the state share within that cadre. Totals are shown separately.</div><div id="dn-cadre"></div>
+  <div id="dn-cadre"></div>
 </div>
 
 </div></div><!-- /tab-4 -->
@@ -2500,8 +2501,9 @@ function renderDonorCapacityTargets(){
       +'<div class="dn-score-value">'+value.toLocaleString()+' / '+target.toLocaleString()+'</div>'
       +'<div class="dn-meter-cap">'+basis+'</div><div class="dn-meter"><div class="dn-meter-fill" style="width:'+(pct||0)+'%;background:#0077a8"></div></div>'
       +'<div class="dn-meter-cap">'+(pct==null?'No planned sites in this view':pct+'% covered · '+(target-value).toLocaleString()+' remaining')+'</div>'
-      +'<div class="dn-meter-cap">'+rule+'</div></article>';
+      +'</article>';
   }).join('');
+  document.getElementById('dn-capacity-target-summary').textContent=c.districts+' districts · '+c.sites+' planned clinics · based on training records.';
   document.getElementById('dn-capacity-target-note').textContent=
     c.districts+' planned-site districts · '+c.sites+' planned clinics. '+c.both+' districts have both specialist cadres recorded; '+c.nurseClinics+' clinics have at least two staff nurses recorded. '
     +'Coverage is based on training records and recorded district/facility assignments, not confirmed current staffing. Extra specialists in one district and nurses above two at one clinic do not fill gaps elsewhere. Physician records are included under MD Medicine. '
