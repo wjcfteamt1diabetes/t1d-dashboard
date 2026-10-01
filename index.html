@@ -411,6 +411,46 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 /* Clean chart footers; explanatory scope stays in titles and reporting details. */
 #c1-note,#c2-note,#dn-growth-note{display:none}
+
+/* Interactive grant scorecard: status overview and compact target comparisons. */
+#tab-4 .dn-score-summary{display:flex;gap:22px;align-items:center;flex-wrap:wrap;padding:18px}
+#tab-4 .dn-grant-ring{flex:0 0 118px;width:118px;height:118px;border-radius:50%;background:conic-gradient(#276b52 0 var(--met-angle),#b37a26 var(--met-angle) var(--assessed-angle),#d5e3ec var(--assessed-angle) 360deg);display:grid;place-items:center}
+#tab-4 .dn-grant-ring>div{width:94px;height:94px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#tab-4 .dn-grant-ring strong{font-size:24px;line-height:1.15;white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums}
+#tab-4 .dn-grant-ring small{font-size:11px;color:#506779}
+#tab-4 .dn-grant-overview{flex:1;min-width:230px}
+#tab-4 .dn-grant-overview h3{font-size:18px;margin:0 0 6px;color:#003b71}
+#tab-4 .dn-status-filters{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+#tab-4 .dn-status-filter{font:inherit;font-size:12px;background:#f0f6fa;color:#274e68;border:1px solid #bfd5e3;border-radius:20px;padding:7px 11px;cursor:pointer}
+#tab-4 .dn-status-filter[aria-pressed=true]{background:#003b71;border-color:#003b71;color:white}
+#tab-4 .dn-status-filter:focus-visible,#tab-4 .dn-grant-indicator summary:focus-visible{outline:2px solid #0077a8;outline-offset:3px}
+#tab-4 #dn-logframe{display:block}
+#tab-4 .dn-grant-group{margin-top:16px}
+#tab-4 .dn-grant-group h3{display:flex;align-items:center;gap:10px;margin:0 0 8px;font-size:15px;color:#003b71}
+#tab-4 .dn-grant-group h3 small{font-size:11px;font-weight:400;color:#506779}
+#tab-4 .dn-grant-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#tab-4 .dn-grant-indicator{border:1px solid #cbdde8;background:white;border-radius:8px;min-width:0;align-self:start;overflow:hidden}
+#tab-4 .dn-grant-indicator summary{list-style:none;cursor:pointer;padding:12px 14px;display:block}
+#tab-4 .dn-grant-indicator summary::-webkit-details-marker{display:none}
+#tab-4 .dn-grant-top{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10px;color:#506779}
+#tab-4 .dn-grant-title{font-size:13px;font-weight:600;line-height:1.4;margin:6px 0;color:#153b56}
+#tab-4 .dn-grant-numbers{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+#tab-4 .dn-grant-numbers strong{font-size:27px;color:#003b71;font-variant-numeric:tabular-nums}
+#tab-4 .dn-grant-numbers span{font-size:12px;color:#506779}
+#tab-4 .dn-target-rail{position:relative;height:7px;margin:13px 5px 8px;background:#e4eef4;border-radius:5px}
+#tab-4 .dn-target-fill{height:100%;border-radius:5px;background:var(--result-color)}
+#tab-4 .dn-target-marker{position:absolute;top:-5px;width:2px;height:17px;background:#153b56;transform:translateX(-50%)}
+#tab-4 .dn-result-dot{position:absolute;top:-2px;width:11px;height:11px;border-radius:50%;background:var(--result-color);border:2px solid white;transform:translateX(-50%);box-shadow:0 0 0 1px var(--result-color)}
+#tab-4 .dn-grant-caption{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;line-height:1.4;color:#506779}
+#tab-4 .dn-grant-caption b{font-weight:500;color:var(--result-color)}
+#tab-4 .dn-expand-cue{white-space:nowrap;color:#0077a8}
+#tab-4 .dn-grant-indicator[open] .dn-expand-cue{font-size:0}
+#tab-4 .dn-grant-indicator[open] .dn-expand-cue::after{content:'Close −';font-size:11px}
+#tab-4 .dn-grant-detail{border-top:1px solid #dce9f1;background:#f5f9fc;padding:12px 14px;font-size:11px;color:#506779;line-height:1.65}
+#tab-4 .dn-grant-detail p{margin:0 0 5px}
+#tab-4 .dn-grant-empty{padding:20px;background:white;border:1px solid #cbdde8;border-radius:8px;color:#506779;font-size:13px}
+@media(max-width:650px){#tab-4 .dn-grant-items{grid-template-columns:1fr}#tab-4 .dn-score-summary{gap:14px;padding:14px}#tab-4 .dn-grant-ring{width:100px;height:100px;flex-basis:100px}#tab-4 .dn-grant-ring>div{width:80px;height:80px}#tab-4 .dn-grant-ring strong{font-size:22px}#tab-4 .dn-grant-overview{min-width:190px}}
+@media(prefers-reduced-motion:no-preference){#tab-4 .dn-status-filter{transition:background .15s,color .15s}#tab-4 .dn-grant-indicator summary:hover{background:#f5faff}}
 </style>
 </head>
 <body>
@@ -2194,36 +2234,45 @@ function renderDonorKPIs(){
     +'<div class="dn-tile-v">'+t.v+'</div><div class="dn-tile-s">'+t.s+'</div></div>').join('');
 }
 
+let DN_GRANT_FILTER='all';
+function setDonorGrantFilter(status){
+  if(!['all','needs','met','na'].includes(status))return;
+  DN_GRANT_FILTER=status;renderLogframe();
+  const button=document.querySelector('#dn-score-summary [data-grant-filter="'+status+'"]');
+  if(button&&button.focus)button.focus({preventScroll:true});
+}
 function renderLogframe(){
   const d=DONOR, el=document.getElementById('dn-logframe'); if(!d||!el) return;
   const values={states:d.states,dist:d.pilotDist,clinics:d.clinics,docs:d.docs,specialists:d.specialists,nurses:d.nurses,
     enrolled:d.enrolled,bb:d.bb,smbg34:d.smbg34,fup:d.fup,hba:d.hba,dka:d.dka,hypo:d.hypo};
-  let met=0,scored=0; const marks=[];
-  el.innerHTML=LOGFRAME.map(r=>{
-    const v=values[r.key], assessed=!d.filtered&&v!=null;
-    const ok=assessed?dnMet(v,r.target,r.cmp):null;
-    const progress=assessed?dnProgress(v,r.target,r.cmp):null;
-    if(assessed){scored++;if(ok)met++;}
-    const status=d.filtered?'Not assessed':v==null?'No data':ok?'✓ met':'Outside target';
-    const color=!assessed?'#577286':ok?'#276b52':'#8d5b12'; marks.push(color);
-    const pill=!assessed?'dn-na':ok?'dn-ok':'dn-below';
+  const scopes={states:'Programme states',dist:'Complete-support roster',clinics:'Complete support + light touch',docs:'Distinct names within each state',specialists:'Paediatrician / physician / MD Medicine · distinct names within state',nurses:'Distinct names within each state',enrolled:'Complete support + light touch',bb:'Complete support · n='+CURD.csEnr,smbg34:d.smbgMonth+' · reported n='+d.smbgN,fup:'Pooled '+d.fupMonths+' completed months · n='+d.fupN+' patient-months due',hba:'Latest test ≥3 months after enrolment · n='+d.hbaN,dka:'Follow-up in past year · n='+CURD.fupDen,hypo:'Follow-up in past year · n='+CURD.fupDen};
+  const rows=LOGFRAME.map(r=>{
+    const v=values[r.key],assessed=!d.filtered&&v!=null,ok=assessed?dnMet(v,r.target,r.cmp):null;
+    return {...r,v,assessed,ok,status:!assessed?'na':ok?'met':'needs'};
+  });
+  const scored=rows.filter(r=>r.assessed).length,met=rows.filter(r=>r.ok===true).length;
+  const counts={all:rows.length,met,needs:scored-met,na:rows.length-scored};
+  const summary=document.getElementById('dn-score-summary');
+  if(summary)summary.innerHTML='<div class="dn-grant-ring" style="--met-angle:'+met/rows.length*360+'deg;--assessed-angle:'+scored/rows.length*360+'deg" role="img" aria-label="'+met+' of '+scored+' measurable targets met; '+counts.needs+' need attention; '+counts.na+' not assessed"><div><strong>'+(d.filtered?'—':met+' / '+scored)+'</strong><small>'+(d.filtered?'not assessed':'targets met')+'</small></div></div>'
+    +'<div class="dn-grant-overview"><h3>'+(d.filtered?'Explore filtered results':'Grant achievement explorer')+'</h3><div class="dn-score-caption">'+(d.filtered?'Whole-programme grant targets are not assessed for filtered results.':'Jul ’26 grant benchmarks · latest available results')+'</div><div class="dn-score-caption" style="margin-top:4px">'+counts.needs+' need attention · '+counts.na+' not assessed. Each indicator counts once.</div>'
+    +'<div class="dn-status-filters" role="group" aria-label="Filter grant indicators">'+[['all','All'],['needs','Needs attention'],['met','Met'],['na','Not assessed']].map(([key,label])=>'<button class="dn-status-filter" data-grant-filter="'+key+'" aria-controls="dn-logframe" aria-pressed="'+(DN_GRANT_FILTER===key)+'" onclick="setDonorGrantFilter(\''+key+'\')">'+label+' '+counts[key]+'</button>').join('')+'</div></div>';
+  const shown=rows.filter(r=>DN_GRANT_FILTER==='all'||r.status===DN_GRANT_FILTER).sort((a,b)=>({needs:0,na:1,met:2}[a.status]-{needs:0,na:1,met:2}[b.status]));
+  const groups=[['Quality of care',['bb','smbg34','fup','hba','dka','hypo']],['Programme reach',['states','dist','clinics','enrolled']],['Workforce training',['specialists','nurses']]];
+  const render=r=>{
+    const {v,ok,assessed}=r,color=!assessed?'#577286':ok?'#276b52':'#8d5b12';
+    const status=d.filtered?'Not assessed':v==null?'No data':ok?'✓ Met':'Needs attention';
     const target=(r.cmp==='lte'?'≤ ':'≥ ')+dnFmt(r.target,r.fmt)+(r.key==='hba'?'%':'');
     const actual=dnFmt(v,r.fmt)+(r.key==='hba'&&v!=null?'%':'');
-    const scope={states:'Programme states',dist:'Complete-support roster',clinics:'Complete support + light touch',docs:'Distinct names within each state',specialists:'Paediatrician / physician / MD Medicine · distinct names within state',nurses:'Distinct names within each state',enrolled:'Complete support + light touch',bb:'Complete support · n='+CURD.csEnr,smbg34:d.smbgMonth+' · reported n='+d.smbgN,fup:'Pooled '+d.fupMonths+' completed months · n='+d.fupN+' patient-months due',hba:'Latest test ≥3 months after enrolment · n='+d.hbaN,dka:'Follow-up in past year · n='+CURD.fupDen,hypo:'Follow-up in past year · n='+CURD.fupDen}[r.key];
-    const caption=progress==null?'Programme-wide target':ok&&r.cmp==='gte'&&v/r.target>=1.1
-      ?(v/r.target).toFixed(1)+'× target':progress+'% towards target';
-    return '<article class="dn-score-card"><div class="dn-score-top"><span class="dn-score-id">Logframe '+r.n+'</span>'
-      +'<span class="dn-pill '+pill+'">'+status+'</span></div><h3 class="dn-score-title">'+r.ind+'</h3>'
-      +'<div class="dn-score-value">'+actual+'</div><div class="dn-score-target">Target '+target+'</div>'
-      +(progress==null?'':'<div class="dn-meter"><div class="dn-meter-fill" style="width:'+progress+'%;background:'+color+'"></div></div>')
-      +'<div class="dn-meter-cap">'+caption+'</div><div class="dn-meter-cap">'+scope+'</div></article>';
-  }).join('');
-  const summary=document.getElementById('dn-score-summary');
-  if(summary)summary.innerHTML=d.filtered
-    ?'<div><strong>Filtered view</strong><div class="dn-score-caption">Targets are not assessed for a subset of the programme.</div></div><div class="dn-score-caption">Clear filters to see programme-wide progress.</div>'
-    :'<div><span class="dn-score-number">'+met+' / '+scored+'</span><span class="dn-score-caption">measurable targets met</span></div>'
-      +'<div><div class="dn-score-track" aria-hidden="true">'+marks.map(color=>'<span style="background:'+color+'"></span>').join('')+'</div>'
-      +'<div class="dn-score-caption">'+(scored-met)+' outside target · '+(LOGFRAME.length-scored)+' without data</div></div>';
+    const percent=r.fmt.startsWith('pct'),max=percent?100:Math.max(r.target,v||0)*1.15;
+    const pos=value=>Math.max(0,Math.min(100,value/max*100));
+    const gap=v==null?null:Math.abs(v-r.target);
+    const gapText=gap==null?'No result available':(percent?gap.toFixed(1)+' percentage points':r.key==='hba'?gap.toFixed(1)+' percentage points':dnFmt(gap,'int'));
+    const caption=!assessed?(d.filtered?'Programme-wide target':'No result available'):ok?(r.cmp==='gte'&&v/r.target>=1.1?(v/r.target).toFixed(1)+'× target':r.cmp==='lte'?(gap===0?'At target ceiling':gapText+' below ceiling'):'Target achieved'):(r.cmp==='lte'?gapText+' above ceiling':gapText+' short of target');
+    return '<details class="dn-grant-indicator" data-grant-status="'+r.status+'" data-grant-key="'+r.key+'" style="--result-color:'+color+'"><summary><div class="dn-grant-top"><span>Logframe '+r.n+'</span><span class="dn-pill '+(!assessed?'dn-na':ok?'dn-ok':'dn-below')+'">'+status+'</span></div><div class="dn-grant-title">'+r.ind+'</div><div class="dn-grant-numbers"><strong>'+actual+'</strong><span>Target '+target+'</span></div>'
+      +(v==null?'':'<div class="dn-target-rail" aria-hidden="true"><div class="dn-target-fill" style="width:'+pos(v)+'%"></div><i class="dn-target-marker" style="left:'+pos(r.target)+'%"></i><i class="dn-result-dot" style="left:'+pos(v)+'%"></i></div>')
+      +'<div class="dn-grant-caption"><b>'+caption+'</b><span class="dn-expand-cue">Details +</span></div></summary><div class="dn-grant-detail"><p><strong>Population / denominator:</strong> '+scopes[r.key]+'</p><p><strong>Benchmark:</strong> Jul ’26 whole-programme grant target. '+(r.cmp==='lte'?'Lower is better.':'Higher is better.')+'</p><p>Rail: line = target; dot = actual. Each rail has its own scale'+(v==null?'.':' (0–'+dnFmt(max,percent?'pct':'dec')+').')+' Status uses unrounded results.</p>'+(d.filtered?'<p>Clear the dashboard filters to assess programme-wide achievement.</p>':'')+'</div></details>';
+  };
+  el.innerHTML=groups.map(([name,keys])=>{const items=shown.filter(r=>keys.includes(r.key));return items.length?'<section class="dn-grant-group"><h3>'+name+'<small>'+items.length+' indicators</small></h3><div class="dn-grant-items">'+items.map(render).join('')+'</div></section>':'';}).join('')||'<div class="dn-grant-empty" role="status">No indicators in this category for the current view. Select All to see every result.</div>';
   const note=document.getElementById('dn-logframe-note');
   if(note){
     const bits=[d.filtered?'Target assessment is disabled for filtered views.':met+' of '+scored+' measurable logframe targets met.',
