@@ -90,10 +90,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .dn-db-delta{font-size:9px;font-weight:bold;text-align:right;font-variant-numeric:tabular-nums}
 .dn-db-axis{display:flex;justify-content:space-between;font-size:8px;color:var(--g3);margin:2px 0 0 72px}
 .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:7px}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-bottom:7px}
+@media(max-width:700px){.g2{grid-template-columns:minmax(0,1fr)}.g6,.g5,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cs2{grid-column:span 2}.cs3{grid-column:span 3}.cs4{grid-column:span 4}
 
-.card{background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:10px 12px}
+.card{min-width:0;background:var(--card);border:1px solid var(--bdr);border-radius:7px;padding:10px 12px}
 .cab{border-left:3px solid var(--b2)}.cao{border-left:3px solid var(--g2)}
 
 /* Typography — uniform Trebuchet MS, no italics */
@@ -2713,7 +2714,11 @@ function parseDate(v,conv){
     const d=new Date(y,mi,day);
     return d.getFullYear()===y&&d.getMonth()===mi&&d.getDate()===day?d:null;
   }
-  const d=new Date(s); return isNaN(d)?null:d;          // "Oct 15 2025", ISO, etc.
+  // ISO date-only values are standard; partial dates must never acquire an
+  // engine-default year (for example '24 April' becoming April 2001).
+  m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s].*)?$/);
+  if(m){const d=new Date(+m[1],+m[2]-1,+m[3]);return d.getFullYear()===+m[1]&&d.getMonth()===+m[2]-1&&d.getDate()===+m[3]?d:null;}
+  return null;
 }
 
 // A d/m/y column is only ambiguous value-by-value; the column as a whole usually
