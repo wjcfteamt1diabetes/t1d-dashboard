@@ -2851,11 +2851,27 @@ async function fetchTab(wbId,tabName){
   const url=Object.prototype.hasOwnProperty.call(csvTabs,tabName)
     ? 'https://docs.google.com/spreadsheets/d/'+wbId+'/export?format=csv&gid='+csvTabs[tabName]
     : 'https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
-  const res=await fetch(url,{cache:'no-store'});
-  if(!res.ok) throw new Error('HTTP '+res.status+' for "'+tabName+'"');
-  const text=await res.text();
-  if(/^\s*</.test(text)) throw new Error('Sheet "'+tabName+'" is not public. Set the workbook sharing to "Anyone with the link → Viewer".');
-  return parseCSV(text);
+  // Bound both the network request and body download; one retry handles
+  // transient Google export delays without leaving the overlay stuck forever.
+  for(let attempt=0;attempt<2;attempt++){
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),25000);
+    try{
+      const res=await fetch(url,{cache:'no-store',signal:controller.signal});
+      if(!res.ok){
+        if(attempt===0&&(res.status===429||res.status>=500))continue;
+        throw new Error('HTTP '+res.status+' for "'+tabName+'"');
+      }
+      const text=await res.text();
+      if(/^\s*</.test(text)) throw new Error('Sheet "'+tabName+'" is not public. Set the workbook sharing to "Anyone with the link → Viewer".');
+      return parseCSV(text);
+    }catch(err){
+      const timedOut=controller.signal.aborted;
+      if(attempt===0&&(timedOut||err instanceof TypeError))continue;
+      if(timedOut)throw new Error('Google Sheets took too long to load "'+tabName+'" after two attempts. Please retry.');
+      throw err;
+    }finally{clearTimeout(timer);}
+  }
 }
 
 // Find the header row by scanning the first rows for any expected column name.
@@ -3650,27 +3666,38 @@ function showError(err){
 
 function refreshData(){ boot(); }
 
+let dashboardLoading=false,dashboardLoadVersion=0;
 async function boot(){
+  if(dashboardLoading)return;
+  dashboardLoading=true;
+  const loadVersion=++dashboardLoadVersion;
   const ov=document.getElementById('overlay');
   const btn=document.getElementById('refresh-btn');
   if(ov){ov.style.display='flex';document.getElementById('ov-retry').style.display='none';document.getElementById('ov-title').textContent='Loading dashboard…';document.getElementById('ov-msg').textContent='Fetching data from Google Sheets';}
   if(btn){btn.disabled=true;btn.textContent='Refreshing…';btn.style.opacity='.5';}
   try{
     const C=window.DASHBOARD_CONFIG;
+    let loaded=0;
+    const load=async(id,name)=>{
+      const grid=await fetchTab(id,name);
+      loaded++;
+      if(dashboardLoading&&loadVersion===dashboardLoadVersion)document.getElementById('ov-msg').textContent='Loaded '+loaded+' of 13 sheets'+(loaded===13?' · building charts…':' · waiting for remaining sheets…');
+      return grid;
+    };
     const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid,stkGrid]=await Promise.all([
-      fetchTab(C.wb1,'Enrolled List'),
-      fetchTab(C.wb1,'CompleteSupport_Facilities'),
-      fetchTab(C.wb1,'Light_touch_facilities'),
-      fetchTab(C.wb1,'Capacity_Building'),
-      fetchTab(C.wb1,'Orientation_T1D signs'),
-      fetchTab(C.wb1,'Followup_adherence'),
-      fetchTab(C.wb2,'Operations_Summary'),
-      fetchTab(C.wb2,'# of offs'),
-      fetchTab(C.wb1,'SMBG_Monthly'),
-      fetchTab(C.wb1,'SMBG_Hyper/Hypo'),
-      fetchTab(C.wb1,'Hba1c_Baseline/Latest'),
-      fetchTab(C.wb1,'Targets'),
-      fetchTab(C.wb2,'Stock Levels')
+      load(C.wb1,'Enrolled List'),
+      load(C.wb1,'CompleteSupport_Facilities'),
+      load(C.wb1,'Light_touch_facilities'),
+      load(C.wb1,'Capacity_Building'),
+      load(C.wb1,'Orientation_T1D signs'),
+      load(C.wb1,'Followup_adherence'),
+      load(C.wb2,'Operations_Summary'),
+      load(C.wb2,'# of offs'),
+      load(C.wb1,'SMBG_Monthly'),
+      load(C.wb1,'SMBG_Hyper/Hypo'),
+      load(C.wb1,'Hba1c_Baseline/Latest'),
+      load(C.wb1,'Targets'),
+      load(C.wb2,'Stock Levels')
     ]);
     // Build per-state targets from the Targets sheet (#6)
     try{
@@ -3719,6 +3746,7 @@ async function boot(){
   }catch(err){
     showError(err);
   }finally{
+    dashboardLoading=false;
     if(btn){btn.disabled=false;btn.textContent='↺ Refresh Data';btn.style.opacity='1';}
   }
 }
