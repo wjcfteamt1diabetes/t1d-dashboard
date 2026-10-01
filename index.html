@@ -255,7 +255,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 
 /* Reference-inspired narrative and results; all data stays source-driven. */
-#tab-4{--b2:#86502c;--b6:#dbc7af;--g1:#352317;--g2:#705943;--g3:#8a7057;--g4:#dbc7af}
+#tab-4{--b2:#86502c;--b6:#dbc7af;--g1:#352317;--g2:#705943;--g3:#80654d;--g4:#dbc7af}
 #tab-4 .dn-heading{align-items:start;display:grid;grid-template-columns:minmax(0,3fr) minmax(240px,1fr);gap:64px;margin-bottom:36px}
 #tab-4 .dn-heading h2{max-width:780px;letter-spacing:-1.6px}
 #tab-4 .dn-intro{font-size:14px;max-width:560px}
@@ -369,8 +369,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-map-state.programme{cursor:pointer;stroke:#705943}
 #tab-4 .dn-map-state.programme:hover,#tab-4 .dn-map-state.programme:focus-visible{stroke:#352317;stroke-width:2;filter:brightness(.9);outline:none}
 #tab-4 .dn-map-caption{font-size:11px;color:#705943;line-height:1.5}
-#tab-4 .dn-map-attribution{margin-top:5px;font-size:9px;color:#8a7057}
-#tab-4 .dn-map-attribution a{color:#8a7057}
+#tab-4 .dn-map-attribution{margin-top:5px;font-size:9px;color:#80654d}
+#tab-4 .dn-map-attribution a{color:#80654d}
 #tab-4 .dn-map-states{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 #tab-4 .dn-map-state-button{background:#fffaf2;color:#352317;border:1px solid #dbc7af;border-top:3px solid var(--state-color);border-radius:6px;padding:12px;text-align:left;font:inherit;cursor:pointer;min-width:0}
 #tab-4 .dn-map-state-button[aria-pressed="true"]{border-color:var(--state-color);background:#edddc7}
@@ -2203,7 +2203,7 @@ function renderLogframe(){
     const progress=assessed?dnProgress(v,r.target,r.cmp):null;
     if(assessed){scored++;if(ok)met++;}
     const status=d.filtered?'Not assessed':v==null?'No data':ok?'✓ met':'Outside target';
-    const color=!assessed?'#8a7057':ok?'#506438':'#92521f'; marks.push(color);
+    const color=!assessed?'#80654d':ok?'#506438':'#92521f'; marks.push(color);
     const pill=!assessed?'dn-na':ok?'dn-ok':'dn-below';
     const target=(r.cmp==='lte'?'≤ ':'≥ ')+dnFmt(r.target,r.fmt)+(r.key==='hba'?'%':'');
     const actual=dnFmt(v,r.fmt)+(r.key==='hba'&&v!=null?'%':'');
@@ -2411,7 +2411,7 @@ function renderDonorHbaDumbbell(){
       +'<svg viewBox="0 0 260 182" role="img" aria-label="'+label+'"><title>'+label+'</title>'
       +'<line x1="38" y1="28" x2="38" y2="147" stroke="#dbc7af"/><line x1="222" y1="28" x2="222" y2="147" stroke="#dbc7af"/>'
       +'<line x1="38" y1="'+y(b)+'" x2="222" y2="'+y(l)+'" stroke="'+color+'" stroke-width="3"/>'
-      +'<circle cx="38" cy="'+y(b)+'" r="5" fill="#8a7057"/><circle cx="222" cy="'+y(l)+'" r="5" fill="#86502c"/>'
+      +'<circle cx="38" cy="'+y(b)+'" r="5" fill="#80654d"/><circle cx="222" cy="'+y(l)+'" r="5" fill="#86502c"/>'
       +'<text x="38" y="'+(y(b)-13)+'" text-anchor="middle" fill="#513926" font-size="16">'+b.toFixed(1)+'%</text>'
       +'<text x="222" y="'+(y(l)-13)+'" text-anchor="middle" fill="#86502c" font-size="16">'+l.toFixed(1)+'%</text>'
       +'<text x="38" y="172" text-anchor="middle" fill="#705943" font-size="11">At enrolment</text><text x="222" y="172" text-anchor="middle" fill="#705943" font-size="11">Latest</text></svg>'
