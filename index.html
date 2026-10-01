@@ -553,12 +553,12 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 <div class="sl">Enrolment trends</div>
 <div class="g2">
   <div class="card">
-    <div class="ct">Cumulative enrolments vs operational clinics</div>
-    <div class="cs">Cumulative enrolments: complete support vs light touch · line = # operational clinics (complete support + light touch)</div>
+    <div class="ct">Cumulative enrolments & documented clinic activity</div>
+    <div class="cs">Bars: cumulative enrolments · line: clinics with a dated opening or first light-touch monthly report; history is incomplete</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
-      <span><span class="ldc" style="background:#d97706"></span>Clinics</span>
+      <span><span class="ldc" style="background:#d97706"></span>Documented clinics</span>
     </div>
     <div class="nr">
       <button class="nb" id="p1" onclick="shift(0,-1)">← Back</button>
@@ -570,11 +570,11 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   </div>
   <div class="card">
     <div class="ct">New enrolments per month</div>
-    <div class="cs">New enrolments vs average per operational clinic (complete support + light touch)</div>
+    <div class="cs">Bars: monthly enrolments · line: enrolments divided by the current operational-clinic count (complete support + light touch)</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
-      <span><span class="ldc" style="background:#d97706"></span>Avg/clinic</span>
+      <span><span class="ldc" style="background:#d97706"></span>Enrolments/current clinic</span>
     </div>
     <div class="nr">
       <button class="nb" id="p2" onclick="shift(1,-1)">← Back</button>
@@ -1090,8 +1090,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
   <div class="cs">Complete support + light touch · cumulative counts at month end; current month to date</div>
   <div class="lg" id="dn-growth-lg"></div>
   <div style="height:190px;position:relative"><canvas id="dn-growth"></canvas></div>
-  <div class="dn-panel-lbl">Clinics operational — dated history</div>
-  <div style="height:80px;position:relative"><canvas id="dn-clinics"></canvas></div>
+  <div class="dn-panel-lbl">Documented clinic activity — incomplete history</div>
+  <div style="height:110px;position:relative"><canvas id="dn-clinics"></canvas></div>
 </div>
 
 <div class="fnote" id="dn-growth-note"></div>
@@ -1216,7 +1216,7 @@ Chart.register({
 let RAW=null;          // parsed sheets: {enrolled, csFac, ltGrid, cap, orient, targets, opsGrid, offsGrid}
 let DATA=null;         // {demographics, insulin, capacity} for the active filter
 let CURD=null;         // merged geo+patient object consumed by renderKPIs
-let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL,TREND_GAP;
+let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL,TREND_GAP,CURRENT_CLIN;
 let DONOR=null;        // everything the Donor Reporting tab renders
 let FUP_MOM,FUP_PENDING,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
 let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
@@ -1290,7 +1290,7 @@ function renderKPIs(d,f){
   sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',sharePct(d.csEnr,d.enr)+' of enrolled · '+b.csOp+' facilities');
   sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',sharePct(d.ltEnr,d.enr)+' of enrolled · '+b.ltOp+' facilities');
   const nL=d.newLast, nP=d.newPrev;
-  sv('k-new',nL); sv('k-avgclin','Avg/clinic: '+(d.avgClin||0).toFixed(1));
+  sv('k-new',nL); sv('k-avgclin','Avg/current clinic: '+(d.avgClin==null?'N/A':d.avgClin.toFixed(1)));
   const nt=document.getElementById('k-newtrend');
   nt.textContent=(nL<nP?'↓':nL>nP?'↑':'=')+' vs '+nP+' prior month';
   nt.className='ktr '+(nL<nP?'dn':nL>nP?'up':'');
@@ -1534,14 +1534,14 @@ function buildC1(o){
       }}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
-        y:{stacked:true, display:false, suggestedMax:tots.length?Math.max(...tots)*1.2:undefined},
-        y2:{position:'right', display:false}
+        y:{stacked:true,beginAtZero:true,title:{display:true,text:'People enrolled',font:{size:9}},ticks:{font:{size:8},maxTicksLimit:4},suggestedMax:tots.length?Math.max(...tots)*1.2:undefined},
+        y2:{position:'right',beginAtZero:true,title:{display:true,text:'Documented clinics',font:{size:9}},ticks:{precision:0,font:{size:8},maxTicksLimit:4},grid:{drawOnChartArea:false}}
       }
     }
   });
   _c1._tots=tots;
   const note=document.getElementById('c1-note');
-  if(note) note.textContent=[filterNote(),gapNote()].filter(Boolean).join(' ');
+  if(note) note.textContent=[filterNote(),gapNote(),'Latest documented activity: '+(CLIN.at(-1)||0)+' of '+CURRENT_CLIN+' currently operational clinics. Opening dates / first monthly reports are unavailable for the remainder; the line is not a complete clinic-opening history.'].filter(Boolean).join(' ');
   document.getElementById('nl1').textContent=winLabel(o);
   document.getElementById('p1').disabled=o<=0;
   document.getElementById('n1').disabled=o>=MAX;
@@ -1549,27 +1549,27 @@ function buildC1(o){
 
 function buildC2(o){
   if(_c2)_c2.destroy();
-  const lb=MONTHS.slice(o,o+WIN);
+  const lb=MONTHS.slice(o,o+WIN).map((label,i)=>label+(o+i===MONTHS.length-1?'*':''));
   const cs=NEWENR_CS.slice(o,o+WIN);
   const lt=NEWENR_LT.slice(o,o+WIN);
   const tot=cs.map((v,i)=>v+lt[i]);
-  const av=AVGCL.slice(o,o+WIN);
-  const cl=CLIN.slice(o,o+WIN);
+  const av=AVGCL.slice(o,o+WIN).map((v,i)=>o+i===MONTHS.length-1?null:v);
+  const cl=CURRENT_CLIN;
   _c2=new Chart(document.getElementById('c2'),{
     type:'bar',
     data:{labels:lb,datasets:[
       {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_fs:8,_minVal:1,_minH:12},
       {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:12},
-      {label:'Avg/clinic',data:av,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
+      {label:'Enrolments/current clinic',data:av,type:'line',borderColor:'#d97706',backgroundColor:'transparent',
        borderWidth:2,pointRadius:3,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
     options:{
       responsive:true, maintainAspectRatio:false, layout:{padding:{top:20}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
         label(ctx){
-          if(ctx.dataset.label==='Avg/clinic'){
+          if(ctx.dataset.label==='Enrolments/current clinic'){
             const i=ctx.dataIndex;
-            return ' Avg/clinic: '+ctx.parsed.y.toFixed(1)+(cl[i]>0?' ('+tot[i]+' ÷ '+cl[i]+' clinics)':'');
+            return ' Enrolments/current clinic: '+ctx.parsed.y.toFixed(1)+' ('+tot[i]+' ÷ '+cl+' current clinics)';
           }
           const p=tot[ctx.dataIndex]>0?Math.round(ctx.parsed.y/tot[ctx.dataIndex]*100):0;
           return ' '+ctx.dataset.label+': '+ctx.parsed.y+' ('+p+'%)';
@@ -1577,14 +1577,14 @@ function buildC2(o){
       }}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
-        y:{stacked:true, display:false, suggestedMax:tot.length?Math.max(...tot)*1.2:undefined},
-        y2:{position:'right', display:false}
+        y:{stacked:true,beginAtZero:true,title:{display:true,text:'New enrolments',font:{size:9}},ticks:{font:{size:8},maxTicksLimit:4},suggestedMax:tot.length?Math.max(...tot)*1.2:undefined},
+        y2:{position:'right',beginAtZero:true,title:{display:true,text:'Enrolments/current clinic',font:{size:9}},ticks:{font:{size:8},maxTicksLimit:4,callback(v){return Number(v).toFixed(1);}},grid:{drawOnChartArea:false}}
       }
     }
   });
   _c2._tots=tot;
   const note2=document.getElementById('c2-note');
-  if(note2) note2.textContent=filterNote();
+  if(note2) note2.textContent=[filterNote(),CURRENT_CLIN?'Average uses '+CURRENT_CLIN+' currently operational clinics for every month; it does not estimate the number open historically. * Current month is incomplete and excluded from the average line.':'No operational clinics in this selection; average unavailable. * Current month is incomplete.'].filter(Boolean).join(' ');
   document.getElementById('nl2').textContent=winLabel(o);
   document.getElementById('p2').disabled=o<=0;
   document.getElementById('n2').disabled=o>=MAX;
@@ -1943,11 +1943,11 @@ function buildInfoTable(){
     {n:'1',ind:'Implementation states',tab:'T1',type:'Absolute #',num:'Count of distinct state values',den:'—',sheet:'CompleteSupport_Facilities',cols:'State'},
     {n:'2',ind:'Pilot districts',tab:'T1',type:'Absolute #',num:'Count of distinct district values',den:'—',sheet:'CompleteSupport_Facilities',cols:'District'},
     {n:'3',ind:'Planned facilities',tab:'T1',type:'Absolute #',num:'Count of distinct facilities across complete support + light touch lists',den:'—',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name'},
-    {n:'4',ind:'Operational clinics',tab:'T1',type:'Absolute # + %',num:'Facilities where Operational Status = Yes (complete) + all in light touch list',den:'Total planned facilities',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name, Operational Status'},
+    {n:'4',ind:'Operational clinics',tab:'T1',type:'Absolute # + %',num:'Facilities marked operational in the complete-support and light-touch rosters',den:'Total planned facilities',sheet:'CompleteSupport_Facilities, light_touch_facilities',cols:'Facility Name, Operational Status'},
     {n:'5',ind:'PLT1D enrolled (total / CS / LT)',tab:'T1',type:'Absolute #',num:'Count of rows in enrolled_list · CS = facilities not in LT sheet · LT = sum of enrolments in LT sheet',den:'—',sheet:'enrolled_list, light_touch_facilities',cols:'Patient ID, Facility Name'},
     {n:'6',ind:'Enrolled vs target (%)',tab:'T1',type:'%',num:'Count of all enrolled PLT1D (LT + CS)',den:'Committed target (from Targets sheet)',sheet:'enrolled_list, Targets',cols:'Patient ID'},
-    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1D (complete support) + cumulative light-touch enrolments up to each month · line = operational clinics as of that month: complete support (Operational = Yes, Date of Operationalisation ≤ month end) + light touch (from the first month the facility reports an enrolment figure)',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
-    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1D with enrolment date in that month (complete support) + light-touch enrolments reported for that month · line = avg per operational clinic: those enrolments ÷ operational clinics that month (complete support + light touch, as in 7a)',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
+    {n:'7a',ind:'Cumulative enrolments chart',tab:'T1',type:'Absolute #',num:'Cumulative PLT1D (complete support) + cumulative light-touch enrolments up to each month · line = documented clinic activity as of that month (incomplete opening history): complete support (Operational = Yes, Date of Operationalisation ≤ month end) + light touch (from the first month the facility reports an enrolment figure)',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
+    {n:'7b',ind:'New enrolments per month',tab:'T1',type:'Absolute #',num:'PLT1D with enrolment date in that month (complete support) + light-touch enrolments reported for that month · line = monthly enrolments ÷ the current operational-clinic roster (complete support + light touch); current month excluded from the line',den:'—',sheet:'enrolled_list, light_touch_facilities, CompleteSupport_Facilities',cols:'Date of enrolment, Date of Operationalisation, monthly enrolment columns'},
     {n:'8',ind:'Gender distribution',tab:'T1',type:'%',num:'Count of PLT1D by Sex column value',den:'All PLT1D enrolled',sheet:'enrolled_list',cols:'Sex'},
     {n:'9',ind:'Previous treatment facility',tab:'T1',type:'%',num:'Count by facility category (PHC/CHC/DH etc.). If Newly Diagnosed in Previous regimen → override to Newly Diagnosed',den:'PLT1D with non-blank previous facility value',sheet:'enrolled_list',cols:'Previous treatment regimen, Previous treatment facility category'},
     {n:'10',ind:'Insulin regimen — basal-bolus',tab:'T1',type:'%',num:'Baseline: Previous treatment regimen = Basal-bolus · Current: Transitioned to BB = Yes OR already on BB',den:'Total PLT1D enrolled',sheet:'enrolled_list',cols:'Previous treatment regimen, Transitioned to basal-bolus insulin regimen?'},
@@ -2347,7 +2347,7 @@ function buildDonorGrowth(){
   const gap=d.enrolled-(g.series.reduce((a,sr)=>a+(sr.data[sr.data.length-1]||0),0));
   const clinicGap=d.clinics-(g.clinics[g.clinics.length-1]||0);
   const note=document.getElementById('dn-growth-note');
-  if(note)note.textContent=(gap>0?gap.toLocaleString()+' enrolments are in the headline total but cannot be placed on this time axis (undated enrolments or unreconciled monthly records). ':'')+(clinicGap>0?clinicGap+' operational clinics lack opening dates and are included in the headline total.':'');
+  if(note)note.textContent=(gap>0?gap.toLocaleString()+' enrolments are in the headline total but cannot be placed on this time axis (undated enrolments or unreconciled monthly records). ':'')+(clinicGap>0?clinicGap+' currently operational clinics lack a dated opening / first monthly report on this axis; the history is incomplete.':'');
   if(lg) lg.innerHTML=g.series.map(sr=>'<span><span class="ld" style="background:'+(DN_COL[sr.st]||'#94a3b8')+'"></span>'+sr.name+'</span>').join('');
   const tots=g.labels.map((_,i)=>g.series.reduce((a,sr)=>a+(sr.data[i]||0),0));
   const pad={left:6,right:6,top:14,bottom:0};
@@ -2688,6 +2688,11 @@ function statusTok(p){return normv(p['Case Status (Active/Inactive)'])==='inacti
 function parseDate(v,conv){
   if(v instanceof Date) return isNaN(v)?null:v;
   const s=String(v).trim(); if(!s) return null;
+  // Native Sheets/Excel grids encode dates as days since 30 Dec 1899.
+  if(typeof v==='number'||/^\d{5}(?:\.\d+)?$/.test(s)){
+    const serial=Number(v);
+    if(serial>=20000&&serial<=80000){const d=new Date(1899,11,30);d.setDate(d.getDate()+Math.floor(serial));return d;}
+  }
   let m=s.match(/^Date\((\d+),(\d+),(\d+)/);            // gviz Date(y,m,d)
   if(m) return new Date(+m[1],+m[2],+m[3]);
   m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/); // slash/dash dates
@@ -2872,12 +2877,11 @@ function ltData(f){
     // LT has no "Date of Operationalisation" column, so a facility counts as
     // operational from the first month it reports an enrolment figure (0 included —
     // a reported zero still means the clinic was running that month) and stays
-    // operational thereafter. No reported month at all → operational from the first
-    // month column, so the chart's latest point matches the operational-clinics KPI.
+    // operational thereafter. Without a monthly record, no start date is inferred.
+    // This is documented activity, not a verified opening date.
     let st=null;
     if(ltOper){
       for(let k=0;k<monthCols.length;k++){ if(num(row[monthCols[k].i])!=null){st=monthCols[k];break;} }
-      if(!st&&monthCols.length)st=monthCols[0];
       if(st)opStarts.push({y:st.y,m:st.m});
     }
   }
@@ -3088,6 +3092,7 @@ function recompute(){
   const opConv=dateConv((RAW.csFac||[]).map(x=>x['Date of Operationalisation']));
   const csCum=[],ltCum=[],clin=[],clinCs=[],clinLt=[],neCs=[],neLt=[],avg=[];let cumLt=0;
   const ltStarts=lt.opStarts||[];
+  const currentClinics=csOp+lt.opCount;
   // CS cumulative is as-of each month, so LT cumulative must also carry in the
   // enrolments from months the date slicer trimmed off the front — otherwise the
   // LT bar restarts from zero at the range start while the CS bar does not.
@@ -3105,9 +3110,10 @@ function recompute(){
     const opLt=ltStarts.filter(s=>ymKey(s.y,s.m)<=ymKey(mo.y,mo.m)).length;
     clinCs.push(op);clinLt.push(opLt);clin.push(op+opLt);
     const nl=lt.monthly[mo.label]||0;neLt.push(nl);cumLt+=nl;ltCum.push(cumLt);
-    // Avg per operational clinic uses the same CS + LT basis as the bars above it
-    const totCl=op+opLt;
-    avg.push(totCl>0?Math.round((nw+nl)/totCl*10)/10:0);
+    // Normalize every month to the current roster. Historical opening dates
+    // are incomplete, so the dated-clinic subset cannot be the denominator for
+    // all programme enrolments. This is not historical clinic productivity.
+    avg.push(currentClinics>0?(nw+nl)/currentClinics:null);
   });
 
   // Patients the time axis cannot place: the cumulative bar counts only enrolments
@@ -3121,8 +3127,7 @@ function recompute(){
              lastLabel:months.length?months[months.length-1].label:''};
 
   // New-enrolments card: same two halves and same clinic count as the chart, so the
-  // card and the month it names always agree. Clinics are taken as-of that month
-  // rather than today's total, which is what the chart's avg line divides by.
+  // card and the month it names always agree. Both use the current clinic roster.
   const mLabel=d=>MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
   const lastLbl=mLabel(lastM), prevLbl=mLabel(prevM);
   let csLast=0,csPrev=0;
@@ -3141,7 +3146,7 @@ function recompute(){
 
   // ── Assign globals ──
   MONTHS=months.map(m=>m.label);
-  CS_CUM=csCum;LT_CUM=ltCum;CLIN=clin;CLIN_CS=clinCs;CLIN_LT=clinLt;NEWENR_CS=neCs;NEWENR_LT=neLt;NEWENR=neCs.map((v,i)=>v+neLt[i]);AVGCL=avg;
+  CS_CUM=csCum;LT_CUM=ltCum;CLIN=clin;CLIN_CS=clinCs;CLIN_LT=clinLt;NEWENR_CS=neCs;NEWENR_LT=neLt;NEWENR=neCs.map((v,i)=>v+neLt[i]);AVGCL=avg;CURRENT_CLIN=currentClinics;
   MAX=Math.max(0,MONTHS.length-WIN);
   off=[off[0]==null?MAX:Math.min(off[0],MAX), off[1]==null?MAX:Math.min(off[1],MAX)];
   FUP_MOM=fmom.mom; FUP_PENDING=fmom.pending; FUP_MATCHED=fmom.matched;
@@ -3185,7 +3190,7 @@ function recompute(){
   CURD={
     states:statesCount, dist, plan:csF.length+lt.facCount, op:csOp+lt.opCount, csOp, ltOp:lt.opCount,
     enr:csEnr+ltEnr, csEnr, ltEnr, target,
-    newLast, newPrev, avgClin:clinLast>0?Math.round(newLast/clinLast*10)/10:0,
+    newLast, newPrev, avgClin:clinLast>0?newLast/clinLast:null,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
     fupDen, hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
     hba1cFacPct:hbKey?pctC(hbFac,csOp):null, hba1cFacCount:hbFac, hba1cFacDen:csOp,
