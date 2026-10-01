@@ -848,12 +848,11 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 <div class="sl">Peer support</div>
 <div class="card" id="peer-support-card">
   <div class="ct">Peer-support camps conducted</div>
-  <div class="cs">Recorded facility totals · complete support only</div>
+  <div class="cs">Complete support only</div>
   <div class="peer-camps-layout">
     <div class="peer-camps-chart"><canvas id="c-peer-camps" role="img" aria-label="Peer-support camps by state"></canvas><div class="peer-camps-centre"><strong id="peer-camps-total">—</strong><span>camps</span></div></div>
     <div id="peer-camps-legend" class="peer-camps-legend"></div>
   </div>
-  <div class="cs" id="peer-camps-coverage"></div>
 </div>
 
 </div></div><!-- /tab-0 -->
@@ -1629,9 +1628,7 @@ function renderPeerSupport(){
   canvas.setAttribute('aria-label',d.reported?'Peer-support camps: '+d.total+'. '+d.groups.map(g=>sln(g.st)+': '+g.camps+' recorded').join('; '):'No peer-support camp counts reported');
   const active=d.groups.filter(g=>g.camps>0);
   _peerCamps=new Chart(canvas,{type:'doughnut',data:{labels:active.length?active.map(g=>sln(g.st)):['No recorded camps'],datasets:[{data:active.length?active.map(g=>g.camps):[1],backgroundColor:active.length?active.map(g=>DN_COL[g.st]||'#94a3b8'):['#e2e8f0'],borderWidth:2,borderColor:'#fff',_noLabel:true}]},options:{responsive:true,maintainAspectRatio:false,cutout:'74%',plugins:{legend:{display:false},tooltip:{enabled:active.length>0,callbacks:{label:c=>c.label+': '+c.raw+' camps'}}}}});
-  document.getElementById('peer-camps-legend').innerHTML=d.groups.map(g=>'<div class="peer-camps-row"><i class="ld" style="background:'+(DN_COL[g.st]||'#94a3b8')+'"></i><span class="peer-state">'+dnEscape(sln(g.st))+'</span><strong>'+ (g.reported?fmt(g.camps):'—')+'</strong><small>'+g.reported+'/'+g.facilities+' facilities reporting</small></div>').join('')||'<div class="data-pending">No complete-support facilities in this view.</div>';
-  const missing=d.facilities-d.reported;
-  sv('peer-camps-coverage',d.facilities?d.reported+'/'+d.facilities+' facilities reporting'+(missing?' · '+missing+' unreported':'')+' · geography filters only':'No complete-support facilities in this view.');
+  document.getElementById('peer-camps-legend').innerHTML=d.groups.map(g=>'<div class="peer-camps-row"><i class="ld" style="background:'+(DN_COL[g.st]||'#94a3b8')+'"></i><span class="peer-state">'+dnEscape(sln(g.st))+'</span><strong>'+ (g.reported?fmt(g.camps):'—')+'</strong></div>').join('')||'<div class="data-pending">No complete-support facilities in this view.</div>';
 }
 
 function renderTrainedStaff(){
