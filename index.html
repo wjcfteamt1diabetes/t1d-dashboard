@@ -496,6 +496,31 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 #tab-4 .dn-district-facilities{margin-top:14px;display:grid;gap:6px;max-height:300px;overflow-y:auto;padding:3px}
 #tab-4 .dn-map-state.selected-district{stroke:#003b71;stroke-width:2.5}
 @media(max-width:700px){#tab-4 .dn-district-layout{grid-template-columns:1fr}}
+
+/* Compact results, larger geographic canvas. */
+#tab-4 .card{padding:12px}
+#tab-4 .dn-hero-card{padding:0}
+#tab-4 .dn-hero-fig{padding:12px 16px}
+#tab-4 .dn-hero-val{font-size:44px}
+#tab-4 .dn-hero-side{padding:3px 8px}
+#tab-4 .dn-hero-side>div{padding:7px 8px}
+#tab-4 .dn-tile-v{font-size:23px;margin:2px 0}
+#tab-4 .dn-map-state-button{padding:9px}
+#tab-4 .dn-map-state-button h3{margin-bottom:5px}
+#tab-4 .dn-map-state-button strong{font-size:23px}
+#tab-4 .dn-score-value{font-size:24px}
+#tab-4 .dn-grant-indicator summary{padding:9px 12px}
+#tab-4 .dn-grant-title{margin:4px 0}
+#tab-4 .dn-grant-numbers strong{font-size:24px}
+#tab-4 .dn-target-rail{margin-top:10px;margin-bottom:6px}
+#tab-4 .dn-grant-items{gap:6px}
+#tab-4 .dn-slope-card{padding:6px 0}
+#tab-4 .dn-map-layout{grid-template-columns:minmax(340px,1.6fr) minmax(240px,1fr) minmax(210px,.75fr)}
+#tab-4 .dn-district-layout{grid-template-columns:minmax(340px,1.35fr) minmax(280px,1fr)}
+#tab-4 .dn-map-panel svg{height:480px}
+#tab-4 .dn-district-layout .dn-map-panel svg{height:520px}
+@media(max-width:1050px){#tab-4 .dn-map-layout{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}#tab-4 .dn-map-plan{grid-column:1/-1}}
+@media(max-width:700px){#tab-4 .dn-map-layout,#tab-4 .dn-district-layout{grid-template-columns:minmax(0,1fr)}#tab-4 .dn-map-plan{grid-column:auto}#tab-4 .dn-map-panel svg,#tab-4 .dn-district-layout .dn-map-panel svg{height:420px}#tab-4 .dn-hero-val{font-size:40px}}
 </style>
 </head>
 <body>
@@ -2279,7 +2304,7 @@ function renderDonorKPIs(){
   if(story)story.innerHTML='The programme supports <strong>'+d.enrolled.toLocaleString()+' people living with T1D</strong> through <strong>'+d.clinics+' operational clinics</strong> across <strong>'+d.states+' '+(d.states===1?'state':'states')+'</strong>.';
 
   const tgt=LOGFRAME.find(r=>r.key==='enrolled');
-  sv('dn-enr-n','across '+d.clinics+' T1D clinics in '+d.states+' states'
+  sv('dn-enr-n','across '+d.clinics+' T1D clinics in '+d.states+' '+(d.states===1?'state':'states')
     +(tgt&&!d.filtered?' · '+Math.round(d.enrolled/tgt.target*10)/10+'× the Jul ’26 target of '+tgt.target.toLocaleString():''));
   const tiles=[
     {l:'T1D clinics operational', v:d.clinics.toLocaleString(), s:d.byState.map(r=>r.st+' '+r.clinics).join(' · ')},
