@@ -2070,8 +2070,51 @@ function activeFilterSummary(){
   return parts.length?parts.join('   ·   '):'No filters applied — all patients & facilities';
 }
 
+// Keep the completed report available for a fresh user gesture. Embedded browsers
+// can block a save attempted only after asynchronous canvas rendering.
+let PDF_EXPORT_URL=null;
+function showPDFDownload(doc,filename){
+  const blob=doc.output('blob');
+  if(!blob||blob.size===0)throw new Error('The generated PDF is empty.');
+  const old=document.getElementById('pdf-download-panel');
+  if(old)old.remove();
+  if(PDF_EXPORT_URL)URL.revokeObjectURL(PDF_EXPORT_URL);
+  PDF_EXPORT_URL=URL.createObjectURL(blob);
+  const panel=document.createElement('section');
+  panel.id='pdf-download-panel';panel.setAttribute('role','region');
+  panel.setAttribute('aria-label','PDF export');
+  panel.style.cssText='position:fixed;right:20px;top:85px;z-index:9999;background:#fff;color:#17375e;border:1px solid #cbd7e7;border-radius:12px;padding:16px;width:340px;max-width:calc(100vw - 40px);box-sizing:border-box;box-shadow:0 6px 30px #17375e33;font-size:13px';
+  const title=document.createElement('strong');title.textContent='Your PDF is ready';
+  const note=document.createElement('p');
+  note.textContent=filename+' · '+(blob.size/1024/1024).toFixed(1)+' MB';
+  const actions=document.createElement('div');actions.style.cssText='display:flex;gap:12px;flex-wrap:wrap';
+  const download=document.createElement('a');
+  download.href=PDF_EXPORT_URL;download.download=filename;download.textContent='Download PDF';
+  const open=document.createElement('a');
+  open.href=PDF_EXPORT_URL;open.target='_blank';open.rel='noopener';open.textContent='Open PDF';
+  actions.append(download,open);
+  let file=null;
+  try{if(typeof File==='function')file=new File([blob],filename,{type:'application/pdf'});}catch(e){}
+  let canShareFile=false;
+  try{canShareFile=!!(file&&navigator.share&&navigator.canShare&&navigator.canShare({files:[file]}));}catch(e){}
+  if(canShareFile){
+    const share=document.createElement('button');share.type='button';share.textContent='Save / Share PDF';
+    share.onclick=async()=>{try{await navigator.share({files:[file],title:'T1D Dashboard'});}
+      catch(err){if(err.name!=='AbortError')hint.textContent='Sharing is unavailable. Try Download PDF or Open PDF.';}};
+    actions.append(share);
+  }
+  const hint=document.createElement('p');
+  hint.textContent='Choose Download PDF. If your browser opens it instead, use its save or share control.';
+  hint.style.cssText='font-size:11px;line-height:1.5;margin-bottom:0';
+  const close=document.createElement('button');close.type='button';close.textContent='Close';
+  close.style.cssText='float:right;margin-left:12px';
+  close.onclick=()=>panel.remove();
+  panel.append(close,title,note,actions,hint);document.body.append(panel);download.focus();
+}
+
 async function exportPDF(){
   const btn=document.getElementById('pdf-btn');
+  if(btn.disabled)return;
   if(!window.jspdf||!window.html2canvas){alert('PDF libraries still loading — please try again in a moment.');return;}
   const tabBtns=Array.from(document.querySelectorAll('.tabs-inner .tab'));
   const origTab=tabBtns.findIndex(t=>t.classList.contains('active'));
@@ -2117,7 +2160,7 @@ async function exportPDF(){
       doc.addImage(canvas.toDataURL('image/png'),'PNG',0,banner,cw,ch,undefined,'FAST');
     }
     const fnameState=(document.getElementById('f-state')?document.getElementById('f-state').value:'all')||'all';
-    doc.save('T1D_Dashboard_'+fnameState+'_'+new Date().toISOString().slice(0,10)+'.pdf');
+    showPDFDownload(doc,'T1D_Dashboard_'+fnameState+'_'+new Date().toISOString().slice(0,10)+'.pdf');
   }catch(err){
     console.error('PDF export failed',err);
     alert('PDF export failed: '+(err&&err.message?err.message:err));
