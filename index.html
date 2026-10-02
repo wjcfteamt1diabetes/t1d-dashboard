@@ -2798,8 +2798,9 @@ function parseStock(grid){
   return objs.map(o=>{
     const covRaw=o['% Coverage']; let cov=null;
     if(covRaw!=null && String(covRaw).trim()!==''){
-      const s=String(covRaw).replace('%','').trim(); const n=Number(s);
-      if(!isNaN(n)) cov = n<=1 ? Math.round(n*100) : Math.round(n);
+      const s=String(covRaw).trim(), explicitPercent=s.endsWith('%');
+      const n=Number(explicitPercent?s.slice(0,-1).trim():s);
+      if(Number.isFinite(n)) cov = Math.round(explicitPercent?n:(n<=1?n*100:n));
     }
     const so=String(o['Stockout']==null?'':o['Stockout']).trim();
     const mt=String(o['Meet Complete Demand']==null?'':o['Meet Complete Demand']).trim();
