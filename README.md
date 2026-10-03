@@ -47,6 +47,42 @@ charts instantly.**
 
 ---
 
+## Local development and loading
+
+Run `python3 -m http.server 8000` from the checkout. Use Node 22+ for the tests:
+`node --test tests/loading.test.cjs` exercises caching and deferred rendering.
+The separate donor suite, `node --test tests/donor.test.cjs`, currently has known
+browser-stub and outdated-assertion failures.
+
+The dashboard loads its 12 shared source tabs in parallel. Stock data loads when
+Stock Levels is opened, and charts render when their tab is viewed. PDF export
+waits for the stock data before capturing that tab.
+
+If an embedded browser blocks a CSV fetch or Google's download redirect, loading
+falls back to Google's visualization script endpoint. No third-party proxy is
+used. The inline workbook defaults also allow a single-file HTML preview to run
+without `config.js`; a hosted site's existing configuration takes precedence.
+
+Successful sheet responses are reused for up to five minutes in the current
+browser tab, including page reloads. The header identifies cached data and its
+fetch time. **Refresh Data** bypasses this cache; stock data is refreshed when its
+tab is next opened. If browser storage is unavailable, loading still works with
+an in-memory cache. Cached responses are not a fallback for a failed forced refresh.
+
+---
+
+## Offline review preview
+
+`preview.html` is a self-contained aggregate snapshot for embedded previews that
+cannot reach Google Sheets or external chart libraries. It contains rendered
+charts and aggregate totals, with five state views and all six tabs. It makes no
+network requests and contains no patient-level source tables. The capture date is
+shown at the top. Other filters and chart interactions are disabled; open the live
+`index.html` dashboard for refreshed data and full filtering. This snapshot does
+not refresh automatically and is a review artifact, not the live dashboard entry.
+
+---
+
 ## Patient data request
 
 `docs/data-request/` specifies the patient-level data the dashboard needs, as **two

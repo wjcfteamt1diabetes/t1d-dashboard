@@ -1299,6 +1299,12 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 
 
 <script>
+// Single-file previews may not serve config.js. Keep the public workbook defaults
+// available inline while preserving any configuration loaded by the hosted site.
+window.DASHBOARD_CONFIG=window.DASHBOARD_CONFIG||{
+  wb1:'1cgMB5RIomWGSw_cQfmFkxx3qfBXlXxIL9fR4FzFuwIg',
+  wb2:'1zObGfUcDOszt82v9V65OAK7yV5McXzeusFx5XqU_d6M'
+};
 Chart.defaults.font.family = 'Trebuchet MS';
 // Render every chart at high resolution (crisp on all displays, incl. the fixed-size donuts)
 Chart.defaults.devicePixelRatio = Math.max(2.5, window.devicePixelRatio || 1);
@@ -2037,7 +2043,14 @@ function buildStaticCharts(){
 }
 
 function shift(c,d){off[c]=Math.max(0,Math.min(MAX,off[c]+d));c===0?buildC1(off[0]):buildC2(off[1]);}
-function switchTab(i){document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',i===j));}
+let activeDashboardTab=0, dashboardRenderVersion=0;
+const renderedTabVersions=new Map();
+function switchTab(i){
+  activeDashboardTab=i;
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',i===j));
+  return renderActiveTab();
+}
 
 // Sticky offsets follow filter wrapping and source-warning height changes.
 (function alignDashboardNavigation(){
@@ -2172,7 +2185,7 @@ async function exportPDF(){
     if(document.fonts)await document.fonts.ready;
     for(let k=0;k<tabs.length;k++){
       btn.textContent='Exporting… '+(k+1)+'/'+tabs.length;
-      switchTab(tabs[k].i);
+      if(await switchTab(tabs[k].i)===false)throw new Error('Stock data could not be loaded. Retry the Stock Levels tab before exporting.');
       // Let the now-visible tab lay out and its Chart.js canvases resize to full size.
       Object.values(Chart.instances||{}).forEach(c=>{try{c.resize();}catch(e){}});
       await new Promise(r=>setTimeout(r,450));
@@ -2817,41 +2830,38 @@ function renderLtExclusionNote(){
 function applyFilters(){
   safe('populateFilters', populateFilters);   // cascade dropdown options to current selection
   recompute();
+  dashboardRenderVersion++;
   safe('renderLtExclusionNote', renderLtExclusionNote);
   const f=getF(), d=getD();
   safe('renderKPIs',      ()=>renderKPIs(d,f));
-  safe('buildC1',         ()=>buildC1(off[0]));
-  safe('buildC2',         ()=>buildC2(off[1]));
-  safe('renderGender',    renderGender);
-  safe('buildAge',        buildAge);
-  safe('renderPTF',       renderPTF);
-  safe('renderTDD',       renderTDD);
-  safe('renderBasal',     renderBasal);
-  safe('renderTrainedStaff', renderTrainedStaff);
-  safe('renderPeerSupport', renderPeerSupport);
-  safe('buildStaticCharts',  buildStaticCharts);
-  safe('buildFupChart',   ()=>buildFupChart(fupOff));
-  safe('renderSmbg',      renderSmbg);
-  safe('renderHyperHypo', renderHyperHypo);
-  safe('computeClinicOps', computeClinicOps);  // re-window clinic-ops series to the active date range
-  safe('buildClinOps',    buildClinOps);
-  safe('buildOffDays',    buildOffDays);
-  safe('buildHbaChange',  buildHbaChange);
-  safe('buildHbaAvg',     buildHbaAvg);
-  safe('buildHbaAll',     buildHbaAll);
-  safe('buildHbaDist',    buildHbaDist);
-  safe('buildHbaLatest',  buildHbaLatest);
-  safe('renderStockKPIs', renderStockKPIs);
-  safe('renderStockTrend',renderStockTrend);
-  safe('renderStockHeatmap', renderStockHeatmap);
-  safe('renderDonorKPIs',    renderDonorKPIs);
-  safe('renderLogframe',     renderLogframe);
-  safe('renderDonorStates',  renderDonorStates);
-  safe('buildDonorGrowth',   buildDonorGrowth);
-  safe('renderDonorRegimen', renderDonorRegimen);
-  safe('renderDonorHbaDumbbell', renderDonorHbaDumbbell);
-  safe('renderDonorCapacityTargets', renderDonorCapacityTargets);
-  safe('buildDonorCadre',    buildDonorCadre);
+  return renderActiveTab();
+}
+
+function renderActiveTab(){
+  if(!RAW)return;
+  const tab=activeDashboardTab, version=dashboardRenderVersion;
+  if(tab===3&&RAW.stock===null)return ensureStockLoaded();
+  if(renderedTabVersions.get(tab)===version)return;
+  const renders={
+    0:[['buildC1',()=>buildC1(off[0])],['buildC2',()=>buildC2(off[1])],
+       ['renderGender',renderGender],['buildAge',buildAge],['renderPTF',renderPTF],
+       ['renderTrainedStaff',renderTrainedStaff],['renderPeerSupport',renderPeerSupport],
+       ['buildFupChart',()=>buildFupChart(fupOff)],['renderSmbg',renderSmbg],
+       ['renderHyperHypo',renderHyperHypo],['computeClinicOps',computeClinicOps],
+       ['buildClinOps',buildClinOps],['buildOffDays',buildOffDays]],
+    1:[['renderTDD',renderTDD],['renderBasal',renderBasal],['buildHbaChange',buildHbaChange],
+       ['buildHbaAvg',buildHbaAvg],['buildHbaAll',buildHbaAll],
+       ['buildHbaDist',buildHbaDist],['buildHbaLatest',buildHbaLatest]],
+    2:[['buildStaticCharts',buildStaticCharts]],
+    3:[['renderStockKPIs',renderStockKPIs],['renderStockTrend',renderStockTrend],
+       ['renderStockHeatmap',renderStockHeatmap]],
+    4:[['renderDonorKPIs',renderDonorKPIs],['renderLogframe',renderLogframe],
+       ['renderDonorStates',renderDonorStates],['buildDonorGrowth',buildDonorGrowth],
+       ['renderDonorRegimen',renderDonorRegimen],['renderDonorHbaDumbbell',renderDonorHbaDumbbell],
+       ['renderDonorCapacityTargets',renderDonorCapacityTargets],['buildDonorCadre',buildDonorCadre]]
+  };
+  (renders[tab]||[]).forEach(([name,fn])=>safe(name,fn));
+  renderedTabVersions.set(tab,version);
 }
 
 // ═══════════ STOCK LEVELS ═══════════
@@ -3119,7 +3129,30 @@ function parseCSV(text){
   return rows;
 }
 
-async function fetchTab(wbId,tabName){
+const SHEET_CACHE_TTL=5*60*1000, SHEET_CACHE_PREFIX='t1d_sheet_v1:';
+const sheetCacheMemory=new Map();
+function readSheetCache(key){
+  try{
+    const entry=sheetCacheMemory.get(key)||JSON.parse(sessionStorage.getItem(key)||'null');
+    const age=entry?Date.now()-entry.savedAt:-1;
+    if(entry&&typeof entry.text==='string'&&Number.isFinite(entry.savedAt)&&age>=0&&age<SHEET_CACHE_TTL){
+      sheetCacheMemory.set(key,entry);return entry;
+    }
+  }catch(e){/* Storage may be unavailable; network loading still works. */}
+  sheetCacheMemory.delete(key);
+  try{sessionStorage.removeItem(key);}catch(e){}
+  return null;
+}
+function writeSheetCache(key,text){
+  const entry={text,savedAt:Date.now()};
+  sheetCacheMemory.set(key,entry);
+  try{sessionStorage.setItem(key,JSON.stringify(entry));}catch(e){/* Quota/private mode: retain only the in-memory cache. */}
+  return entry;
+}
+async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
+  const cacheKey=SHEET_CACHE_PREFIX+wbId+':'+tabName;
+  const cached=forceFresh?null:readSheetCache(cacheKey);
+  if(cached){if(onSource)onSource(cached.savedAt,true);return parseCSV(cached.text);}
   // CSV export preserves rows with missing operationalisation dates. The
   // typed gviz feed drops those facility records, breaking stock geography.
   const csvTabs={CompleteSupport_Facilities:1253968089,'Enrolled List':0,
@@ -3128,6 +3161,8 @@ async function fetchTab(wbId,tabName){
   const url=Object.prototype.hasOwnProperty.call(csvTabs,tabName)
     ? 'https://docs.google.com/spreadsheets/d/'+wbId+'/export?format=csv&gid='+csvTabs[tabName]
     : 'https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
+  const fallbackUrl='https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?headers=0&'+
+    (Object.prototype.hasOwnProperty.call(csvTabs,tabName)?'gid='+csvTabs[tabName]:'sheet='+encodeURIComponent(tabName));
   // Bound both the network request and body download; one retry handles
   // transient Google export delays without leaving the overlay stuck forever.
   for(let attempt=0;attempt<2;attempt++){
@@ -3141,14 +3176,51 @@ async function fetchTab(wbId,tabName){
       }
       const text=await res.text();
       if(/^\s*</.test(text)) throw new Error('Sheet "'+tabName+'" is not public. Set the workbook sharing to "Anyone with the link → Viewer".');
-      return parseCSV(text);
+      const grid=parseCSV(text);
+      const entry=writeSheetCache(cacheKey,text);
+      if(onSource)onSource(entry.savedAt,false);
+      return grid;
     }catch(err){
       const timedOut=controller.signal.aborted;
-      if(attempt===0&&(timedOut||err instanceof TypeError))continue;
+      // Safari/embedded previews can block a cross-origin CSV fetch or its
+      // googleusercontent download redirect. The Google script transport does
+      // not need fetch/CORS access; headers=0 retains the source header row.
+      if(err instanceof TypeError){
+        const grid=await fetchGoogleSheetScript(fallbackUrl,tabName);
+        const text=grid.map(row=>row.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(',')).join('\n');
+        const entry=writeSheetCache(cacheKey,text);
+        if(onSource)onSource(entry.savedAt,false);
+        return grid;
+      }
+      if(attempt===0&&timedOut)continue;
       if(timedOut)throw new Error('Google Sheets took too long to load "'+tabName+'" after two attempts. Please retry.');
       throw err;
     }finally{clearTimeout(timer);}
   }
+}
+
+let googleSheetResponseId=0;
+function fetchGoogleSheetScript(url,tabName){
+  return new Promise((resolve,reject)=>{
+    const callback='t1dSheetResponse_'+Date.now()+'_'+(++googleSheetResponseId);
+    const script=document.createElement('script');
+    const cleanup=()=>{clearTimeout(timer);script.remove();delete window[callback];};
+    const fail=()=>{cleanup();reject(new Error('Google Sheets access was blocked for "'+tabName+'". Open this dashboard in a regular browser tab and allow access to docs.google.com.'));};
+    const timer=setTimeout(fail,25000);
+    window[callback]=payload=>{
+      if(!payload||payload.status!=='ok'||!payload.table||!Array.isArray(payload.table.rows)){fail();return;}
+      const table=payload.table;
+      const grid=table.rows.map(row=>table.cols.map((_,i)=>{
+        const cell=row.c&&row.c[i];
+        return cell==null?'':String(cell.f!=null?cell.f:cell.v==null?'':cell.v);
+      }));
+      cleanup();resolve(grid);
+    };
+    script.async=true;
+    script.src=url+'&tqx='+encodeURIComponent('out:json;responseHandler:'+callback);
+    script.onerror=fail;
+    document.head.appendChild(script);
+  });
 }
 
 // Find the header row by scanning the first rows for any expected column name.
@@ -3949,10 +4021,52 @@ function showError(err){
   console.error('[Dashboard]', err);
 }
 
-function refreshData(){ boot(); }
+function refreshData(){ return boot({forceFresh:true}); }
+
+let stockLoadPromise=null, stockLoadOwner=null, stockForceFresh=false;
+function stockLoadStatus(message,failed=false){
+  const tab=document.getElementById('tab-3');
+  if(!tab)return;
+  const content=tab.querySelector('.tc-wrap');
+  if(content)content.hidden=!!message;
+  let status=document.getElementById('stock-load-status');
+  if(!message){if(status)status.remove();tab.removeAttribute('aria-busy');return;}
+  tab.setAttribute('aria-busy',failed?'false':'true');
+  if(!status){status=document.createElement('div');status.id='stock-load-status';status.className='card';status.setAttribute('role','status');tab.prepend(status);}
+  status.textContent=message;
+  if(failed){
+    const retry=document.createElement('button');retry.type='button';retry.textContent='Retry stock data';
+    retry.onclick=()=>ensureStockLoaded(true);status.appendChild(retry);
+  }
+}
+function ensureStockLoaded(forceFresh=stockForceFresh){
+  const owner=RAW;
+  if(!owner)return Promise.resolve(false);
+  if(owner.stock!==null)return Promise.resolve(true);
+  if(stockLoadPromise&&stockLoadOwner===owner)return stockLoadPromise;
+  stockLoadOwner=owner;
+  stockLoadStatus('Loading stock data…');
+  stockLoadPromise=(async()=>{
+    try{
+      const grid=await fetchTab(window.DASHBOARD_CONFIG.wb2,'Stock Levels',{forceFresh});
+      if(RAW!==owner)return false;
+      fillRow(grid,['Facility','Commodity','Month'],STK_CANON);
+      owner.stock=parseStock(grid);
+      stockLoadStatus('');
+      if(activeDashboardTab===3)renderActiveTab();
+      return true;
+    }catch(err){
+      if(RAW===owner)stockLoadStatus('Could not load stock data: '+err.message+' ',true);
+      return false;
+    }finally{
+      if(stockLoadOwner===owner){stockLoadPromise=null;stockLoadOwner=null;}
+    }
+  })();
+  return stockLoadPromise;
+}
 
 let dashboardLoading=false,dashboardLoadVersion=0;
-async function boot(){
+async function boot({forceFresh=false}={}){
   if(dashboardLoading)return;
   dashboardLoading=true;
   const loadVersion=++dashboardLoadVersion;
@@ -3962,14 +4076,14 @@ async function boot(){
   if(btn){btn.disabled=true;btn.textContent='Refreshing…';btn.style.opacity='.5';}
   try{
     const C=window.DASHBOARD_CONFIG;
-    let loaded=0;
+    let loaded=0, oldestFetch=Infinity, cachedSheets=0;
     const load=async(id,name)=>{
-      const grid=await fetchTab(id,name);
+      const grid=await fetchTab(id,name,{forceFresh,onSource:(savedAt,cached)=>{oldestFetch=Math.min(oldestFetch,savedAt);if(cached)cachedSheets++;}});
       loaded++;
-      if(dashboardLoading&&loadVersion===dashboardLoadVersion)document.getElementById('ov-msg').textContent='Loaded '+loaded+' of 13 sheets'+(loaded===13?' · building charts…':' · waiting for remaining sheets…');
+      if(dashboardLoading&&loadVersion===dashboardLoadVersion)document.getElementById('ov-msg').textContent='Loaded '+loaded+' of 12 sheets'+(loaded===12?' · building charts…':' · waiting for remaining sheets…');
       return grid;
     };
-    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid,stkGrid]=await Promise.all([
+    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid]=await Promise.all([
       load(C.wb1,'Enrolled List'),
       load(C.wb1,'CompleteSupport_Facilities'),
       load(C.wb1,'Light_touch_facilities'),
@@ -3981,8 +4095,7 @@ async function boot(){
       load(C.wb1,'SMBG_Monthly'),
       load(C.wb1,'SMBG_Hyper/Hypo'),
       load(C.wb1,'Hba1c_Baseline/Latest'),
-      load(C.wb1,'Targets'),
-      load(C.wb2,'Stock Levels')
+      load(C.wb1,'Targets')
     ]);
     // Build per-state targets from the Targets sheet (#6)
     try{
@@ -3998,7 +4111,6 @@ async function boot(){
     fillRow(csFac,  ['State','Facility name','T1D Clinic Operational?'], CS_CANON);
     fillRow(ltGrid, ['State','Facility name'],                     LT_CANON);
     fillRow(orient, ['State','Type of Service Provider','Pilot District? (Yes/No)'], ORI_CANON);
-    fillRow(stkGrid,['Facility','Commodity','Month'], STK_CANON);
     // Every row the tab returned, before we drop the blank placeholders. Kept so the
     // guard below can tell "the tab is unreachable" apart from "the tab is empty".
     const enrRows=toObjects(enr, ['Claude_ID','State','Survival Status']);
@@ -4014,19 +4126,19 @@ async function boot(){
       opsGrid: opsGrid, offsGrid: offsGrid,       // transposed sheets
       smbgGrid: smbgGrid, hhGrid: hhGrid,         // kept as grids
       hba:     toObjects(hbaGrid, ['Claude_ID','State','Latest hba1c time bucket']),
-      stock:   parseStock(stkGrid)
+      stock:   null // Fetch only when the Stock Levels tab (or PDF export) needs it.
     };
     if(RAW.enrolled.length<50) throw new Error(enrRows.length<50
       ? 'Enrolled List returned '+enrRows.length+' rows. Check the tab name / sharing.'
       : 'Enrolled List has '+enrRows.length+' rows but only '+RAW.enrolled.length+' carry patient data — State, Age, Sex, Facility Name and Date of enrolment are blank. The tab is reachable, so this is missing data, not a connection problem: restore the sheet from File → Version history.');
-    computeClinicOps();
+    stockForceFresh=forceFresh;
     buildGeo();                               // facility→geo lookup + dropdown option lists
     populateFilters();                        // fill Division/District/Facility/DPC from live data
     safe('buildInfoTable', buildInfoTable);   // static, build once
-    applyFilters();                           // recompute() + render everything (incl. HbA1c charts)
+    await applyFilters();                     // Render only the active tab; other tabs render on demand.
     safe('addSumNotes', addSumNotes);         // caption under part-of-whole charts
     const el=document.getElementById('hdr-badge');
-    if(el)el.textContent='Updated '+new Date().toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    if(el)el.textContent=(cachedSheets?'Cached · fetched ':'Updated ')+new Date(oldestFetch).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     if(ov)ov.style.display='none';
   }catch(err){
     showError(err);
@@ -4050,7 +4162,7 @@ async function tryUnlock(){
   const inp=document.getElementById('gate-input'), err=document.getElementById('gate-err');
   try{
     if(await sha256(PASS_SALT+inp.value.trim())===PASS_HASH){
-      sessionStorage.setItem('t1d_auth', PASS_HASH);
+      try{sessionStorage.setItem('t1d_auth', PASS_HASH);}catch(e){/* Embedded/private browsers may deny storage. */}
       document.getElementById('gate').style.display='none';
       boot();
     }else{
@@ -4059,7 +4171,9 @@ async function tryUnlock(){
   }catch(e){ err.textContent='This browser blocks the unlock (needs HTTPS).'; }
 }
 (function initGate(){
-  if(sessionStorage.getItem('t1d_auth')===PASS_HASH){
+  let savedAuth=null;
+  try{savedAuth=sessionStorage.getItem('t1d_auth');}catch(e){}
+  if(savedAuth===PASS_HASH){
     document.getElementById('gate').style.display='none';
     boot();
   }else{
@@ -4069,10 +4183,6 @@ async function tryUnlock(){
 </script>
 </body>
 </html>
-
-
-
-
 
 
 
