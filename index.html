@@ -28,12 +28,12 @@ SOFTWARE.
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>T1D Program Dashboard</title>
+<link rel="preconnect" href="https://docs.google.com">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;650;700&family=Syne:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="config.js"></script>
 <style>
 :root{
@@ -2070,6 +2070,41 @@ function activeFilterSummary(){
   return parts.length?parts.join('   ·   '):'No filters applied — all patients & facilities';
 }
 
+// PDF capture libraries are only needed when a report is requested.
+const PDF_LIBRARY_URLS={
+  canvas:'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+  pdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+};
+const pdfLibraryLoads={};
+function loadPDFLibrary(url,ready){
+  if(ready())return Promise.resolve();
+  if(pdfLibraryLoads[url])return pdfLibraryLoads[url];
+  const pending=new Promise((resolve,reject)=>{
+    const script=document.createElement('script');
+    script.src=url;script.async=true;
+    const fail=()=>{
+      clearTimeout(timer);script.onload=script.onerror=null;script.remove();
+      delete pdfLibraryLoads[url];
+      reject(new Error('Could not load PDF tools. Please try Export PDF again.'));
+    };
+    const timer=setTimeout(fail,20000);
+    script.onerror=fail;
+    script.onload=()=>{
+      if(!ready()){fail();return;}
+      clearTimeout(timer);script.onload=script.onerror=null;resolve();
+    };
+    document.head.appendChild(script);
+  });
+  pdfLibraryLoads[url]=pending;
+  return pending;
+}
+function ensurePDFLibraries(){
+  return Promise.all([
+    loadPDFLibrary(PDF_LIBRARY_URLS.canvas,()=>typeof window.html2canvas==='function'),
+    loadPDFLibrary(PDF_LIBRARY_URLS.pdf,()=>!!(window.jspdf&&window.jspdf.jsPDF))
+  ]);
+}
+
 // Keep the completed report available for a fresh user gesture. Embedded browsers
 // can block a save attempted only after asynchronous canvas rendering.
 let PDF_EXPORT_URL=null;
@@ -2115,14 +2150,20 @@ function showPDFDownload(doc,filename){
 async function exportPDF(){
   const btn=document.getElementById('pdf-btn');
   if(btn.disabled)return;
-  if(!window.jspdf||!window.html2canvas){alert('PDF libraries still loading — please try again in a moment.');return;}
+  const oldLabel=btn.textContent;
+  btn.disabled=true;btn.style.opacity='.6';btn.textContent='Preparing PDF…';
+  try{await ensurePDFLibraries();}
+  catch(err){
+    btn.disabled=false;btn.style.opacity='';btn.textContent=oldLabel;
+    alert(err&&err.message?err.message:'Could not load PDF tools. Please try again.');
+    return;
+  }
   const tabBtns=Array.from(document.querySelectorAll('.tabs-inner .tab'));
   const origTab=tabBtns.findIndex(t=>t.classList.contains('active'));
   // Enumerate every tab dynamically so new tabs are covered automatically.
   const tabs=tabBtns.map((t,i)=>({i,name:t.textContent.trim()})).filter(t=>document.getElementById('tab-'+t.i));
   const filterLine=activeFilterSummary();
   const stamp=new Date().toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-  const oldLabel=btn.textContent; btn.disabled=true; btn.style.opacity='.6';
   const donorNotes=Array.from(document.querySelectorAll('#tab-4 details')).map(el=>({el,open:el.open}));
   const {jsPDF}=window.jspdf;
   let doc=null;
@@ -4028,6 +4069,7 @@ async function tryUnlock(){
 </script>
 </body>
 </html>
+
 
 
 
