@@ -647,8 +647,8 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
     <div class="ct">PLT1D enrolled</div>
     <div class="cs">Progress towards programme enrolment target</div>
     <div class="kv b" id="k-enr">2,216</div>
-    <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="k-gauge" style="width:72%"></div></div><div class="gauge-pct" id="k-gaugeN">72%</div></div>
-    <div class="kn" id="k-target">of target 3,080</div>
+    <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="k-gauge" style="width:0%"></div></div><div class="gauge-pct" id="k-gaugeN">—</div></div>
+    <div class="kn" id="k-target">Target not loaded</div>
   </div>
   <div class="card">
     <div class="ct">New enrolments — last month</div>
@@ -1393,7 +1393,7 @@ let FUP_MAX=0, fupOff=null, FUP_MATCHED=0;
 let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-let TARGETS={RJ:4000,MP:1082,UK:602,CG:270,all:5954};  // overwritten from Targets sheet at load
+let TARGETS={RJ:null,MP:null,UK:null,CG:null,all:null}; // populated only from the Targets sheet
 
 // ── Donor logframe (Jul '26 column) ──────────────────────────────────────────
 // These are contractual targets from the grant logframe, not programme data:
@@ -1444,7 +1444,8 @@ function renderKPIs(d,f){
   sv('k-cs-op',b.csOp); sv('k-lt-op',b.ltOp);
   sv('k-enr',fmt(d.enr)); sv('k-tot',fmt(d.enr)); sv('k-tot-n','n = '+fmt(d.enr)+' PLT1D');
   const gp=share(d.enr,b.target); sw('k-gauge',gp==null?0:Math.min(gp,100));
-  sv('k-gaugeN',gp==null?'—':gp+'%'); sv('k-target',b.target>0?'of target '+fmt(b.target):'no target set');
+  sv('k-gaugeN',gp==null?'—':gp+'%');
+  sv('k-target',b.target==null?'Target unavailable · check Targets sheet':'of target '+fmt(b.target));
   sv('n-tag','n = '+fmt(d.enr)+' PLT1D');
   sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',sharePct(d.csEnr,d.enr)+' of enrolled · '+b.csOp+' facilities');
   sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',sharePct(d.ltEnr,d.enr)+' of enrolled · '+b.ltOp+' facilities');
@@ -3150,18 +3151,21 @@ function writeSheetCache(key,text){
   return entry;
 }
 async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
-  const cacheKey=SHEET_CACHE_PREFIX+wbId+':'+tabName;
+  // Old Targets responses lost numeric headers in gviz; do not reuse them.
+  const cacheKey=SHEET_CACHE_PREFIX+wbId+':'+tabName+(tabName==='Targets'?':headers_v2':'');
   const cached=forceFresh?null:readSheetCache(cacheKey);
   if(cached){if(onSource)onSource(cached.savedAt,true);return parseCSV(cached.text);}
   // CSV export preserves rows with missing operationalisation dates. The
   // typed gviz feed drops those facility records, breaking stock geography.
+  // It also drops the numeric column headers in Targets.
   const csvTabs={CompleteSupport_Facilities:1253968089,'Enrolled List':0,
     Followup_adherence:733015193,SMBG_Monthly:1620041867,
-    'Hba1c_Baseline/Latest':3339173,'SMBG_Hyper/Hypo':1524331750};
+    'Hba1c_Baseline/Latest':3339173,'SMBG_Hyper/Hypo':1524331750,Targets:1785757412};
   const url=Object.prototype.hasOwnProperty.call(csvTabs,tabName)
     ? 'https://docs.google.com/spreadsheets/d/'+wbId+'/export?format=csv&gid='+csvTabs[tabName]
     : 'https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
-  const fallbackUrl='https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?headers=0&'+
+  const targetHeaders=tabName==='Targets';
+  const fallbackUrl='https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?headers='+(targetHeaders?1:0)+'&'+
     (Object.prototype.hasOwnProperty.call(csvTabs,tabName)?'gid='+csvTabs[tabName]:'sheet='+encodeURIComponent(tabName));
   // Bound both the network request and body download; one retry handles
   // transient Google export delays without leaving the overlay stuck forever.
@@ -3184,9 +3188,10 @@ async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
       const timedOut=controller.signal.aborted;
       // Safari/embedded previews can block a cross-origin CSV fetch or its
       // googleusercontent download redirect. The Google script transport does
-      // not need fetch/CORS access; headers=0 retains the source header row.
+      // not need fetch/CORS access. Targets uses headers=1 and reconstructs
+      // its header row from column labels; other tabs retain headers=0.
       if(err instanceof TypeError){
-        const grid=await fetchGoogleSheetScript(fallbackUrl,tabName);
+        const grid=await fetchGoogleSheetScript(fallbackUrl,tabName,{includeHeaders:targetHeaders});
         const text=grid.map(row=>row.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(',')).join('\n');
         const entry=writeSheetCache(cacheKey,text);
         if(onSource)onSource(entry.savedAt,false);
@@ -3200,7 +3205,7 @@ async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
 }
 
 let googleSheetResponseId=0;
-function fetchGoogleSheetScript(url,tabName){
+function fetchGoogleSheetScript(url,tabName,{includeHeaders=false}={}){
   return new Promise((resolve,reject)=>{
     const callback='t1dSheetResponse_'+Date.now()+'_'+(++googleSheetResponseId);
     const script=document.createElement('script');
@@ -3214,6 +3219,7 @@ function fetchGoogleSheetScript(url,tabName){
         const cell=row.c&&row.c[i];
         return cell==null?'':String(cell.f!=null?cell.f:cell.v==null?'':cell.v);
       }));
+      if(includeHeaders)grid.unshift(table.cols.map(col=>col.label||''));
       cleanup();resolve(grid);
     };
     script.async=true;
@@ -3240,6 +3246,40 @@ function toObjects(grid,expected){
   const hdrs=grid[hr].map(h=>String(h).trim());
   return grid.slice(hr+1).map(r=>{const o={};hdrs.forEach((h,i)=>o[h]=r[i]!==undefined?r[i]:'');return o;})
     .filter(o=>Object.keys(o).some(k=>String(o[k]).trim()!==''));
+}
+
+// Enrolment targets are counts. Reject blanks, formula errors, percentages and
+// partial numbers rather than converting them to zero or guessing a column.
+function targetCount(value){
+  const s=String(value==null?'':value).trim();
+  if(!/^(?:\d+|\d{1,3}(?:,\d{3})+|\d{1,2}(?:,\d{2})+,\d{3})(?:\.0+)?$/.test(s))return null;
+  const n=Number(s.replace(/,/g,''));
+  return Number.isSafeInteger(n)&&n>=0?n:null;
+}
+function parseTargets(grid){
+  const states=['RJ','MP','UK','CG'],targets={RJ:null,MP:null,UK:null,CG:null,all:null};
+  const header=value=>normv(value).replace(/[\u2010-\u2015]/g,'-').replace(/\s+/g,' ');
+  for(let r=0;r<Math.min((grid||[]).length,10);r++){
+    const h=grid[r].map(header),si=h.indexOf('state');
+    let ti=h.indexOf('enrolment target');
+    if(ti<0)ti=h.indexOf('state-level targets');
+    if(si<0||ti<0)continue;
+    const seen=new Set();
+    for(const row of grid.slice(r+1)){
+      const state=normv(row[si]).toUpperCase();
+      if(!states.includes(state))continue; // Total and adherence rows are not state targets.
+      targets[state]=seen.has(state)?null:targetCount(row[ti]);
+      seen.add(state);
+    }
+    // A partial sum would understate the programme target. Zero is valid;
+    // missing/invalid state targets keep the all-state comparison unavailable.
+    if(states.every(state=>targets[state]!=null)){
+      const total=states.reduce((sum,state)=>sum+targets[state],0);
+      if(Number.isSafeInteger(total))targets.all=total;
+    }
+    break;
+  }
+  return targets;
 }
 
 function pctC(n,d){return d>0?Math.round(n/d*100):0;}
@@ -3635,7 +3675,7 @@ function recompute(){
   HBA_ALL_LBLS=hba.allDistLabels; HBA_ALL_LT7=hba.allLt7; HBA_ALL_710=hba.allD710; HBA_ALL_1013=hba.allD1013; HBA_ALL_1316=hba.allD1316; HBA_ALL_GT16=hba.allGt16;
 
   // merged object for renderKPIs (geo + patient)
-  const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]||0;
+  const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]??null;
   CURD={
     states:statesCount, dist, plan:csF.length+lt.facCount, op:csOp+lt.opCount, csOp, ltOp:lt.opCount,
     enr:csEnr+ltEnr, csEnr, ltEnr, target,
@@ -4097,13 +4137,8 @@ async function boot({forceFresh=false}={}){
       load(C.wb1,'Hba1c_Baseline/Latest'),
       load(C.wb1,'Targets')
     ]);
-    // Build per-state targets from the Targets sheet (#6)
-    try{
-      const tgt=toObjects(tgtGrid,['State','State-level targets']);
-      const tm={}; tgt.forEach(t=>{const s=normv(t['State']);const v=num(t['State-level targets']);
-        if(s&&v!=null&&s!=='total'&&!/follow/.test(s)) tm[s.toUpperCase()]=v;});
-      if(Object.keys(tm).length){ tm.all=['RJ','MP','UK','CG'].reduce((a,k)=>a+(tm[k]||0),0); TARGETS=tm; }
-    }catch(e){console.warn('Targets parse failed, using defaults',e);}
+    // Always replace previous targets, including when a refresh returns missing values.
+    TARGETS=parseTargets(tgtGrid);
     // Refill headers gviz dropped on numeric/date/% columns, then parse
     fillRow(enr,    ['Claude_ID','State','Sex','Survival Status'], EN_CANON);
     fillRow(hbaGrid,['Claude_ID','State','Survival Status'],       HBA_CANON);

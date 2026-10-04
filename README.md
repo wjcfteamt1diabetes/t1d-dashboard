@@ -51,6 +51,8 @@ charts instantly.**
 
 Run `python3 -m http.server 8000` from the checkout. Use Node 22+ for the tests:
 `node --test tests/loading.test.cjs` exercises caching and deferred rendering.
+`node --test tests/targets.test.cjs` covers target parsing, state filtering,
+percentages, and refresh behavior.
 The separate donor suite, `node --test tests/donor.test.cjs`, currently has known
 browser-stub and outdated-assertion failures.
 
@@ -68,6 +70,12 @@ browser tab, including page reloads. The header identifies cached data and its
 fetch time. **Refresh Data** bypasses this cache; stock data is refreshed when its
 tab is next opened. If browser storage is unavailable, loading still works with
 an in-memory cache. Cached responses are not a fallback for a failed forced refresh.
+
+Enrolment targets come from the clinical workbook's `Targets` tab, using
+`Enrolment target` (or the legacy `State-level targets` header). The all-state
+target sums RJ, MP, UK, and CG only when all four have valid counts. Missing or
+invalid targets display as unavailable; a valid zero displays as target 0 with
+no percentage. There is no hardcoded enrolment-target fallback.
 
 ---
 
