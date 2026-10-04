@@ -532,6 +532,31 @@ html{scroll-padding-top:calc(var(--filter-bar-height,44px) + var(--tab-bar-heigh
 .peer-camps-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bdr)}
 .peer-camps-row .peer-state{flex:1}.peer-camps-row small{color:var(--tm);font-size:9px}
 @media(max-width:420px){.peer-camps-layout{gap:12px}.peer-camps-chart{width:112px;height:112px;flex-basis:112px}.peer-camps-row{flex-wrap:wrap}.peer-camps-row small{width:100%;padding-left:16px}}
+/* Dashboard motion: short responses to navigation and data changes. */
+@keyframes dashboard-card-in{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@media(prefers-reduced-motion:no-preference){
+  html.dashboard-ready:not(.pdf-exporting) .tc.active .card{
+    animation:dashboard-card-in 260ms cubic-bezier(.2,.7,.3,1) backwards;
+  }
+  html.dashboard-ready:not(.pdf-exporting) .tc.active .card:nth-child(2){animation-delay:25ms}
+  html.dashboard-ready:not(.pdf-exporting) .tc.active .card:nth-child(3){animation-delay:50ms}
+  html.dashboard-ready:not(.pdf-exporting) .tc.active .card:nth-child(n+4){animation-delay:75ms}
+  html:not(.pdf-exporting) .gauge-fl{transition:width 380ms cubic-bezier(.2,.7,.3,1)}
+}
+@media(prefers-reduced-motion:no-preference) and (hover:hover) and (pointer:fine){
+  html:not(.pdf-exporting) .tc .card{transition:translate 180ms ease,box-shadow 180ms ease}
+  html:not(.pdf-exporting) .tc .card:hover{translate:0 -2px;box-shadow:0 4px 14px rgba(15,52,96,.07)}
+}
+html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc *::after{
+  animation:none!important;transition:none!important;translate:none!important;
+}
+@media print{
+  .tc *{animation:none!important;transition:none!important;translate:none!important}
+}
+/* End dashboard motion. */
 </style>
 </head>
 <body>
@@ -1421,7 +1446,22 @@ function getF(){return{
   status:fval('f-status'), sex:fval('f-sex'), age:fval('f-age')
 };}
 function getD(){ return CURD; }
-function sv(id,v){const e=document.getElementById(id);if(e)e.textContent=v;}
+// Values are updated immediately; motion only draws attention to a changed figure.
+const valueAnimations=new WeakMap();
+function animateUpdatedValue(el,previous,next){
+  valueAnimations.get(el)?.cancel();
+  if(previous===next||!previous.trim()||!/[0-9]/.test(next)||typeof el.animate!=='function')return;
+  if(!el.matches('.kv,.dn-hero-val,.dn-tile-v,.gauge-pct')||!el.getClientRects().length)return;
+  if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||document.getElementById('pdf-btn')?.disabled)return;
+  valueAnimations.set(el,el.animate([{backgroundColor:'#dbeafe'},{backgroundColor:'transparent'}],
+    {duration:480,easing:'ease-out'}));
+}
+function sv(id,v){
+  const el=document.getElementById(id);if(!el)return;
+  const previous=el.textContent,next=String(v);
+  el.textContent=next;
+  animateUpdatedValue(el,previous,next);
+}
 function sw(id,w){const e=document.getElementById(id);if(e)e.style.width=w+'%';}
 function fmt(n){return n.toLocaleString();}
 // A ratio with no denominator has no value to show — a dash, never NaN and never
@@ -2181,6 +2221,8 @@ async function exportPDF(){
   const donorNotes=Array.from(document.querySelectorAll('#tab-4 details')).map(el=>({el,open:el.open}));
   const {jsPDF}=window.jspdf;
   let doc=null;
+  document.documentElement.classList.add('pdf-exporting');
+  document.querySelectorAll('.tc').forEach(tab=>tab.getAnimations?.({subtree:true}).forEach(animation=>animation.cancel()));
   try{
     donorNotes.forEach(({el})=>el.open=true);
     if(document.fonts)await document.fonts.ready;
@@ -2223,6 +2265,7 @@ async function exportPDF(){
     donorNotes.forEach(({el,open})=>el.open=open);
     if(origTab>=0) switchTab(origTab);
     Object.values(Chart.instances||{}).forEach(c=>{try{c.resize();}catch(e){}});
+    document.documentElement.classList.remove('pdf-exporting');
     btn.disabled=false; btn.style.opacity=''; btn.textContent=oldLabel;
   }
 }
@@ -4175,6 +4218,7 @@ async function boot({forceFresh=false}={}){
     const el=document.getElementById('hdr-badge');
     if(el)el.textContent=(cachedSheets?'Cached · fetched ':'Updated ')+new Date(oldestFetch).toLocaleString('en-IN',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
     if(ov)ov.style.display='none';
+    document.documentElement?.classList.add('dashboard-ready');
   }catch(err){
     showError(err);
   }finally{
