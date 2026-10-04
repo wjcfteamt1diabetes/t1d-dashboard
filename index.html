@@ -1334,6 +1334,110 @@ Chart.defaults.font.family = 'Trebuchet MS';
 // Render every chart at high resolution (crisp on all displays, incl. the fixed-size donuts)
 Chart.defaults.devicePixelRatio = Math.max(2.5, window.devicePixelRatio || 1);
 
+// Draw the final, exact data immediately, then reveal only the plotted marks.
+// One frame loop serves visible charts; off-screen charts wait until scrolled into view.
+const chartEntrances=new Map();
+let chartEntranceFrame=null,chartEntranceObserver=null;
+const chartMotionPreference=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+function chartMotionAllowed(){
+  return typeof requestAnimationFrame==='function'&&!chartMotionPreference?.matches
+    &&!document.getElementById('pdf-btn')?.disabled&&document.visibilityState!=='hidden';
+}
+function chartCanvasVisible(chart){
+  const canvas=chart.canvas,tab=canvas?.closest?.('.tc');
+  return !!canvas&&(!tab||tab.classList.contains('active'))&&!!canvas.getClientRects?.().length;
+}
+function chartHasData(chart){
+  return chart.data.datasets.some(ds=>ds.data.some(value=>{
+    const n=typeof value==='object'&&value!==null?value.y:value;
+    return n!==null&&n!==undefined&&n!==''&&Number.isFinite(Number(n))&&Number(n)!==0;
+  }));
+}
+function prepareChartEntrance(chart){
+  if(!chartMotionAllowed()||!chartHasData(chart))return;
+  const kind=chart.config.type==='doughnut'||chart.config.type==='pie'?'arc'
+    :chart.config.type==='line'||chart.options.indexAxis==='y'?'line':'bar';
+  chartEntrances.set(chart,{canvas:chart.canvas,kind,progress:0,started:null,duration:kind==='line'?1100:700});
+}
+function removeChartEntrance(chart){
+  const canvas=chartEntrances.get(chart)?.canvas||chart.canvas;
+  chartEntrances.delete(chart);if(canvas)chartEntranceObserver?.unobserve(canvas);
+  if(!Array.from(chartEntrances.values()).some(state=>state.started!==null)&&chartEntranceFrame!==null){
+    cancelAnimationFrame(chartEntranceFrame);chartEntranceFrame=null;
+  }
+}
+function finishChartEntrances(redraw=true){
+  const charts=Array.from(chartEntrances.keys());
+  charts.forEach(chart=>removeChartEntrance(chart));
+  if(redraw)charts.forEach(chart=>chart.draw());
+}
+function tickChartEntrances(time){
+  chartEntranceFrame=null;
+  for(const [chart,state] of chartEntrances){
+    if(state.started===null)continue;
+    if(!chartMotionAllowed()||!chartCanvasVisible(chart)){removeChartEntrance(chart);chart.draw();continue;}
+    if(state.started<0)state.started=time;
+    const elapsed=Math.min(1,(time-state.started)/state.duration);
+    state.progress=state.kind==='line'?elapsed:1-Math.pow(1-elapsed,3);
+    if(elapsed===1)removeChartEntrance(chart);
+    chart.draw();
+  }
+  if(Array.from(chartEntrances.values()).some(state=>state.started!==null))
+    chartEntranceFrame=requestAnimationFrame(tickChartEntrances);
+}
+function startChartEntrance(chart){
+  const state=chartEntrances.get(chart);
+  if(!state||state.started!==null||dashboardLoading||!chartCanvasVisible(chart))return;
+  if(!chartMotionAllowed()){removeChartEntrance(chart);chart.draw();return;}
+  state.started=-1;
+  if(chartEntranceFrame===null)chartEntranceFrame=requestAnimationFrame(tickChartEntrances);
+}
+function queueChartEntrance(chart){
+  if(!chartEntrances.has(chart))return;
+  if(typeof IntersectionObserver==='function'){
+    chartEntranceObserver=chartEntranceObserver||new IntersectionObserver(entries=>{
+      entries.filter(entry=>entry.isIntersecting).forEach(entry=>{
+        for(const candidate of chartEntrances.keys())if(candidate.canvas===entry.target)startChartEntrance(candidate);
+      });
+    },{rootMargin:'60px'});
+    chartEntranceObserver.observe(chart.canvas);
+    const rect=chart.canvas.getBoundingClientRect();
+    if(rect.bottom>=-60&&rect.top<=window.innerHeight+60)startChartEntrance(chart);
+  }else startChartEntrance(chart);
+}
+function resumeVisibleChartEntrances(){
+  for(const chart of chartEntrances.keys())queueChartEntrance(chart);
+}
+const dashboardChartEntrance={
+  id:'dashboard-entrance',
+  beforeInit:prepareChartEntrance,
+  beforeDatasetsDraw(chart){
+    const state=chartEntrances.get(chart),area=chart.chartArea;
+    if(!state||!area)return;
+    const ctx=chart.ctx,p=state.progress;
+    ctx.save();ctx.beginPath();
+    if(state.kind==='arc'){
+      const arc=chart.getDatasetMeta(0).data[0];
+      const x=arc?.x??(area.left+area.right)/2,y=arc?.y??(area.top+area.bottom)/2;
+      ctx.moveTo(x,y);ctx.arc(x,y,Math.hypot(chart.width,chart.height),-Math.PI/2,-Math.PI/2+Math.PI*2*p);ctx.closePath();
+    }else if(state.kind==='line')ctx.rect(0,0,area.left+(area.right-area.left)*p,chart.height);
+    else ctx.rect(0,area.bottom-(area.bottom-area.top)*p,chart.width,chart.height);
+    ctx.clip();chart.$entranceClip=true;
+  },
+  afterDatasetsDraw(chart){if(chart.$entranceClip){chart.ctx.restore();chart.$entranceClip=false;}},
+  afterDestroy:removeChartEntrance
+};
+function createDashboardChart(canvas,config){
+  config.options={...config.options,animation:false};
+  config.plugins=[...(config.plugins||[]),dashboardChartEntrance];
+  const chart=new Chart(canvas,config);
+  queueChartEntrance(chart);
+  return chart;
+}
+chartMotionPreference?.addEventListener?.('change',()=>{if(chartMotionPreference.matches)finishChartEntrances();});
+document.addEventListener?.('visibilitychange',()=>{if(document.visibilityState==='hidden')finishChartEntrances();});
+window.addEventListener?.('beforeprint',()=>finishChartEntrances());
+
 // Inline bar label plugin — draws value text in centre of each bar segment
 Chart.register({
   id:'barLabels',
@@ -1629,7 +1733,7 @@ function renderGender(){
   if(_cg)_cg.destroy();
   const cols=['#0f3460','#2e86de','#94a3b8'];
   const gd=(DATA.demographics.gender||[]).map((g,i)=>({...g,c:cols[i]||'#94a3b8'}));
-  _cg=new Chart(document.getElementById('c-gender'),{type:'doughnut',data:{datasets:[{data:gd.map(g=>g.v),backgroundColor:gd.map(g=>g.c),borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  _cg=createDashboardChart(document.getElementById('c-gender'),{type:'doughnut',data:{datasets:[{data:gd.map(g=>g.v),backgroundColor:gd.map(g=>g.c),borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   if(gd[0]){sv('gender-pct',gd[0].v+'%'); sv('gender-lbl',gd[0].l);}
   document.getElementById('gender-legend').innerHTML=gd.map(g=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${g.c};display:inline-block;margin-right:4px"></span>${g.l}</span><strong>${g.v}%</strong></div>`).join('');
 }
@@ -1686,7 +1790,7 @@ function renderPeerSupport(){
   sv('peer-camps-total',d.reported?fmt(d.total):'—');
   canvas.setAttribute('aria-label',d.reported?'Peer-support camps: '+d.total+'. '+d.groups.map(g=>sln(g.st)+': '+g.camps+' recorded').join('; '):'No peer-support camp counts reported');
   const active=d.groups.filter(g=>g.camps>0);
-  _peerCamps=new Chart(canvas,{type:'doughnut',data:{labels:active.length?active.map(g=>sln(g.st)):['No recorded camps'],datasets:[{data:active.length?active.map(g=>g.camps):[1],backgroundColor:active.length?active.map(g=>DN_COL[g.st]||'#94a3b8'):['#e2e8f0'],borderWidth:2,borderColor:'#fff',_noLabel:true}]},options:{responsive:true,maintainAspectRatio:false,cutout:'74%',plugins:{legend:{display:false},tooltip:{enabled:active.length>0,callbacks:{label:c=>c.label+': '+c.raw+' camps'}}}}});
+  _peerCamps=createDashboardChart(canvas,{type:'doughnut',data:{labels:active.length?active.map(g=>sln(g.st)):['No recorded camps'],datasets:[{data:active.length?active.map(g=>g.camps):[1],backgroundColor:active.length?active.map(g=>DN_COL[g.st]||'#94a3b8'):['#e2e8f0'],borderWidth:2,borderColor:'#fff',_noLabel:true}]},options:{responsive:true,maintainAspectRatio:false,cutout:'74%',plugins:{legend:{display:false},tooltip:{enabled:active.length>0,callbacks:{label:c=>c.label+': '+c.raw+' camps'}}}}});
   document.getElementById('peer-camps-legend').innerHTML=d.groups.map(g=>'<div class="peer-camps-row"><i class="ld" style="background:'+(DN_COL[g.st]||'#94a3b8')+'"></i><span class="peer-state">'+dnEscape(sln(g.st))+'</span><strong>'+ (g.reported?fmt(g.camps):'—')+'</strong></div>').join('')||'<div class="data-pending">No complete-support facilities in this view.</div>';
 }
 
@@ -1738,7 +1842,7 @@ function buildC1(o){
   const lt=LT_CUM.slice(o,o+WIN);
   const cl=CLIN_CS.slice(o,o+WIN);
   const tots=cs.map((v,i)=>v+lt[i]);
-  _c1=new Chart(document.getElementById('c1'),{
+  _c1=createDashboardChart(document.getElementById('c1'),{
     type:'bar',
     data:{labels:lb,datasets:[
       {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16},
@@ -1780,7 +1884,7 @@ function buildC2(o){
   const matched=CS_AVG_N.slice(o,o+WIN);
   const av=CS_AVGCL.slice(o,o+WIN).map((v,i)=>o+i===MONTHS.length-1?null:v);
   const cl=CLIN_CS.slice(o,o+WIN);
-  _c2=new Chart(document.getElementById('c2'),{
+  _c2=createDashboardChart(document.getElementById('c2'),{
     type:'bar',
     data:{labels:lb,datasets:[
       {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_noLabel:true,_pct:false,_fs:8,_minVal:1,_minH:12},
@@ -1818,7 +1922,7 @@ function buildC2(o){
 
 function buildClinOps(){
   if(_cco)_cco.destroy();
-  _cco=new Chart(document.getElementById('c-clinops'),{
+  _cco=createDashboardChart(document.getElementById('c-clinops'),{
     type:'bar',
     data:{labels:CLINOPS_M, datasets:[
       {label:'% functional', data:CLINOPS_V,
@@ -1840,7 +1944,7 @@ function buildOffDays(){
   if(_cod)_cod.destroy();
   const cols=['#dbeafe','#2e86de','#94a3b8','#64748b','#334155'];
   const lbls=['0 offs','1 off','2 offs','3 offs','4 offs'];
-  _cod=new Chart(document.getElementById('c-offdays'),{
+  _cod=createDashboardChart(document.getElementById('c-offdays'),{
     type:'bar',
     data:{labels:CLINOPS_M, datasets:lbls.map((l,i)=>({
       label:l, data:OFFDAYS_D.map(r=>r[i]),
@@ -1897,7 +2001,7 @@ function buildHbaChange(){
     {l:'Worsened 2–4 pp',d:HBA_W2,c:'#d97070', lc:'#fff'},
     {l:'Worsened ≥4 pp',d:HBA_W4,c:'#b33a3a', lc:'#fff'},
   ];
-  _chc=new Chart(document.getElementById('c-hba-change'),{
+  _chc=createDashboardChart(document.getElementById('c-hba-change'),{
     type:'bar',
     data:{labels:HBA_LBLS, datasets:defs.map(d=>({
       label:d.l, data:d.d, backgroundColor:d.c, stack:'s',
@@ -1919,7 +2023,7 @@ function buildHbaChange(){
 function buildHbaAvg(){
   if(_cha)_cha.destroy();
   if(hbaPending('c-hba-avg')) return;
-  _cha=new Chart(document.getElementById('c-hba-avg'),{
+  _cha=createDashboardChart(document.getElementById('c-hba-avg'),{
     type:'bar',
     data:{labels:HBA_LBLS, datasets:[
       {label:'Baseline',      data:HBA_AVG_BASE, backgroundColor:'#7db8e8', _noLabel:true},
@@ -1969,7 +2073,7 @@ function buildHbaAvg(){
 function buildHbaDist(){
   if(window._chdist)window._chdist.destroy();
   if(hbaPending('c-hba-dist')) return;
-  window._chdist=new Chart(document.getElementById('c-hba-dist'),{
+  window._chdist=createDashboardChart(document.getElementById('c-hba-dist'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
       {label:'<7%',  data:HBA_D_LT7,   backgroundColor:'#0f3460', stack:'s', _minVal:3, _minH:14},
@@ -1994,7 +2098,7 @@ function buildHbaDist(){
 function buildHbaLatest(){
   if(window._chlatest)window._chlatest.destroy();
   if(hbaPending('c-hba-latest')) return;
-  window._chlatest=new Chart(document.getElementById('c-hba-latest'),{
+  window._chlatest=createDashboardChart(document.getElementById('c-hba-latest'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
       {label:'Avg HbA1c', data:HBA_LATEST, backgroundColor:'#1a5fa8', borderRadius:3, _noLabel:true}
@@ -2029,7 +2133,7 @@ function buildHbaLatest(){
 function buildHbaAll(){
   if(window._chbaAll) window._chbaAll.destroy();
   if(hbaPending('c-hba-all')) return;
-  window._chbaAll=new Chart(document.getElementById('c-hba-all'),{
+  window._chbaAll=createDashboardChart(document.getElementById('c-hba-all'),{
     type:'bar',
     data:{labels:HBA_ALL_LBLS, datasets:[
       {label:'<7%',   data:HBA_ALL_LT7,  backgroundColor:'#0f3460', stack:'s', _minVal:3, _minH:14},
@@ -2055,7 +2159,7 @@ function buildStaticCharts(){
   // Pilot split donut — reads from DATA.capacity
   if(_cp)_cp.destroy();
   const ps=DATA.capacity.pilotSplit||[54,46];
-  _cp=new Chart(document.getElementById('c-pilot'),{type:'doughnut',data:{datasets:[{data:ps,backgroundColor:['#0f3460','#e2e8f0'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  _cp=createDashboardChart(document.getElementById('c-pilot'),{type:'doughnut',data:{datasets:[{data:ps,backgroundColor:['#0f3460','#e2e8f0'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   sv('pilot-pct',ps[0]+'%');
   document.getElementById('pilot-legend').innerHTML=
     [['Pilot site',ps[0],'#0f3460'],['Non-pilot',ps[1],'#e2e8f0']]
@@ -2066,7 +2170,7 @@ function buildStaticCharts(){
   const spec=DATA.capacity.specialty||[];
   const specCols=['#0f3460','#1a5fa8','#7db8e8','#bfdbfe'];
   if(_cs2)_cs2.destroy();
-  _cs2=new Chart(document.getElementById('c-spec'),{type:'doughnut',data:{datasets:[{data:spec.map(s=>s.v),backgroundColor:specCols,borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  _cs2=createDashboardChart(document.getElementById('c-spec'),{type:'doughnut',data:{datasets:[{data:spec.map(s=>s.v),backgroundColor:specCols,borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   document.getElementById('spec-legend').innerHTML=spec.map((s,i)=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${specCols[i]};display:inline-block;margin-right:4px"></span>${s.l}</span><strong>${s.v}%</strong></div>`).join('');
 
   // FLW cadre donut — reads from DATA.capacity
@@ -2078,7 +2182,7 @@ function buildStaticCharts(){
     document.getElementById('flw-legend').innerHTML='<div class="data-pending" style="font-size:9px">Data pending — convert the Orientation_T1D signs tab to static values</div>';
     return;
   }
-  _cfl=new Chart(document.getElementById('c-flw'),{type:'doughnut',data:{datasets:[{data:flw.map(f=>f.v),backgroundColor:flwCols,borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  _cfl=createDashboardChart(document.getElementById('c-flw'),{type:'doughnut',data:{datasets:[{data:flw.map(f=>f.v),backgroundColor:flwCols,borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   if(flw[0]){sv('flw-donut-pct',flw[0].v+'%'); sv('flw-donut-lbl',flw[0].l);}
   document.getElementById('flw-legend').innerHTML=flw.map((f,i)=>`<div style="display:flex;justify-content:space-between;font-size:10px"><span><span class="ld" style="background:${flwCols[i]};display:inline-block;margin-right:3px"></span>${f.l}</span><strong>${f.v}%</strong></div>`).join('');
 }
@@ -2087,10 +2191,16 @@ function shift(c,d){off[c]=Math.max(0,Math.min(MAX,off[c]+d));c===0?buildC1(off[
 let activeDashboardTab=0, dashboardRenderVersion=0;
 const renderedTabVersions=new Map();
 function switchTab(i){
+  const changed=i!==activeDashboardTab;
+  if(changed)finishChartEntrances();
   activeDashboardTab=i;
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
   document.querySelectorAll('.tc').forEach((c,j)=>c.classList.toggle('active',i===j));
-  return renderActiveTab();
+  const result=renderActiveTab();
+  if(changed)Object.values(Chart.instances||{}).filter(chart=>chartCanvasVisible(chart)).forEach(chart=>{
+    if(!chartEntrances.has(chart)){prepareChartEntrance(chart);queueChartEntrance(chart);}
+  });
+  return result;
 }
 
 // Sticky offsets follow filter wrapping and source-warning height changes.
@@ -2206,6 +2316,7 @@ async function exportPDF(){
   if(btn.disabled)return;
   const oldLabel=btn.textContent;
   btn.disabled=true;btn.style.opacity='.6';btn.textContent='Preparing PDF…';
+  finishChartEntrances();
   try{await ensurePDFLibraries();}
   catch(err){
     btn.disabled=false;btn.style.opacity='';btn.textContent=oldLabel;
@@ -2231,7 +2342,9 @@ async function exportPDF(){
       if(await switchTab(tabs[k].i)===false)throw new Error('Stock data could not be loaded. Retry the Stock Levels tab before exporting.');
       // Let the now-visible tab lay out and its Chart.js canvases resize to full size.
       Object.values(Chart.instances||{}).forEach(c=>{try{c.resize();}catch(e){}});
-      await new Promise(r=>setTimeout(r,450));
+      finishChartEntrances();
+      Object.values(Chart.instances||{}).forEach(chart=>{chart.stop();chart.update('none');});
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       const el=document.getElementById('tab-'+tabs[k].i);
       const canvas=await html2canvas(el,{scale:2,useCORS:true,backgroundColor:'#f0f4fa',
         windowWidth:1420,scrollX:0,scrollY:0});
@@ -2389,7 +2502,7 @@ function buildFupChart(o){
   // attendance rather than as a month that is three weeks in.
   const tgt=win.map(r=>r.partial?null:75);
 
-  _cfup=new Chart(document.getElementById('c-fup'),{
+  _cfup=createDashboardChart(document.getElementById('c-fup'),{
     type:'bar',
     data:{labels:labs, datasets:[
       {label:'% Follow-up', data:vals, stack:'s',
@@ -2434,7 +2547,7 @@ function buildAge(){
   if(window._cage) window._cage.destroy();
   const ag=DATA.demographics.age||[];
   const agCols=['#7db8e8','#1a5fa8','#0f3460'];
-  window._cage=new Chart(document.getElementById('c-age'),{type:'doughnut',
+  window._cage=createDashboardChart(document.getElementById('c-age'),{type:'doughnut',
     data:{datasets:[{data:ag.map(a=>a.v),backgroundColor:agCols,borderWidth:0}]},
     options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   const adults=ag.find(a=>a.l.includes('18'))||ag[ag.length-1]||{l:'Adults',v:''};
@@ -2754,7 +2867,7 @@ function buildDonorGrowth(){
   if(lg) lg.innerHTML=g.series.map(sr=>'<span><span class="ld" style="background:'+(DN_COL[sr.st]||'#94a3b8')+'"></span>'+sr.name+'</span>').join('');
   const tots=g.labels.map((_,i)=>g.series.reduce((a,sr)=>a+(sr.data[i]||0),0));
   const pad={left:6,right:6,top:14,bottom:0};
-  _dnGrowth=new Chart(document.getElementById('dn-growth'),{
+  _dnGrowth=createDashboardChart(document.getElementById('dn-growth'),{
     type:'line',
     data:{labels:g.labels,datasets:g.series.map(sr=>({
       label:sr.name,data:sr.data,backgroundColor:DN_COL[sr.st]||'#94a3b8',stack:'s',
@@ -2767,7 +2880,7 @@ function buildDonorGrowth(){
       scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{color:'#506779',font:{size:9},maxRotation:0,autoSkip:true}},
               y:{title:{display:true,text:'People enrolled (count)',color:'#506779',font:{size:11}},afterFit(axis){axis.width=64;},stacked:true,display:true,beginAtZero:true,ticks:{color:'#506779',font:{size:10}},grid:{display:false},border:{display:false},suggestedMax:tots.length?Math.max(...tots)*1.12:undefined}}}
   });
-  _dnClinics=new Chart(document.getElementById('dn-clinics'),{
+  _dnClinics=createDashboardChart(document.getElementById('dn-clinics'),{
     type:'line',
     data:{labels:g.labels,datasets:[{label:'Documented clinic activity',data:g.clinics,
       borderColor:'#0077a8',backgroundColor:'rgba(0,119,168,0.12)',fill:true,stepped:'before',
@@ -2872,6 +2985,7 @@ function renderLtExclusionNote(){
 }
 
 function applyFilters(){
+  finishChartEntrances(false);
   safe('populateFilters', populateFilters);   // cascade dropdown options to current selection
   recompute();
   dashboardRenderVersion++;
@@ -3004,7 +3118,7 @@ function renderStockTrend(){
   }));
   const ctx=document.getElementById('c-stk-trend'); if(!ctx) return;
   if(_cstk){_cstk.destroy();_cstk=null;}
-  _cstk=new Chart(ctx,{type:'line',data:{labels,datasets},options:{
+  _cstk=createDashboardChart(ctx,{type:'line',data:{labels,datasets},options:{
     responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y+'%')}}},
     scales:{
@@ -4151,6 +4265,7 @@ function ensureStockLoaded(forceFresh=stockForceFresh){
 let dashboardLoading=false,dashboardLoadVersion=0;
 async function boot({forceFresh=false}={}){
   if(dashboardLoading)return;
+  finishChartEntrances();
   dashboardLoading=true;
   const loadVersion=++dashboardLoadVersion;
   const ov=document.getElementById('overlay');
@@ -4224,6 +4339,7 @@ async function boot({forceFresh=false}={}){
   }finally{
     dashboardLoading=false;
     if(btn){btn.disabled=false;btn.textContent='↺ Refresh Data';btn.style.opacity='1';}
+    resumeVisibleChartEntrances();
   }
 }
 

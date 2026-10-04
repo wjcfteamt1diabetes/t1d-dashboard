@@ -53,6 +53,8 @@ Run `python3 -m http.server 8000` from the checkout. Use Node 22+ for the tests:
 `node --test tests/loading.test.cjs` exercises caching and deferred rendering.
 `node --test tests/targets.test.cjs` covers target parsing, state filtering,
 percentages, and refresh behavior.
+`node --test tests/chart-motion.test.cjs` covers graph reveals, rapid filter
+changes, visibility, reduced motion, and static PDF capture.
 The separate donor suite, `node --test tests/donor.test.cjs`, currently has known
 browser-stub and outdated-assertion failures.
 
@@ -76,6 +78,13 @@ Enrolment targets come from the clinical workbook's `Targets` tab, using
 target sums RJ, MP, UK, and CG only when all four have valid counts. Missing or
 invalid targets display as unavailable; a valid zero displays as target 0 with
 no percentage. There is no hardcoded enrolment-target fallback.
+
+Charts reveal their plotted marks on initial load, tab changes, and filter
+changes: lines trace across in 1.1 seconds, bars rise and doughnuts sweep in
+0.7 seconds. Values and axes use the final data immediately. One animation
+loop serves visible charts; off-screen charts wait until visible. Rapid
+changes cancel the previous reveal. Reduced-motion preferences, empty or
+all-zero datasets, and PDF/print output use complete static charts.
 
 ---
 
