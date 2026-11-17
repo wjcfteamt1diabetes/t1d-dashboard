@@ -7,7 +7,8 @@ const source=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8')
   .match(/<script>([\s\S]*?)<\/script>/)[1].split('// ── Passcode gate')[0];
 // Aggregate-only fixture matching the verified public Targets CSV export.
 const targetCSV='State,Follow-up adherence,Enrolment target\nCG,75%,700\nMP,75%,"1,082"\nUK,75%,602\nRJ,75%,"4,000"\nTotal,75%,"6,384"';
-const emptyTargets={RJ:null,MP:null,UK:null,CG:null,all:null};
+const emptyTargets={RJ:null,MP:null,UK:null,CG:null,GA:null,all:null};
+const goaTargetCSV=targetCSV.replace('Total,75%,"6,384"','GA,75%,400\nTotal,75%,"6,784"');
 function setup(){
   const elements={},storage=new Map(),requests=[],errors=[];
   const context=vm.createContext({AbortController,setTimeout,clearTimeout,
@@ -29,14 +30,14 @@ function setup(){
 
 test('actual target header reads counts rather than the adjacent adherence percentage',()=>{
   const {plain}=setup();
-  assert.deepEqual(plain('parseTargets(parseCSV(targetCSV))'),{RJ:4000,MP:1082,UK:602,CG:700,all:6384});
+  assert.deepEqual(plain('parseTargets(parseCSV(targetCSV))'),{RJ:4000,MP:1082,UK:602,CG:700,GA:null,all:6384});
 });
 
 test('legacy headers, title rows, reordered columns, casing and whitespace are supported',()=>{
   const {plain}=setup();
   assert.deepEqual(plain(`parseTargets([['Programme targets'],[' State–level   targets ',' STATE '],
     ['4,000',' rj '],['1,082','mp'],['602','UK'],['700','CG'],['999999','Total'],['75%','Follow-up adherence']])`),
-    {RJ:4000,MP:1082,UK:602,CG:700,all:6384});
+    {RJ:4000,MP:1082,UK:602,CG:700,GA:null,all:6384});
 });
 
 test('the current header takes precedence if both target columns exist',()=>{
@@ -74,6 +75,30 @@ test('invalid and duplicate state rows invalidate that state and the overall sum
     assert.equal(run('TARGETS.RJ'),4000);
   }
   assert.equal(run(`parseTargets([['State','Enrolment target'],['RJ','9007199254740991'],['MP','1'],['UK','0'],['CG','0']]).all`),null);
+});
+
+test('a Goa target of 400 is included when present and a missing Goa row keeps the four-state total',()=>{
+  const {run,plain,context,elements}=setup();
+  context.goaTargetCSV=goaTargetCSV;
+  assert.deepEqual(plain('parseTargets(parseCSV(goaTargetCSV))'),{RJ:4000,MP:1082,UK:602,CG:700,GA:400,all:6784});
+  assert.equal(run(`parseTargets(parseCSV(goaTargetCSV.replace('6,784','6,384'))).all`),6784,'state rows win over a stale Total cell');
+  assert.equal(run(`parseTargets([['State','Enrolment target'],['RJ','4000'],['MP','1082'],['UK','602'],['CG','700'],['GA','']]).all`),null);
+  assert.equal(run(`parseTargets([['State','Enrolment target'],['RJ','4000'],['MP','1082'],['UK','602'],['CG','700'],['Goa','400']]).GA`),400);
+  assert.equal(run(`parseTargets([['State','Enrolment target'],['RJ','4000'],['MP','1082'],['UK','602'],['CG','700'],['Goa','400']]).all`),6784);
+  run('TARGETS=parseTargets(parseCSV(goaTargetCSV));');
+  elements['f-state']={value:'GA',textContent:'',style:{}};
+  run('recompute();renderKPIs(CURD,getF());');
+  assert.equal(run('CURD.target'),400);assert.equal(run('CURD.enr'),0);
+  assert.equal(elements['k-gaugeN'].textContent,'0%');
+  assert.equal(elements['k-target'].textContent,'of target 400');
+  assert.equal(elements['k-states-n'].textContent,'Goa');
+  elements['f-state']={value:'RJ',textContent:'',style:{}};
+  run('recompute();renderKPIs(CURD,getF());');
+  assert.equal(run('CURD.target'),4000);assert.equal(elements['k-target'].textContent,'of target 4,000');
+  elements['f-state']={value:'all',textContent:'',style:{}};
+  run('recompute();renderKPIs(CURD,getF());');
+  assert.equal(run('CURD.target'),6784);assert.equal(elements['k-target'].textContent,'of target 6,784');
+  assert.equal(elements['k-states-n'].textContent,'RJ · MP · UK · CG · GA');
 });
 
 test('all-state and each state recompute use the sheet target and render the correct percentages',()=>{

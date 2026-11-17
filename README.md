@@ -1,6 +1,6 @@
 # T1D Program Dashboard
 
-A live program-monitoring dashboard for India's Type 1 Diabetes programme across Rajasthan, Madhya Pradesh, Uttarakhand, and Chhattisgarh.
+A live program-monitoring dashboard for India's Type 1 Diabetes programme across Rajasthan, Madhya Pradesh, Uttarakhand, Chhattisgarh, and Goa.
 
 Maintenance runbook: [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
@@ -77,9 +77,14 @@ an in-memory cache. Cached responses are not a fallback for a failed forced refr
 
 Enrolment targets come from the clinical workbook's `Targets` tab, using
 `Enrolment target` (or the legacy `State-level targets` header). The all-state
-target sums RJ, MP, UK, and CG only when all four have valid counts. Missing or
-invalid targets display as unavailable; a valid zero displays as target 0 with
-no percentage. There is no hardcoded enrolment-target fallback.
+target sums RJ, MP, UK, CG, and GA when those rows have valid counts. A missing
+Goa row does not blank the total: it falls back to the sum of the states that
+are present, as long as RJ, MP, UK, and CG are valid. A present but invalid
+state row, or a missing row for one of those four, leaves the all-state target
+unavailable. Missing or invalid targets display as unavailable; a valid zero
+displays as target 0 with no percentage. There is no hardcoded enrolment-target
+fallback. Goa's programme enrolment target is 400 once the Targets tab has its
+GA row.
 
 Charts reveal their plotted marks on initial load, tab changes, and filter
 changes: lines trace across in 1.1 seconds, bars rise and doughnuts sweep in

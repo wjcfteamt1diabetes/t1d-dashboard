@@ -32,7 +32,7 @@ by the programme; see [`capture-and-responsibility.md`](capture-and-responsibili
 | `date_of_birth` | Date of birth. Send `birth_year_month` (`YYYY-MM`) instead if DOB is treated as identifying. | date `YYYY-MM-DD` | M | DEO · at registration, from an ID or immunisation card | Plausible against `age_at_enrolment_years` |
 | `age_at_enrolment_years` | Age in completed years on `enrolment_date` | integer 0–99 | M | Derived — send if already computed | Consistent with DOB ± 1 |
 | `age_as_of_date` | Date on which any age in this file was computed | date | M | Extract process | = extract date |
-| `residence_state` | State of residence | text, programme state list | M | DEO · at registration | One of the four programme states |
+| `residence_state` | State of residence | text, programme state list | M | DEO · at registration | One of RJ, MP, UK, CG, GA |
 | `residence_district` | District of residence | text, district master | M | DEO · at registration | Use one spelling per district across all files — `Jaipur I`/`Jaipur II` versus `Jaipur` already breaks the district count |
 | `residence_block` | Block / taluka of residence | text | M | DEO · at registration | — |
 | `residence_type` | Rural or urban residence | `Rural` \| `Urban` \| `Peri-urban` \| `UNK` | M | DEO · at registration | Say which definition is used (census, facility judgement, ward vs panchayat) |
