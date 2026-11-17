@@ -44,8 +44,8 @@ SOFTWARE.
   --t1:#0f172a;--t2:#475569;--tm:#94a3b8;
   --fn:'Trebuchet MS','Segoe UI',Tahoma,Arial,sans-serif;
   /* HbA1c colors */
-  --hI4:#14532d;--hI2:#16a34a;--hIL:#86efac;--hNC:#94a3b8;
-  --hWL:#fda4af;--hW2:#f87171;--hW4:#dc2626;
+  --hI4:#064e3b;--hI2:#059669;--hIL:#6ee7b7;--hNC:#334155;
+  --hWL:#fdba74;--hW2:#ea580c;--hW4:#9f1239;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:13px}
@@ -137,15 +137,15 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .pl-sm{font-size:10px;color:var(--t2);width:62px;flex-shrink:0;text-align:right}
 .pb{flex:1;height:15px;background:#f1f5f9;border-radius:3px;overflow:hidden;position:relative}
 .pf{height:100%;border-radius:3px;display:flex;align-items:center;padding-right:5px;justify-content:flex-end}
-.pv{font-size:9px;font-weight:700;color:#fff}
+.pv{font-size:11px;font-weight:700;color:#fff}
 
 /* Stacked HTML bars */
-.sbar{display:flex;height:20px;border-radius:3px;overflow:hidden;margin-bottom:3px}
-.ss{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff}
+.sbar{display:flex;height:22px;border-radius:3px;overflow:hidden;margin-bottom:3px}
+.ss{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
 
-.lg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:7px;font-size:10px;color:var(--t2)}
+.lg{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:7px;font-size:11px;color:var(--t2)}
 .lg span{display:flex;align-items:center;gap:3px}
-.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+.ld{width:10px;height:10px;border-radius:2px;flex-shrink:0;display:inline-block}
 .ldc{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 
 .gauge-row{display:flex;align-items:center;gap:7px;margin-top:4px}
@@ -167,10 +167,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 /* MOM row shared style */
 .mom-row{display:flex;align-items:center;gap:4px;margin-bottom:8px}
-.mom-lbl{font-size:9px;color:var(--t2);width:48px;flex-shrink:0;font-weight:500}
-.mom-n{font-size:9px;color:var(--tm);width:56px;flex-shrink:0;text-align:right}
-.mom-bar{flex:1;height:14px;background:#f1f5f9;border-radius:2px;overflow:hidden;display:flex}
-.mom-seg{display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700}
+.mom-lbl{font-size:11px;color:var(--t2);width:54px;flex-shrink:0;font-weight:500}
+.mom-n{font-size:11px;color:var(--tm);width:72px;flex-shrink:0;text-align:right}
+.mom-bar{flex:1;height:18px;background:#f1f5f9;border-radius:2px;overflow:hidden;display:flex}
+.mom-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
 
 /* Info tab table */
 .info-table{width:100%;border-collapse:collapse;font-size:10px}
@@ -186,6 +186,20 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 
 /* Data-pending stub */
 .data-pending{font-size:10px;color:var(--tm);font-style:normal;background:#f8fafc;border:1px dashed var(--bdr);border-radius:5px;padding:8px 12px;text-align:center;margin-top:4px}
+.data-pending-chart{margin-top:10px;padding:18px 16px;background:#f8fafc;border:1.5px dashed #64748b;border-radius:8px;color:#334155;font-size:12px;font-weight:600;line-height:1.45}
+.data-pending-kicker{display:block;margin-bottom:3px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1a5fa8}
+.share-callout{font-size:11px;line-height:1.45;color:#334155;margin-top:6px}
+.bar-out{position:absolute;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:#0f172a;white-space:nowrap;line-height:1}
+#peer-support-card{max-width:560px}
+.stk-heat{width:100%;border-collapse:separate;border-spacing:3px;table-layout:fixed;font-size:11px}
+.stk-heat-name{width:30%}
+.stk-heat th{font-size:11px;font-weight:600;color:#334155}
+.stk-heat th.stk-heat-fac{text-align:left;padding:2px 8px;text-transform:uppercase;letter-spacing:.03em;position:sticky;left:0;background:#fff;z-index:2}
+.stk-heat th.stk-heat-m{height:58px;vertical-align:bottom;padding:0 1px;font-weight:600}
+.stk-heat th.stk-heat-m span{display:inline-block;writing-mode:vertical-rl;transform:rotate(180deg);font-size:11px;line-height:1.05;white-space:nowrap}
+.stk-heat td.stk-heat-fac{font-size:12px;color:#0f172a;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:sticky;left:0;background:#fff;z-index:1}
+.stk-heat td.stk-heat-cell{height:18px;border-radius:2px}
+.stk-heat td.stk-heat-state{font-size:12px;font-weight:700;padding:8px 8px 3px;background:#eef2f7;position:sticky;left:0}
 .sum-note{font-size:8px;color:var(--tm);margin-top:6px;line-height:1.3}
 /* Passcode gate */
 #gate{position:fixed;inset:0;z-index:10000;background:var(--b1);display:flex;align-items:center;justify-content:center;font-family:var(--fn)}
@@ -240,7 +254,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-pill{font-size:10px;font-weight:600;padding:4px 8px;border-radius:4px}
 #tab-4 .dn-meter{height:6px;min-width:0;background:#cbdde8;border-radius:2px;margin-top:auto}
 #tab-4 .dn-meter-fill{border-radius:2px}
-#tab-4 .dn-meter-cap{font-size:10px;line-height:1.5;margin-top:5px;color:#506779}
+#tab-4 .dn-meter-cap{font-size:11px;line-height:1.5;margin-top:5px;color:#506779}
 #tab-4 .dn-notes{margin-top:14px;color:#506779;font-size:11px;line-height:1.7}
 #tab-4 .dn-notes summary{cursor:pointer;color:#0077a8;font-weight:600;padding:4px 0;width:fit-content}
 #tab-4 .dn-notes summary:focus-visible{outline:2px solid #0077a8;outline-offset:4px}
@@ -271,7 +285,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-cadre-name{font-size:12px;color:#506779}
 #tab-4 .dn-cadre-total{font-size:30px;font-weight:650;color:#153b56;letter-spacing:-.8px;margin-top:4px}
 #tab-4 .dn-cadre-bar{display:flex;height:18px;border-radius:3px;overflow:hidden;gap:2px;margin:8px 0 10px}
-#tab-4 .dn-cadre-counts{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:11px;line-height:1.6;color:#274e68}
+#tab-4 .dn-cadre-counts{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;line-height:1.55;color:#274e68}
 #tab-4 .dn-cadre-counts span{display:inline-flex;gap:5px;align-items:center}
 @media(max-width:1000px){#tab-4 .dn-score-grid,#tab-4 .dn-reach-grid{grid-template-columns:repeat(2,minmax(0,1fr))}#tab-4 .dn-hero-side{grid-template-columns:repeat(2,minmax(0,1fr))}#tab-4 .dn-hero-side>div:nth-child(4){border-bottom:1px solid #cbdde8}#tab-4 .g2{grid-template-columns:1fr}}
 @media(max-width:600px){#tab-4{padding:20px 12px}#tab-4 h2{font-size:38px}#tab-4 .dn-heading{display:block}#tab-4 .dn-report-tag{display:inline-block;margin-top:12px}#tab-4 .dn-hero{grid-template-columns:1fr}#tab-4 .dn-hero-fig{border-right:0;border-bottom:1px solid #cbdde8;padding:24px}#tab-4 .dn-hero-val{font-size:62px}#tab-4 .dn-hero-side{padding:8px}#tab-4 .dn-score-summary{grid-template-columns:1fr;gap:8px;padding:16px}#tab-4 .dn-score-grid{gap:8px}#tab-4 .dn-score-card{padding:12px}#tab-4 .dn-score-top{align-items:start;flex-direction:column}#tab-4 .dn-score-title{min-height:58px}#tab-4 .card{padding:16px}#tab-4 .dn-hero-card{padding:0}#tab-4 .dn-cadre-row{grid-template-columns:1fr;gap:6px}#tab-4 .dn-db-row{grid-template-columns:62px 1fr 90px;gap:6px}#tab-4 .dn-db-axis{margin-left:68px;margin-right:96px}#tab-4 .dn-state-card{padding:14px}#tab-4 .dn-state-foot{gap:8px;flex-wrap:wrap}}
@@ -376,7 +390,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-slope-grid{gap:8px 14px}
 #tab-4 .dn-slope-card{padding:8px 0}
 #tab-4 .dn-slope-title{margin-bottom:3px}
-#tab-4 .dn-slope-card svg{height:120px}
+#tab-4 .dn-slope-card svg{height:156px}
 #tab-4 .dn-cadre-row{gap:16px;padding:10px 0}
 #tab-4 .dn-cadre-total{font-size:26px}
 #tab-4 .dn-cadre-bar{margin:4px 0 6px}
@@ -400,7 +414,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-map-state-button[aria-pressed="true"]{border-color:var(--state-color);background:#dcecf5}
 #tab-4 .dn-map-state-button:hover,#tab-4 .dn-map-state-button:focus-visible{outline:2px solid var(--state-color);outline-offset:2px}
 #tab-4 .dn-map-state-button h3{font-size:12px;font-weight:500;margin:0 0 8px}
-#tab-4 .dn-map-state-button strong{display:block;font-size:26px;color:var(--state-color);margin-bottom:2px}
+#tab-4 .dn-map-state-button strong{display:block;font-size:26px;color:var(--state-ink,var(--state-color));margin-bottom:2px}
 #tab-4 .dn-map-state-button small{display:block;color:#506779;font-size:10px;line-height:1.5}
 #tab-4 .dn-map-foot{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:11px;color:#506779;margin-top:10px}
 #tab-4 .dn-map-foot b{color:#153b56}
@@ -409,7 +423,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 #tab-4 .dn-plan-table th:first-child{text-align:left}
 #tab-4 .dn-plan-table td{padding:11px 7px;border-bottom:1px solid #cbdde8;text-align:right;color:#0077a8;font-size:23px;font-variant-numeric:tabular-nums}
 #tab-4 .dn-plan-table td:first-child{text-align:left;font-size:11px;color:#274e68}
-#tab-4 .dn-map-key{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:10px;color:#506779}
+#tab-4 .dn-map-key{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:11px;color:#506779}
+#tab-4 .dn-map-key span{display:inline-flex;align-items:center;gap:5px}
 @media(max-width:1050px){#tab-4 .dn-map-layout{grid-template-columns:1fr 1fr}#tab-4 .dn-map-plan{grid-column:1/-1}#tab-4 .dn-plan-table td{padding:7px}}
 @media(max-width:650px){#tab-4 .dn-map-layout{grid-template-columns:1fr}#tab-4 .dn-map-plan{grid-column:auto}#tab-4 .dn-map-panel svg{height:300px}}
 
@@ -706,7 +721,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 </div>
 
 <div class="sl">Enrolment trends</div>
-<div class="g2">
+<div class="g2" style="align-items:start">
   <div class="card">
     <div class="ct">Cumulative enrolments & complete-support clinics</div><div class="cs" id="c1-clinics"></div>
     <div class="lg">
@@ -719,7 +734,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
       <span class="nl" id="nl1"></span>
       <button class="nb" id="n1" onclick="shift(0,1)">Forward →</button>
     </div>
-    <div style="height:170px;position:relative"><canvas id="c1"></canvas></div>
+    <div style="height:240px;position:relative"><canvas id="c1"></canvas></div>
     <span id="c1-note" hidden></span>
   </div>
   <div class="card">
@@ -734,7 +749,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
       <span class="nl" id="nl2"></span>
       <button class="nb" id="n2" onclick="shift(1,1)">Forward →</button>
     </div>
-    <div style="height:170px;position:relative"><canvas id="c2"></canvas></div>
+    <div style="height:210px;position:relative"><canvas id="c2"></canvas></div>
     <span id="c2-note" hidden></span>
   </div>
 </div>
@@ -782,7 +797,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="ct">Insulin regimen — basal-bolus</div>
     <div class="cs">Complete-support patients on basal-bolus · target: 100%</div>
     <div style="margin-top:10px">
-      <div class="pr"><div class="pl">Baseline</div><div class="pb"><div class="pf" id="ins-base" style="width:44%;background:#7db8e8"><span class="pv" id="ins-base-v">44%</span></div></div></div>
+      <div class="pr"><div class="pl">Baseline</div><div class="pb"><div class="pf" id="ins-base" style="width:44%;background:#7db8e8"><span class="pv" id="ins-base-v" style="color:#0f172a">44%</span></div></div></div>
       <div class="pr"><div class="pl">Current</div><div class="pb"><div class="pf" id="ins-last" style="width:96%;background:var(--b1)"><span class="pv" id="ins-last-v">96%</span></div></div></div>
       <div style="font-size:9px;color:var(--b2);font-weight:700;margin-top:4px" id="ins-delta">▲ +52pp improvement from baseline</div>
     </div>
@@ -804,11 +819,11 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   <div class="card">
     <div class="ct">SMBG frequency per day</div>
     <div class="cs">Patients with SMBG data · last row: enrolled &gt;3 months</div>
-    <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:var(--g4)"></span>Not monitoring</span>
-      <span><span class="ld" style="background:var(--b4)"></span>&lt;3 per day</span>
-      <span><span class="ld" style="background:var(--b2)"></span>3–4 per day</span>
-      <span><span class="ld" style="background:var(--b1)"></span>&gt;4 per day</span>
+    <div class="lg" id="smbg-lg" style="margin-top:4px">
+      <span><span class="ld" style="background:#475569"></span>Not monitoring</span>
+      <span><span class="ld" style="background:#93c5fd"></span>&lt;3 per day</span>
+      <span><span class="ld" style="background:#1d4ed8"></span>3–4 per day</span>
+      <span><span class="ld" style="background:#1e1b4b"></span>&gt;4 per day</span>
     </div>
     <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:5px">All enrolled · monthly</div>
     <div id="smbg-mom"></div>
@@ -820,12 +835,12 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="ct">Hyper/hypoglycaemic readings — last 3 months</div>
     <div class="cs">Share of visits with SMBG data, by reading band</div>
     <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:4px">% Hyper readings</div>
-    <div class="lg" style="margin-bottom:4px">
-      <span><span class="ld" style="background:var(--b2)"></span>0–20%</span>
-      <span><span class="ld" style="background:var(--b4)"></span>20–40%</span>
-      <span><span class="ld" style="background:var(--g4)"></span>40–60%</span>
-      <span><span class="ld" style="background:var(--g2)"></span>60–80%</span>
-      <span><span class="ld" style="background:var(--g1)"></span>80–100%</span>
+    <div class="lg" id="hyper-lg" style="margin-bottom:4px">
+      <span><span class="ld" style="background:#0c4a6e"></span>0–20%</span>
+      <span><span class="ld" style="background:#0284c7"></span>20–40%</span>
+      <span><span class="ld" style="background:#38bdf8"></span>40–60%</span>
+      <span><span class="ld" style="background:#d97706"></span>60–80%</span>
+      <span><span class="ld" style="background:#9f1239"></span>80–100%</span>
     </div>
     <div id="hyper-rows"></div>
     <hr class="row-div">
@@ -858,11 +873,11 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="ct">Monthly clinic off days</div>
     <div class="cs">Reporting clinics, by days closed</div>
     <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:#dbeafe"></span>0 offs</span>
-      <span><span class="ld" style="background:var(--b3)"></span>1 off</span>
-      <span><span class="ld" style="background:var(--g3)"></span>2 offs</span>
-      <span><span class="ld" style="background:var(--g2)"></span>3 offs</span>
-      <span><span class="ld" style="background:var(--g1)"></span>4 offs</span>
+      <span><span class="ld" style="background:#7eb3ea"></span>0 offs</span>
+      <span><span class="ld" style="background:#1d4ed8"></span>1 off</span>
+      <span><span class="ld" style="background:#64748b"></span>2 offs</span>
+      <span><span class="ld" style="background:#334155"></span>3 offs</span>
+      <span><span class="ld" style="background:#0f172a"></span>4 offs</span>
     </div>
     <div style="height:135px;position:relative"><canvas id="c-offdays"></canvas></div>
   </div>
@@ -944,12 +959,12 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   <div class="card">
     <div class="ct">Latest HbA1c distribution — enrolled ≥3 months</div>
     <div class="cs">Latest post-enrolment reading, by time since enrolment</div>
-    <div class="lg" style="margin-top:4px">
-      <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
-      <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
-      <span><span class="ld" style="background:#7db8e8"></span>10–13%</span>
-      <span><span class="ld" style="background:#94a3b8"></span>13–16%</span>
-      <span><span class="ld" style="background:#e2e8f0"></span>&gt;16%</span>
+    <div class="lg" id="hba-dist-lg" style="margin-top:4px">
+      <span><span class="ld" style="background:#0c3c6e"></span>&lt;7%</span>
+      <span><span class="ld" style="background:#1d6cb5"></span>7–10%</span>
+      <span><span class="ld" style="background:#7eb6e0"></span>10–13%</span>
+      <span><span class="ld" style="background:#64748b"></span>13–16%</span>
+      <span><span class="ld" style="background:#9a3412"></span>&gt;16%</span>
     </div>
     <div style="height:200px;position:relative"><canvas id="c-hba-dist"></canvas></div>
   </div>
@@ -964,12 +979,12 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="card" style="max-width:680px">
   <div class="ct">Current HbA1c levels by time since enrolment</div>
   <div class="cs">Latest recorded HbA1c, by time since enrolment · all patients with data</div>
-  <div class="lg" style="margin-top:4px">
-    <span><span class="ld" style="background:#0f3460"></span>&lt;7%</span>
-    <span><span class="ld" style="background:#1a5fa8"></span>7–10%</span>
-    <span><span class="ld" style="background:#7db8e8"></span>10–13%</span>
-    <span><span class="ld" style="background:#94a3b8"></span>13–16%</span>
-    <span><span class="ld" style="background:#e2e8f0"></span>&gt;16%</span>
+  <div class="lg" id="hba-all-lg" style="margin-top:4px">
+    <span><span class="ld" style="background:#0c3c6e"></span>&lt;7%</span>
+    <span><span class="ld" style="background:#1d6cb5"></span>7–10%</span>
+    <span><span class="ld" style="background:#7eb6e0"></span>10–13%</span>
+    <span><span class="ld" style="background:#64748b"></span>13–16%</span>
+    <span><span class="ld" style="background:#9a3412"></span>&gt;16%</span>
   </div>
   <div style="height:190px;position:relative;margin-top:6px"><canvas id="c-hba-all"></canvas></div>
 </div>
@@ -1047,7 +1062,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="cs">Doctors with recorded test scores</div>
     <div style="margin-top:10px">
       <div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:6px" id="ppdr-lbl">Doctors (n=387)</div>
-      <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-dr-pre" style="width:62%;background:var(--g3)"><span class="pv" id="ppdr-pre">62%</span></div></div></div>
+      <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-dr-pre" style="width:62%;background:var(--g3)"><span class="pv" id="ppdr-pre" style="color:#0f172a">62%</span></div></div></div>
       <div class="pr"><div class="pl">Post-test</div><div class="pb"><div class="pf" id="pf-dr-post" style="width:81%;background:var(--b1)"><span class="pv" id="ppdr-post">81%</span></div></div></div>
       <div style="font-size:9px;color:var(--b2);font-weight:700;margin-top:4px" id="ppdr-imp">+19pp improvement</div>
     </div>
@@ -1072,7 +1087,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="cs">Nurses with recorded test scores</div>
     <div style="margin-top:8px">
       <div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:6px" id="ppnr-lbl">Staff nurses (n=60)</div>
-      <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-nr-pre" style="width:79%;background:var(--g3)"><span class="pv" id="ppnr-pre">79%</span></div></div></div>
+      <div class="pr"><div class="pl">Pre-test</div><div class="pb"><div class="pf" id="pf-nr-pre" style="width:79%;background:var(--g3)"><span class="pv" id="ppnr-pre" style="color:#0f172a">79%</span></div></div></div>
       <div class="pr"><div class="pl">Post-test</div><div class="pb"><div class="pf" id="pf-nr-post" style="width:87%;background:var(--b1)"><span class="pv" id="ppnr-post">87%</span></div></div></div>
       <div style="font-size:9px;color:var(--b2);font-weight:700;margin-top:4px" id="ppnr-imp">+8pp improvement</div>
     </div>
@@ -1089,19 +1104,19 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   <div class="card cao">
     <div class="ct">Doctor mentoring sessions</div>
     <div class="cs">Doctor mentoring sessions</div>
-    <div class="data-pending">No source data available</div>
+    <div class="data-pending data-pending-chart" role="status"><span class="data-pending-kicker">Data pending</span>No source data available</div>
   </div>
   <div class="card cao">
     <div class="ct">Nurse mentoring sessions</div>
     <div class="cs">Nurse mentoring sessions</div>
-    <div class="data-pending">No source data available</div>
+    <div class="data-pending data-pending-chart" role="status"><span class="data-pending-kicker">Data pending</span>No source data available</div>
   </div>
 </div>
 <div style="margin-bottom:7px">
   <div class="card" style="max-width:50%">
     <div class="ct">Mentoring sessions by month</div>
     <div class="cs">Count of sessions by cadre</div>
-    <div class="data-pending">No source data available</div>
+    <div class="data-pending data-pending-chart" role="status"><span class="data-pending-kicker">Data pending</span>No source data available</div>
   </div>
 </div>
 
@@ -1116,7 +1131,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="ct">FLW orientation attendances</div>
     <div class="cs">Attendances · repeat participation may be included</div>
     <div class="kv b" id="flw-hr">12,817</div>
-    <div class="ks">ANM · ASHA · BCM · BPM · CHO…</div>
+    <div class="ks" id="flw-cadres" style="line-height:1.45"></div>
   </div>
   <div class="card">
     <div class="ct">Pilot districts with ≥1 session</div>
@@ -1182,9 +1197,9 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   <div class="ct">Average demand coverage</div>
   <div class="cs">Demand met across reporting facilities · one line per commodity</div>
   <div class="lg">
-    <span><span class="ld" style="background:var(--b1)"></span>Glucometer</span>
-    <span><span class="ld" style="background:var(--b2)"></span>Glucostrips</span>
-    <span><span class="ld" style="background:var(--b3)"></span>Long-acting insulin</span>
+    <span><span class="ld" style="background:#0f3460"></span>Glucometer</span>
+    <span><span class="ld" style="background:#0f766e"></span>Glucostrips</span>
+    <span><span class="ld" style="background:#2563eb"></span>Long-acting insulin</span>
     <span><span class="ld" style="background:#d97706"></span>Short-acting insulin</span>
   </div>
   <div style="height:230px;position:relative;margin-top:6px"><canvas id="c-stk-trend"></canvas></div>
@@ -1252,9 +1267,9 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   <div class="ct">Cumulative PLT1D enrolled, by state</div>
   <div class="cs">Both support models · month-end totals; current month to date</div>
   <div class="lg" id="dn-growth-lg"></div>
-  <div style="height:190px;position:relative"><canvas id="dn-growth"></canvas></div>
+  <div style="height:220px;position:relative"><canvas id="dn-growth"></canvas></div>
   <div class="dn-panel-lbl">Documented clinic activity — incomplete history</div>
-  <div style="height:110px;position:relative"><canvas id="dn-clinics"></canvas></div>
+  <div style="height:150px;position:relative"><canvas id="dn-clinics"></canvas></div>
 </div>
 
 <div class="fnote" id="dn-growth-note"></div>
@@ -1331,8 +1346,92 @@ window.DASHBOARD_CONFIG=window.DASHBOARD_CONFIG||{
   wb2:'1zObGfUcDOszt82v9V65OAK7yV5McXzeusFx5XqU_d6M'
 };
 Chart.defaults.font.family = 'Trebuchet MS';
+Chart.defaults.font.size = 11;
 // Render every chart at high resolution (crisp on all displays, incl. the fixed-size donuts)
 Chart.defaults.devicePixelRatio = Math.max(2.5, window.devicePixelRatio || 1);
+
+function hexRgb(hex){
+  const h=String(hex||'').replace('#','').trim();
+  if(!/^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/.test(h)) return null;
+  const full=h.length===3?h.split('').map(c=>c+c).join(''):h;
+  const n=parseInt(full,16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function relLum(hex){
+  const rgb=hexRgb(hex); if(!rgb) return 0;
+  const lin=rgb.map(v=>{const c=v/255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4);});
+  return 0.2126*lin[0]+0.7152*lin[1]+0.0722*lin[2];
+}
+// Text colour that stays readable on a filled segment.
+function inkOn(hex){
+  const L=relLum(hex);
+  return (1.05/(L+0.05))>=((L+0.05)/0.05)?'#ffffff':'#0f172a';
+}
+// Same hue, darkened until it can be read on a white card.
+function readableOnWhite(hex){
+  let cur=hex;
+  for(let i=0;i<8;i++){
+    if(1.05/(relLum(cur)+0.05)>=4.5) return cur;
+    const rgb=hexRgb(cur); if(!rgb) return '#153b56';
+    cur='#'+rgb.map(v=>Math.max(0,Math.round(v*0.78)).toString(16).padStart(2,'0')).join('');
+  }
+  return cur;
+}
+function paintChartLabel(ctx,text,x,y,fill,baseline,halo){
+  ctx.save();
+  ctx.font='bold 11px Trebuchet MS,sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline=baseline||'middle';
+  if(halo){
+    ctx.lineJoin='round'; ctx.lineWidth=4; ctx.strokeStyle='#ffffff';
+    ctx.strokeText(text,x,y);
+  }
+  ctx.fillStyle=fill;
+  ctx.fillText(text,x,y);
+  ctx.restore();
+}
+function smallShareText(columns,series,min){
+  const bits=[];
+  series.forEach(s=>{
+    const small=[];
+    (s.d||[]).forEach((v,i)=>{
+      if(!(v>0)||v>=min) return;
+      const lb=columns[i];
+      const name=Array.isArray(lb)?lb.filter(Boolean).join(' '):String(lb||'');
+      small.push(name+' '+v+'%');
+    });
+    if(small.length) bits.push(s.l+': '+small.join(', '));
+  });
+  return bits.length?'Too small to label on the bar — '+bits.join(' · ')+'.':'';
+}
+function setShareNote(anchorId,text){
+  const anchor=document.getElementById(anchorId); if(!anchor) return;
+  const host=anchor.closest('.card')||anchor.parentElement;
+  let note=host.querySelector('.share-callout[data-for="'+anchorId+'"]');
+  if(!text){ if(note) note.remove(); return; }
+  if(!note){
+    note=document.createElement('div');
+    note.className='share-callout';
+    note.dataset.for=anchorId;
+    const wrap=anchor.parentElement;
+    (wrap&&wrap!==host?wrap:anchor).insertAdjacentElement('afterend', note);
+  }
+  note.textContent=text;
+}
+const SMBG_COLS=['#475569','#93c5fd','#1d4ed8','#1e1b4b'];
+const SMBG_NAMES=['Not monitoring','<3 per day','3–4 per day','>4 per day'];
+const HH_COLS=['#0c4a6e','#0284c7','#38bdf8','#d97706','#9f1239'];
+const HH_NAMES=['0–20%','20–40%','40–60%','60–80%','80–100%'];
+const HBA_BAND_COLS=['#0c3c6e','#1d6cb5','#7eb6e0','#64748b','#9a3412'];
+const HBA_CHG_COLS=[
+  {l:'Improved ≥4 pp', c:'#064e3b'},
+  {l:'Improved 2–4 pp', c:'#059669'},
+  {l:'Improved <2 pp', c:'#6ee7b7'},
+  {l:'No change', c:'#334155'},
+  {l:'Worsened <2 pp', c:'#fdba74'},
+  {l:'Worsened 2–4 pp', c:'#ea580c'},
+  {l:'Worsened ≥4 pp', c:'#9f1239'}
+];
 
 // Draw the final, exact data immediately, then reveal only the plotted marks.
 // One frame loop serves visible charts; off-screen charts wait until scrolled into view.
@@ -1438,63 +1537,102 @@ chartMotionPreference?.addEventListener?.('change',()=>{if(chartMotionPreference
 document.addEventListener?.('visibilitychange',()=>{if(document.visibilityState==='hidden')finishChartEntrances();});
 window.addEventListener?.('beforeprint',()=>finishChartEntrances());
 
-// Inline bar label plugin — draws value text in centre of each bar segment
+// Inline bar label plugin — draws value text in centre of each bar segment.
+// Combo charts keep the line value above the point and the bar total inside
+// the stack, so the line does not cut through the total.
 Chart.register({
   id:'barLabels',
   afterDatasetsDraw(chart){
     try{
       const ctx=chart.ctx;
+      const combo=!!(chart.config.options._averageLabels||chart.config.options._clinicLabels);
       chart.data.datasets.forEach((ds,i)=>{
         if(ds.type==='line'||ds._noLabel) return;
         const meta=chart.getDatasetMeta(i);
         if(!meta||meta.hidden) return;
+        const bg=ds.backgroundColor;
         meta.data.forEach((bar,j)=>{
           const v=ds.data[j];
-          if(!v&&v!==0) return;
-          const bh=Math.abs((bar.base!=null?bar.base:bar.y)-bar.y);
-          if(bh<(ds._minH||14)) return;
-          if(v<(ds._minVal!==undefined?ds._minVal:3)) return;
-          const lbl=ds._pct===false?String(v):v+'%';
-          const midY=bar.y+bh/2;
+          if(v==null||v==='') return;
+          const top=Math.min(bar.y, bar.base!=null?bar.base:bar.y);
+          const bottom=Math.max(bar.y, bar.base!=null?bar.base:bar.y);
+          const bh=bottom-top;
+          const minH=ds._minH||16;
+          if(bh<minH) return;
+          if(!ds._staticLabel && v<(ds._minVal!==undefined?ds._minVal:8)) return;
+          const lbl=ds._staticLabel||(ds._pct===false?Number(v).toLocaleString():v+'%');
+          const color=Array.isArray(bg)?bg[j]:bg;
+          const fill=ds._lc||inkOn(color);
           ctx.save();
-          ctx.font=`bold ${ds._fs||8.5}px Trebuchet MS,sans-serif`;
-          ctx.textAlign='center';ctx.textBaseline='middle';
-          ctx.fillStyle=ds._lc||'rgba(255,255,255,0.92)';
-          ctx.fillText(lbl,bar.x,midY);
+          ctx.font=`bold ${ds._fs||11}px Trebuchet MS,sans-serif`;
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillStyle=fill;
+          if(ds._staticLabel && ctx.measureText(lbl).width>bar.width-4){
+            const parts=String(lbl).split(' ');
+            ctx.fillText(parts[0], bar.x, top+bh/2-7);
+            ctx.fillText(parts.slice(1).join(' ')||parts[0], bar.x, top+bh/2+7);
+          } else {
+            const y=ds._labelAt==='end'?bottom-9:top+bh/2;
+            ctx.fillText(lbl, bar.x, y);
+          }
           ctx.restore();
         });
       });
-      // Sum-on-top for charts that opt in
-      const absolute=chart.config.options._absoluteTotals;
-      if(chart.config.options._averageLabels||chart.config.options._clinicLabels){
+      if(combo){
         chart.data.datasets.forEach((ds,i)=>{
           if(ds.type!=='line') return;
           const meta=chart.getDatasetMeta(i);
           ds.data.forEach((v,j)=>{
-            if(v==null||!Number.isFinite(v)||meta.hidden) return;
+            if(v==null||!Number.isFinite(v)||!meta||meta.hidden) return;
             const point=meta.data[j];
-            ctx.save();ctx.font='bold 9px Trebuchet MS,sans-serif';
-            ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#a95400';
-            ctx.fillText(chart.config.options._clinicLabels?v.toLocaleString():v.toFixed(1),point.x,point.y-(chart.config.options._clinicLabels?30:7));ctx.restore();
+            const text=chart.config.options._clinicLabels?Number(v).toLocaleString():Number(v).toFixed(1);
+            paintChartLabel(ctx, text, point.x, point.y-18, '#9a4d00', 'bottom', true);
           });
         });
       }
+      const absolute=chart.config.options._absoluteTotals;
       if(!chart._sumOnTop&&!absolute) return;
       const n=chart.data.labels.length;
       const sums=Array(n).fill(0);
       chart.data.datasets.forEach(ds=>{
         if(ds.type==='line') return;
-        ds.data.forEach((v,j)=>{sums[j]+=(v||0);});
+        ds.data.forEach((v,j)=>{sums[j]+=(Number(v)||0);});
       });
       const lastDs=chart.data.datasets.filter(d=>d.type!=='line');
       if(!lastDs.length) return;
-      const lastMeta=chart.getDatasetMeta(chart.data.datasets.indexOf(lastDs[lastDs.length-1]));
+      const last=lastDs[lastDs.length-1];
+      const lastMeta=chart.getDatasetMeta(chart.data.datasets.indexOf(last));
+      const lineDs=chart.data.datasets.find(d=>d.type==='line');
+      const lineMeta=lineDs?chart.getDatasetMeta(chart.data.datasets.indexOf(lineDs)):null;
+      const bg=last.backgroundColor;
       sums.forEach((s,j)=>{
         if(!s) return;
         const bar=lastMeta.data[j];
-        ctx.save();ctx.font='bold 9px Trebuchet MS,sans-serif';
-        ctx.textAlign='center';ctx.textBaseline='bottom';
-        ctx.fillStyle='#0f172a';ctx.fillText(absolute?s.toLocaleString():s+'%',bar.x,bar.y-3);ctx.restore();
+        const text=absolute?s.toLocaleString():s+'%';
+        const top=Math.min(bar.y, bar.base!=null?bar.base:bar.y);
+        const bottom=Math.max(bar.y, bar.base!=null?bar.base:bar.y);
+        const bh=bottom-top;
+        const color=Array.isArray(bg)?bg[j]:bg;
+        const fill=last._lc||inkOn(color);
+        if(chart.config.options._averageLabels && bh>=18){
+          ctx.save();
+          ctx.font='bold 11px Trebuchet MS,sans-serif';
+          ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillStyle=fill;
+          ctx.fillText(text, bar.x, top+Math.max(bh/2, 12));
+          ctx.restore();
+        } else if(chart.config.options._clinicLabels){
+          // Keep the total off the clinic line. When the line sits on the bar,
+          // the total moves above the line label instead of through it.
+          const lineVal=lineDs?lineDs.data[j]:null;
+          const linePt=lineMeta&&lineVal!=null&&Number.isFinite(Number(lineVal))?lineMeta.data[j]:null;
+          const lineLabelY=linePt?linePt.y-18:null;
+          let totalY=top-14;
+          if(lineLabelY!=null && Math.abs(totalY-lineLabelY)<24) totalY=lineLabelY-26;
+          paintChartLabel(ctx, text, bar.x, totalY, '#0f172a', 'bottom', true);
+        } else {
+          paintChartLabel(ctx, text, bar.x, top-2, '#0f172a', 'bottom', true);
+        }
       });
     }catch(e){/* silent */}
   }
@@ -1623,46 +1761,50 @@ function renderKPIs(d,f){
   else{sv('hba1c-fac','—'); sv('hba1c-fac-n','HbA1c-availability column not found');}
   if(b.flwOk){
     sv('flw-ses',b.flwSes); sv('flw-hr',fmt(b.flwHr));
+    sv('flw-cadres',b.flwCadres||'');
     sv('flw-dist',b.flwDist); sv('flw-dist-s','of '+b.flwTotDist+' pilot districts');
     const fp=share(b.flwDist,b.flwTotDist); sw('flw-gauge',fp||0); sv('flw-pct',fp==null?'—':fp+'%');
   }else{
-    sv('flw-ses','—'); sv('flw-hr','—'); sv('flw-dist','—');
+    sv('flw-ses','—'); sv('flw-hr','—'); sv('flw-cadres',''); sv('flw-dist','—');
     sv('flw-dist-s','Data pending — Orientation tab returns formula errors'); sw('flw-gauge',0); sv('flw-pct','');
   }
   sv('spec-total',b.drTr);
 }
 
+function momSegs(values, cols, names){
+  return values.map((v,i)=>`<div class="mom-seg" title="${names[i]}: ${v}%" style="width:${v}%;background:${cols[i]};color:${inkOn(cols[i])}">${v>=8?v+'%':''}</div>`).join('');
+}
 function renderSmbg(){
   const el=document.getElementById('smbg-mom'); el.innerHTML='';
-  const cols=['#e2e8f0','#7db8e8','#1a5fa8','#0f3460'], txts=['#64748b','#fff','#fff','#fff'];
+  const lg=document.getElementById('smbg-lg');
+  if(lg) lg.innerHTML=SMBG_NAMES.map((n,i)=>`<span><span class="ld" style="background:${SMBG_COLS[i]}"></span>${n}</span>`).join('');
   SMBG_MOM.forEach(r=>{
     const d=document.createElement('div'); d.className='mom-row';
-    let segs='';
-    r.v.forEach((v,i)=>{segs+=`<div class="mom-seg" style="width:${v}%;background:${cols[i]};color:${txts[i]}">${v>8?v+'%':''}</div>`;});
-    d.innerHTML=`<span class="mom-lbl">${r.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${r.n.toLocaleString()}</span>`;
+    d.innerHTML=`<span class="mom-lbl">${r.m}</span><div class="mom-bar">${momSegs(r.v,SMBG_COLS,SMBG_NAMES)}</div><span class="mom-n">n = ${r.n.toLocaleString()}</span>`;
     el.appendChild(d);
   });
   const el2=document.getElementById('smbg-last'); el2.innerHTML='';
   const d=document.createElement('div'); d.className='mom-row';
-  let segs='';
-  SMBG_LAST.v.forEach((v,i)=>{segs+=`<div class="mom-seg" style="width:${v}%;background:${cols[i]};color:${txts[i]};font-weight:700">${v>8?v+'%':''}</div>`;});
-  d.innerHTML=`<span class="mom-lbl" style="font-weight:700">${SMBG_LAST.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${SMBG_LAST.n.toLocaleString()}</span>`;
+  d.innerHTML=`<span class="mom-lbl" style="font-weight:700">${SMBG_LAST.m}</span><div class="mom-bar">${momSegs(SMBG_LAST.v,SMBG_COLS,SMBG_NAMES)}</div><span class="mom-n">n = ${SMBG_LAST.n.toLocaleString()}</span>`;
   el2.appendChild(d);
+  const rows=SMBG_MOM.concat([SMBG_LAST]);
+  setShareNote('smbg-last', smallShareText(rows.map(r=>r.m), SMBG_NAMES.map((l,i)=>({l,d:rows.map(r=>r.v[i])})), 8));
 }
 
 function renderHyperHypo(){
-  const cols=['#1a5fa8','#7db8e8','#e2e8f0','#64748b','#334155'];
-  const txts=['#fff','#fff','#64748b','#fff','#fff'];
+  const lg=document.getElementById('hyper-lg');
+  if(lg) lg.innerHTML=HH_NAMES.map((n,i)=>`<span><span class="ld" style="background:${HH_COLS[i]}"></span>${n}</span>`).join('');
   ['hyper-rows','hypo-rows'].forEach((elId,isHypo)=>{
     const el=document.getElementById(elId); el.innerHTML='';
     const data=isHypo?HYPO_D:HYPER_D;
     HYPER_M.forEach((m,i)=>{
       const d=document.createElement('div'); d.className='mom-row';
-      let segs='';
-      data[i].forEach((v,j)=>{segs+=`<div class="mom-seg" style="width:${v}%;background:${cols[j]};color:${txts[j]}">${v>8?v+'%':''}</div>`;});
+      const segs=momSegs(data[i],HH_COLS,HH_NAMES);
       d.innerHTML=m.n?`<span class="mom-lbl">${m.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${m.n.toLocaleString()}</span>`:`<span class="mom-lbl">${m.m}</span><div class="mom-bar">No data reported</div><span class="mom-n">n = 0</span>`;
       el.appendChild(d);
     });
+    const rows=HYPER_M.map((m,i)=>({m:m.m,v:data[i]}));
+    setShareNote(elId, smallShareText(rows.map(r=>r.m), HH_NAMES.map((l,i)=>({l:(isHypo?'Hypo ':'')+l,d:rows.map(r=>r.v[i])})), 8));
   });
 }
 
@@ -1706,7 +1848,7 @@ function renderPTF(){
   // rounded, and the 2px spacers come out of the total instead of overflowing it.
   const bar=secs.map((x,i)=>
     `<div title="${x}: ${fmt(bySec[x])} PLT1D (${pts[i]}%)" style="flex:${bySec[x]} 1 0;background:${PTF_SEC_COL[x]};border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden">`
-    +`<span style="font-size:10px;font-weight:700;color:${PTF_SEC_INK[x]}">${pts[i]>=8?pts[i]+'%':''}</span></div>`).join('');
+    +`<span style="font-size:11px;font-weight:700;color:${PTF_SEC_INK[x]}">${pts[i]>=6?pts[i]+'%':''}</span></div>`).join('');
 
   const legend=secs.map((x,i)=>
     `<div style="display:flex;align-items:center;gap:6px;font-size:10px">`
@@ -1745,23 +1887,29 @@ function renderTDD(){
   const ageKey={ped:'Pediatric 0–17',adu:'Adults ≥18'};
   const all=DATA.insulin.tdd||[];
   const grps=f.age!=='all'?all.filter(g=>g.grp===ageKey[f.age]):all;
+  const bands=[{k:'below',l:'Below range',c:'#64748b'},{k:'inRange',l:'In range',c:'#1a5fa8'},{k:'above',l:'Above range',c:'#cbd5e1'}];
   grps.forEach(g=>{
     const div=document.createElement('div');
     const bg=bgMap[g.grp]||'#f8fafc';
-    div.innerHTML=`<div style="font-size:10px;font-weight:600;color:var(--t2);margin-bottom:3px;background:${bg};padding:2px 6px;border-radius:3px">${g.grp} <span style="font-weight:400;color:var(--tm)">(n=${fmt(g.n)})</span></div>
-    <div class="sbar"><div class="ss" style="width:${g.below}%;background:#64748b">${g.below}%</div><div class="ss" style="width:${g.inRange}%;background:var(--b2)">${g.inRange}%</div><div class="ss" style="width:${g.above}%;background:var(--g4);color:#334155">${g.above}%</div></div>`;
+    const parts=bands.map(b=>({l:b.l,c:b.c,v:g[b.k]}));
+    const bar=parts.map(p=>`<div class="ss" title="${p.l}: ${p.v}%" style="width:${p.v}%;background:${p.c};color:${inkOn(p.c)}">${p.v>=8?p.v+'%':''}</div>`).join('');
+    const small=parts.filter(p=>p.v>0&&p.v<8).map(p=>p.l+' '+p.v+'%').join(' · ');
+    div.innerHTML=`<div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:3px;background:${bg};padding:2px 6px;border-radius:3px">${g.grp} <span style="font-weight:400;color:var(--tm)">(n=${fmt(g.n)})</span></div>
+    <div class="sbar">${bar}</div>`+(small?`<div class="share-callout">${small}</div>`:'');
     el.appendChild(div);
   });
 }
 
 function renderBasal(){
   const el=document.getElementById('basal-bars'); el.innerHTML='';
-  const colMap={'<20%':'#64748b','20–30%':'#94a3b8','30–50%':'#1a5fa8','50–60%':'#7db8e8','> 60%':'#94a3b8'};
+  const colMap={'<20%':'#64748b','20–30%':'#94a3b8','30–50%':'#1a5fa8','50–60%':'#7eb6e0','> 60%':'#94a3b8'};
   (DATA.insulin.basal||[]).forEach(item=>{
     const d=document.createElement('div'); d.className='pr';
     if(item.ideal)d.style.cssText='border-left:2px solid var(--b2);padding-left:4px;margin-bottom:9px';
     const c=colMap[item.l]||'#94a3b8';
-    d.innerHTML=`<div class="pl-sm">${item.l}${item.ideal?' ★':''}</div><div class="pb"><div class="pf" style="width:${item.v}%;background:${c};min-width:24px"><span class="pv">${item.v}%</span></div></div>`;
+    const narrow=item.v<12;
+    const ink=inkOn(c);
+    d.innerHTML=`<div class="pl-sm">${item.l}${item.ideal?' ★':''}</div><div class="pb" style="overflow:visible"><div class="pf" style="width:${Math.max(item.v,0)}%;background:${c};min-width:0">${narrow?'':`<span class="pv" style="color:${ink}">${item.v}%</span>`}</div>${narrow?`<span class="bar-out" style="left:calc(${item.v}% + 6px)">${item.v}%</span>`:''}</div>`;
     el.appendChild(d);
   });
 }
@@ -1791,14 +1939,16 @@ function renderPeerSupport(){
   canvas.setAttribute('aria-label',d.reported?'Peer-support camps: '+d.total+'. '+d.groups.map(g=>sln(g.st)+': '+g.camps+' recorded').join('; '):'No peer-support camp counts reported');
   const active=d.groups.filter(g=>g.camps>0);
   _peerCamps=createDashboardChart(canvas,{type:'doughnut',data:{labels:active.length?active.map(g=>sln(g.st)):['No recorded camps'],datasets:[{data:active.length?active.map(g=>g.camps):[1],backgroundColor:active.length?active.map(g=>DN_COL[g.st]||'#94a3b8'):['#e2e8f0'],borderWidth:2,borderColor:'#fff',_noLabel:true}]},options:{responsive:true,maintainAspectRatio:false,cutout:'74%',plugins:{legend:{display:false},tooltip:{enabled:active.length>0,callbacks:{label:c=>c.label+': '+c.raw+' camps'}}}}});
-  document.getElementById('peer-camps-legend').innerHTML=d.groups.map(g=>'<div class="peer-camps-row"><i class="ld" style="background:'+(DN_COL[g.st]||'#94a3b8')+'"></i><span class="peer-state">'+dnEscape(sln(g.st))+'</span><strong>'+ (g.reported?fmt(g.camps):'—')+'</strong></div>').join('')||'<div class="data-pending">No complete-support facilities in this view.</div>';
+  const listed=d.groups.filter(g=>g.reported>0);
+  document.getElementById('peer-camps-legend').innerHTML=listed.map(g=>'<div class="peer-camps-row"><i class="ld" style="background:'+(DN_COL[g.st]||'#94a3b8')+'"></i><span class="peer-state">'+dnEscape(sln(g.st))+'</span><strong>'+fmt(g.camps)+'</strong></div>').join('')||'<div class="data-pending">No complete-support facilities in this view.</div>';
 }
 
 function renderTrainedStaff(){
   const el=document.getElementById('trained-bars'); el.innerHTML='';
   (TRAINED_STAFF||[]).forEach(r=>{
     const d=document.createElement('div'); d.className='pr';
-    d.innerHTML=`<div class="pl" style="width:170px;white-space:normal;font-size:9px;line-height:1.3">${r.lbl}</div><div class="pb"><div class="pf" style="width:${r.v}%;background:var(--b2)"><span class="pv">${r.v}%</span></div></div>`;
+    const narrow=r.v<16;
+    d.innerHTML=`<div class="pl" style="width:170px;white-space:normal;font-size:11px;line-height:1.3">${r.lbl}</div><div class="pb" style="overflow:visible"><div class="pf" style="width:${r.v}%;background:var(--b2);min-width:0">${narrow?'':`<span class="pv">${r.v}%</span>`}</div>${narrow?`<span class="bar-out" style="left:calc(${r.v}% + 6px)">${r.v}%</span>`:''}</div>`;
     el.appendChild(d);
   });
 }
@@ -1846,11 +1996,11 @@ function buildC1(o){
     type:'bar',
     data:{labels:lb,datasets:[
       {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16},
-      {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_fs:8,_lc:'#0f172a',_minVal:1,_minH:16},
+      {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_lc:'#0f172a',_minVal:1,_minH:16},
       {label:'CS clinics open',data:cl,type:'line',order:-1,borderColor:'#d97706',backgroundColor:'transparent',borderWidth:3.5,pointRadius:4.5,pointHoverRadius:6,pointBorderColor:'#fff',pointBorderWidth:1.5,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
     options:{
-      responsive:true, maintainAspectRatio:false, _absoluteTotals:true, _clinicLabels:true, layout:{padding:{top:22}},
+      responsive:true, maintainAspectRatio:false, _absoluteTotals:true, _clinicLabels:true, layout:{padding:{top:48}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
         label(ctx){
           if(ctx.dataset.type==='line') return ' Complete-support clinics open: '+ctx.parsed.y;
@@ -1860,9 +2010,9 @@ function buildC1(o){
         afterBody(items){const gap=Math.max(0,CURD.enr-(CS_CUM.at(-1)||0)-(LT_CUM.at(-1)||0));return ['Total enrolled: '+tots[items[0].dataIndex].toLocaleString(),...(gap?[gap+' enrolments outside dated history']:[])];}
       }}},
       scales:{
-        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
-        y:{stacked:true,beginAtZero:true,grid:{display:false},border:{display:false},title:{display:true,text:'People enrolled',font:{size:9}},ticks:{font:{size:8},maxTicksLimit:4},suggestedMax:tots.length?Math.max(...tots)*1.2:undefined},
-        y2:{position:'right',beginAtZero:true,title:{display:true,text:'Complete-support clinics',font:{size:9}},ticks:{precision:0,font:{size:8},maxTicksLimit:4},grid:{display:false},border:{display:false}}
+        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11},color:'#334155'}},
+        y:{stacked:true,beginAtZero:true,grid:{display:false},border:{display:false},title:{display:true,text:'People enrolled',font:{size:11},color:'#334155'},ticks:{font:{size:11},color:'#334155',maxTicksLimit:4},suggestedMax:tots.length?Math.max(...tots)*1.2:undefined},
+        y2:{position:'right',beginAtZero:true,title:{display:true,text:'Complete-support clinics',font:{size:11},color:'#334155'},ticks:{precision:0,font:{size:11},color:'#334155',maxTicksLimit:4},grid:{display:false},border:{display:false}}
       }
     }
   });
@@ -1892,7 +2042,7 @@ function buildC2(o){
        borderWidth:3.5,pointRadius:4.5,pointHoverRadius:6,pointBorderColor:'#fff',pointBorderWidth:1.5,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
     ]},
     options:{
-      responsive:true, maintainAspectRatio:false, _absoluteTotals:true, _averageLabels:true, layout:{padding:{top:20}},
+      responsive:true, maintainAspectRatio:false, _absoluteTotals:true, _averageLabels:true, layout:{padding:{top:22}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
         label(ctx){
           if(ctx.dataset.label==='Enrolments/open CS clinic'){
@@ -1905,9 +2055,9 @@ function buildC2(o){
         afterBody(items){return ['Total new enrolments: '+tot[items[0].dataIndex].toLocaleString()];}
       }}},
       scales:{
-        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
-        y:{stacked:true,beginAtZero:true,grid:{display:false},border:{display:false},title:{display:true,text:'New enrolments',font:{size:9}},ticks:{font:{size:8},maxTicksLimit:4},suggestedMax:tot.length?Math.max(...tot)*1.2:undefined},
-        y2:{position:'right',beginAtZero:true,title:{display:true,text:'Enrolments/open CS clinic',font:{size:9}},ticks:{font:{size:8},maxTicksLimit:4,callback(v){return Number(v).toFixed(1);}},grid:{drawOnChartArea:false}}
+        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11},color:'#334155'}},
+        y:{stacked:true,beginAtZero:true,grid:{display:false},border:{display:false},title:{display:true,text:'New enrolments',font:{size:11},color:'#334155'},ticks:{font:{size:11},color:'#334155',maxTicksLimit:4},suggestedMax:tot.length?Math.max(...tot)*1.2:undefined},
+        y2:{position:'right',beginAtZero:true,title:{display:true,text:'Enrolments/open CS clinic',font:{size:11},color:'#334155'},ticks:{font:{size:11},color:'#334155',maxTicksLimit:4,callback(v){return Number(v).toFixed(1);}},grid:{drawOnChartArea:false}}
       }
     }
   });
@@ -1933,7 +2083,7 @@ function buildClinOps(){
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
-        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11},color:'#334155'}},
         y:{display:false, min:0, max:100}
       }
     }
@@ -1942,19 +2092,19 @@ function buildClinOps(){
 
 function buildOffDays(){
   if(_cod)_cod.destroy();
-  const cols=['#dbeafe','#2e86de','#94a3b8','#64748b','#334155'];
+  const cols=['#7eb3ea','#1d4ed8','#64748b','#334155','#0f172a'];
   const lbls=['0 offs','1 off','2 offs','3 offs','4 offs'];
   _cod=createDashboardChart(document.getElementById('c-offdays'),{
     type:'bar',
     data:{labels:CLINOPS_M, datasets:lbls.map((l,i)=>({
       label:l, data:OFFDAYS_D.map(r=>r[i]),
-      backgroundColor:cols[i], stack:'s', _minVal:8, _minH:12, _fs:8, _lc:i===0?'#334155':'#fff'
+      backgroundColor:cols[i], stack:'s', _minVal:8, _minH:16, _lc:inkOn(cols[i])
     }))},
     options:{
       responsive:true, maintainAspectRatio:false, layout:{padding:{top:16}},
       plugins:{legend:{display:false}},
       scales:{
-        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:9}}},
+        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11},color:'#334155'}},
         y:{stacked:true, display:false}
       }
     }
@@ -1991,33 +2141,27 @@ function hbaPending(canvasId){
 
 function buildHbaChange(){
   if(_chc)_chc.destroy();
-  if(hbaPending('c-hba-change')) return;
-  const defs=[
-    {l:'Improved ≥4 pp', d:HBA_I4, c:'#276749', lc:'#fff'},
-    {l:'Improved 2–4 pp', d:HBA_I2, c:'#52a87a', lc:'#fff'},
-    {l:'Improved <2 pp',  d:HBA_IL, c:'#a8d5b5', lc:'#0f172a'},
-    {l:'No change',     d:HBA_NC, c:'#b0bac9', lc:'#0f172a'},
-    {l:'Worsened <2 pp',  d:HBA_WL, c:'#f0b8b8', lc:'#0f172a'},
-    {l:'Worsened 2–4 pp',d:HBA_W2,c:'#d97070', lc:'#fff'},
-    {l:'Worsened ≥4 pp',d:HBA_W4,c:'#b33a3a', lc:'#fff'},
-  ];
+  if(hbaPending('c-hba-change')){ setShareNote('c-hba-change',''); return; }
+  const series=[HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4];
+  const defs=HBA_CHG_COLS.map((d,i)=>({l:d.l,d:series[i],c:d.c}));
   _chc=createDashboardChart(document.getElementById('c-hba-change'),{
     type:'bar',
     data:{labels:HBA_LBLS, datasets:defs.map(d=>({
       label:d.l, data:d.d, backgroundColor:d.c, stack:'s',
-      _lc:d.lc, _minVal:3, _minH:14
+      _lc:inkOn(d.c), _minVal:8, _minH:16
     }))},
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false},
-           ticks:{font:{size:9}, maxRotation:0},
+           ticks:{font:{size:11}, color:'#334155', maxRotation:0},
            categoryPercentage:0.5, barPercentage:0.28},
         y:{stacked:true, display:false, min:0, max:100}
       }
     }
   });
+  setShareNote('c-hba-change', smallShareText(HBA_LBLS, defs, 8));
 }
 
 function buildHbaAvg(){
@@ -2032,11 +2176,11 @@ function buildHbaAvg(){
     options:{
       responsive:true, maintainAspectRatio:false,
       layout:{padding:{top:18, bottom:4}},
-      plugins:{legend:{position:'bottom', labels:{font:{size:10}, boxWidth:12}}},
+      plugins:{legend:{position:'bottom', labels:{font:{size:11}, color:'#334155', boxWidth:12}}},
       scales:{
         x:{grid:{display:false}, border:{display:false},
            ticks:{
-             font:{size:9}, maxRotation:0, autoSkip:false,
+             font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false,
              callback(val,idx){
                const s=['Overall','3–6m','6–9m','9–12m','12–15m','15–18m','>18m'];
                return s[idx]!==undefined?s[idx]:(Array.isArray(HBA_LBLS[idx])?HBA_LBLS[idx][0]:HBA_LBLS[idx]);
@@ -2057,11 +2201,11 @@ function buildHbaAvg(){
             const v=ds.data[j];
             if(v==null) return;
             ctx.save();
-            ctx.font='bold 8.5px Trebuchet MS,sans-serif';
+            ctx.font='bold 11px Trebuchet MS,sans-serif';
             ctx.textAlign='center';
             ctx.textBaseline='bottom';
-            ctx.fillStyle='#475569';
-            ctx.fillText(String(v),bar.x,bar.y-3);
+            ctx.fillStyle='#334155';
+            ctx.fillText(Number(v).toFixed(1),bar.x,bar.y-3);
             ctx.restore();
           });
         });
@@ -2072,27 +2216,30 @@ function buildHbaAvg(){
 
 function buildHbaDist(){
   if(window._chdist)window._chdist.destroy();
-  if(hbaPending('c-hba-dist')) return;
+  if(hbaPending('c-hba-dist')){ setShareNote('c-hba-dist',''); return; }
   window._chdist=createDashboardChart(document.getElementById('c-hba-dist'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
-      {label:'<7%',  data:HBA_D_LT7,   backgroundColor:'#0f3460', stack:'s', _minVal:3, _minH:14},
-      {label:'7–10%', data:HBA_D_7_10, backgroundColor:'#1a5fa8', stack:'s', _minVal:3, _minH:14},
-      {label:'10–13%',data:HBA_D_10_13,backgroundColor:'#7db8e8', stack:'s', _minVal:3, _minH:14, _lc:'#0f172a'},
-      {label:'13–16%',data:HBA_D_13_16,backgroundColor:'#94a3b8', stack:'s', _minVal:3, _minH:14},
-      {label:'>16%', data:HBA_D_GT16,  backgroundColor:'#e2e8f0', stack:'s', _minVal:3, _minH:14, _lc:'#334155'},
+      {label:'<7%',  data:HBA_D_LT7,   backgroundColor:HBA_BAND_COLS[0], stack:'s', _lc:inkOn(HBA_BAND_COLS[0]), _minVal:8, _minH:16},
+      {label:'7–10%', data:HBA_D_7_10, backgroundColor:HBA_BAND_COLS[1], stack:'s', _lc:inkOn(HBA_BAND_COLS[1]), _minVal:8, _minH:16},
+      {label:'10–13%',data:HBA_D_10_13,backgroundColor:HBA_BAND_COLS[2], stack:'s', _lc:inkOn(HBA_BAND_COLS[2]), _minVal:8, _minH:16},
+      {label:'13–16%',data:HBA_D_13_16,backgroundColor:HBA_BAND_COLS[3], stack:'s', _lc:inkOn(HBA_BAND_COLS[3]), _minVal:8, _minH:16},
+      {label:'>16%', data:HBA_D_GT16,  backgroundColor:HBA_BAND_COLS[4], stack:'s', _lc:inkOn(HBA_BAND_COLS[4]), _minVal:8, _minH:16},
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false},
-           ticks:{font:{size:9}, maxRotation:0},
+           ticks:{font:{size:11}, color:'#334155', maxRotation:0},
            categoryPercentage:0.5, barPercentage:0.28},
         y:{stacked:true, display:false, min:0, max:100}
       }
     }
   });
+  setShareNote('c-hba-dist', smallShareText(HBA_DIST_LBLS, [
+    {l:'<7%',d:HBA_D_LT7},{l:'7–10%',d:HBA_D_7_10},{l:'10–13%',d:HBA_D_10_13},{l:'13–16%',d:HBA_D_13_16},{l:'>16%',d:HBA_D_GT16}
+  ], 8));
 }
 
 function buildHbaLatest(){
@@ -2107,7 +2254,7 @@ function buildHbaLatest(){
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
-        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:9}, maxRotation:0},
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0},
            categoryPercentage:0.5, barPercentage:0.5},
         y:{display:false, min:5, max:12}
       }
@@ -2120,9 +2267,9 @@ function buildHbaLatest(){
         meta.data.forEach((bar,j)=>{
           const v=chart.data.datasets[0].data[j]; if(v==null||v===0) return;
           ctx.save();
-          ctx.font='bold 9px Trebuchet MS,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.font='bold 12px Trebuchet MS,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
           ctx.fillStyle='#fff';
-          ctx.fillText(String(v), bar.x, (bar.y+bottom)/2);  // centre of the visible bar
+          ctx.fillText(Number(v).toFixed(1), bar.x, (bar.y+bottom)/2);  // centre of the visible bar
           ctx.restore();
         });
       }
@@ -2132,37 +2279,61 @@ function buildHbaLatest(){
 
 function buildHbaAll(){
   if(window._chbaAll) window._chbaAll.destroy();
-  if(hbaPending('c-hba-all')) return;
+  if(hbaPending('c-hba-all')){ setShareNote('c-hba-all',''); return; }
   window._chbaAll=createDashboardChart(document.getElementById('c-hba-all'),{
     type:'bar',
     data:{labels:HBA_ALL_LBLS, datasets:[
-      {label:'<7%',   data:HBA_ALL_LT7,  backgroundColor:'#0f3460', stack:'s', _minVal:3, _minH:14},
-      {label:'7–10%', data:HBA_ALL_710,  backgroundColor:'#1a5fa8', stack:'s', _minVal:3, _minH:14},
-      {label:'10–13%',data:HBA_ALL_1013, backgroundColor:'#7db8e8', stack:'s', _minVal:3, _minH:14, _lc:'#0f172a'},
-      {label:'13–16%',data:HBA_ALL_1316, backgroundColor:'#94a3b8', stack:'s', _minVal:3, _minH:14},
-      {label:'>16%',  data:HBA_ALL_GT16, backgroundColor:'#e2e8f0', stack:'s', _minVal:3, _minH:14, _lc:'#334155'},
+      {label:'<7%',   data:HBA_ALL_LT7,  backgroundColor:HBA_BAND_COLS[0], stack:'s', _lc:inkOn(HBA_BAND_COLS[0]), _minVal:8, _minH:16},
+      {label:'7–10%', data:HBA_ALL_710,  backgroundColor:HBA_BAND_COLS[1], stack:'s', _lc:inkOn(HBA_BAND_COLS[1]), _minVal:8, _minH:16},
+      {label:'10–13%',data:HBA_ALL_1013, backgroundColor:HBA_BAND_COLS[2], stack:'s', _lc:inkOn(HBA_BAND_COLS[2]), _minVal:8, _minH:16},
+      {label:'13–16%',data:HBA_ALL_1316, backgroundColor:HBA_BAND_COLS[3], stack:'s', _lc:inkOn(HBA_BAND_COLS[3]), _minVal:8, _minH:16},
+      {label:'>16%',  data:HBA_ALL_GT16, backgroundColor:HBA_BAND_COLS[4], stack:'s', _lc:inkOn(HBA_BAND_COLS[4]), _minVal:8, _minH:16},
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false},
-           ticks:{font:{size:9}, maxRotation:0},
+           ticks:{font:{size:11}, color:'#334155', maxRotation:0},
            categoryPercentage:0.6, barPercentage:0.65},
         y:{stacked:true, display:false, min:0, max:100}
       }
-    }
+    },
+    plugins:[{
+      id:'hbaAllEmpty',
+      afterDatasetsDraw(chart){
+        const labels=chart.data.labels||[];
+        const ctx2=chart.ctx;
+        labels.forEach((lb,i)=>{
+          const sum=chart.data.datasets.reduce((a,ds)=>a+(Number(ds.data[i])||0),0);
+          if(sum>0) return;
+          const bar=chart.getDatasetMeta(0).data[i]; if(!bar) return;
+          ctx2.save();
+          ctx2.fillStyle='#475569';
+          ctx2.textAlign='center';
+          ctx2.textBaseline='bottom';
+          ctx2.font='600 11px Trebuchet MS,sans-serif';
+          ctx2.fillText('no data', bar.x, chart.chartArea.bottom-16);
+          ctx2.font='11px Trebuchet MS,sans-serif';
+          ctx2.fillText('n=0', bar.x, chart.chartArea.bottom-2);
+          ctx2.restore();
+        });
+      }
+    }]
   });
+  setShareNote('c-hba-all', smallShareText(HBA_ALL_LBLS, [
+    {l:'<7%',d:HBA_ALL_LT7},{l:'7–10%',d:HBA_ALL_710},{l:'10–13%',d:HBA_ALL_1013},{l:'13–16%',d:HBA_ALL_1316},{l:'>16%',d:HBA_ALL_GT16}
+  ], 8));
 }
 
 function buildStaticCharts(){
   // Pilot split donut — reads from DATA.capacity
   if(_cp)_cp.destroy();
   const ps=DATA.capacity.pilotSplit||[54,46];
-  _cp=createDashboardChart(document.getElementById('c-pilot'),{type:'doughnut',data:{datasets:[{data:ps,backgroundColor:['#0f3460','#e2e8f0'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
+  _cp=createDashboardChart(document.getElementById('c-pilot'),{type:'doughnut',data:{datasets:[{data:ps,backgroundColor:['#0f3460','#4c8ec4'],borderWidth:0}]},options:{cutout:'70%',plugins:{legend:{display:false},tooltip:{enabled:false}},responsive:false}});
   sv('pilot-pct',ps[0]+'%');
   document.getElementById('pilot-legend').innerHTML=
-    [['Pilot site',ps[0],'#0f3460'],['Non-pilot',ps[1],'#e2e8f0']]
+    [['Pilot site',ps[0],'#0f3460'],['Non-pilot',ps[1],'#4c8ec4']]
     .map(([l,v,c])=>`<div style="display:flex;justify-content:space-between"><span><span class="ld" style="background:${c};display:inline-block;margin-right:4px"></span>${l}</span><strong>${v}%</strong></div>`)
     .join('');
 
@@ -2509,7 +2680,7 @@ function buildFupChart(o){
        backgroundColor:win.map((r,i)=>r.partial?'#9ec9ef':(vals[i]>=75?'#0f3460':'#1a5fa8')),
        borderRadius:3, _minVal:1, _minH:14},
       {label:'Not marked', data:band, stack:'s',
-       backgroundColor:'#e2e8f0', borderRadius:3, _noLabel:true},
+       backgroundColor:'#c5d0dc', borderRadius:3, _staticLabel:'Not marked', _lc:'#0f172a', _minH:16},
       {label:'Target', data:tgt, type:'line',
        borderColor:'#d97706', borderDash:[5,5], borderWidth:1.5,
        pointRadius:0, backgroundColor:'transparent', _noLabel:true}
@@ -2536,7 +2707,7 @@ function buildFupChart(o){
         }
       }}},
       scales:{
-        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:8.5}}},
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155'}},
         y:{display:false, min:0, max:100}
       }
     }
@@ -2836,13 +3007,13 @@ function renderDonorStates(){
   }).join('');
   const labels=programme.map(st=>{
     const [x,y]=DN_MAP_POINTS[st],r=rows[st];
-    return '<text x="'+x+'" y="'+y+'" fill="#ffffff" stroke="#153b56" stroke-width="2.5" paint-order="stroke" font-size="12" font-weight="700" text-anchor="middle" pointer-events="none">'+st+'</text>'
-      +(metric==='states'||!r?'':'<text x="'+x+'" y="'+(y+13)+'" fill="#ffffff" stroke="#153b56" stroke-width="2" paint-order="stroke" font-size="11" text-anchor="middle" pointer-events="none">'+r[metric].toLocaleString()+'</text>');
+    return '<text x="'+x+'" y="'+y+'" fill="#ffffff" stroke="#153b56" stroke-width="3" paint-order="stroke" font-size="18" font-weight="700" text-anchor="middle" pointer-events="none">'+st+'</text>'
+      +(metric==='states'||!r?'':'<text x="'+x+'" y="'+(y+16)+'" fill="#ffffff" stroke="#153b56" stroke-width="3" paint-order="stroke" font-size="14" text-anchor="middle" pointer-events="none">'+r[metric].toLocaleString()+'</text>');
   }).join('');
   const controls='<div class="dn-map-controls"><label>Map by <select aria-label="Map metric" onchange="setDonorMapMetric(this.value)">'+Object.entries({states:'State colours',enrolled:'Enrolments',clinics:'Clinics',districts:'Districts'}).map(([key,name])=>'<option value="'+key+'"'+(metric===key?' selected':'')+'>'+name+'</option>').join('')+'</select></label><button aria-label="Zoom in" onclick="zoomDonorMap(1.5)">+</button><span class="dn-map-zoom-label" id="dn-map-zoom">1.0×</span><button aria-label="Zoom out" onclick="zoomDonorMap(1/1.5)">−</button><button aria-label="Reset map zoom" onclick="resetDonorMapView()">Fit India</button></div>';
   const stateCards=programme.map(st=>{
     const r=rows[st];
-    return '<button class="dn-map-state-button" style="--state-color:'+DN_COL[st]+'" aria-label="Filter '+sln(st)+'" aria-pressed="'+(selected===st)+'" onpointerenter="donorMapInsight(\''+st+'\')" onfocus="donorMapInsight(\''+st+'\')" onclick="selectDonorMapState(\''+st+'\')"><h3>'+sln(st)+'</h3><strong>'+(r?r.enrolled.toLocaleString():'Explore')+'</strong><small>'+(r?'PLT1D enrolled<br>'+r.clinics+' clinics · '+r.districts+' districts':'Select state to view results')+'</small></button>';
+    return '<button class="dn-map-state-button" style="--state-color:'+DN_COL[st]+';--state-ink:'+readableOnWhite(DN_COL[st])+'" aria-label="Filter '+sln(st)+'" aria-pressed="'+(selected===st)+'" onpointerenter="donorMapInsight(\''+st+'\')" onfocus="donorMapInsight(\''+st+'\')" onclick="selectDonorMapState(\''+st+'\')"><h3>'+sln(st)+'</h3><strong>'+(r?r.enrolled.toLocaleString():'Explore')+'</strong><small>'+(r?'PLT1D enrolled<br>'+r.clinics+' clinics · '+r.districts+' districts':'Select state to view results')+'</small></button>';
   }).join('');
   const comparison=[['States','states',d.states],['Pilot districts','dist',d.pilotDist],['Operational clinics','clinics',d.clinics],['PLT1D enrolled','enrolled',d.enrolled]];
   el.innerHTML='<div class="dn-map-layout"><div class="dn-map-panel"><div class="dn-map-toolbar"><div class="ct">Explore programme states</div><button class="dn-map-reset" onclick="selectDonorMapState(\'all\')">All states</button></div>'+controls+'<svg id="dn-map-svg" viewBox="'+DN_MAP_UI.view.join(' ')+'" tabindex="0" role="group" aria-label="Interactive India map. Use plus and minus to zoom, arrow keys to pan, or Escape to fit India.">'+svg+labels+'</svg><div id="dn-map-insight" class="dn-map-insight" aria-live="polite"></div><div class="dn-map-key">'+(metric==='states'?programme.map(st=>'<span><i class="ld" style="background:'+DN_COL[st]+'"></i> '+sln(st)+'</span>').join(''):'<span>'+metricName+': lighter = fewer, darker = more. Values shown on states.</span>')+'</div><div class="dn-map-caption">Select a state to open its districts · drag to pan.</div><div class="dn-map-attribution">Map: <a href="https://www.geoboundaries.org/" target="_blank" rel="noopener">geoBoundaries</a> / <a href="https://projects.datameet.org/maps/states/" target="_blank" rel="noopener">DataMeet</a> · <a href="https://creativecommons.org/licenses/by/2.5/in/" target="_blank" rel="noopener">CC BY 2.5 IN</a> · simplified boundaries</div></div>'
@@ -2877,8 +3048,8 @@ function buildDonorGrowth(){
         label(ctx){return ' '+ctx.dataset.label+': '+ctx.parsed.y.toLocaleString();},
         afterBody(items){return['Total enrolled: '+tots[items[0].dataIndex].toLocaleString()];}
       }}},
-      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{color:'#506779',font:{size:9},maxRotation:0,autoSkip:true}},
-              y:{title:{display:true,text:'People enrolled (count)',color:'#506779',font:{size:11}},afterFit(axis){axis.width=64;},stacked:true,display:true,beginAtZero:true,ticks:{color:'#506779',font:{size:10}},grid:{display:false},border:{display:false},suggestedMax:tots.length?Math.max(...tots)*1.12:undefined}}}
+      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{color:'#334155',font:{size:11},maxRotation:0,autoSkip:true}},
+              y:{title:{display:true,text:'People enrolled (count)',color:'#334155',font:{size:11}},afterFit(axis){axis.width=72;},stacked:true,display:true,beginAtZero:true,ticks:{color:'#334155',font:{size:11}},grid:{display:false},border:{display:false},suggestedMax:tots.length?Math.max(...tots)*1.12:undefined}}}
   });
   _dnClinics=createDashboardChart(document.getElementById('dn-clinics'),{
     type:'line',
@@ -2888,8 +3059,8 @@ function buildDonorGrowth(){
     options:{animation:false,responsive:true,maintainAspectRatio:false,layout:{padding:{left:6,right:6,top:6,bottom:0}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
         label(ctx){return ' Documented clinic activity: '+ctx.parsed.y;}}}},
-      scales:{x:{title:{display:true,text:'Month',color:'#506779',font:{size:10}},offset:false,grid:{display:false},border:{display:false},ticks:{color:'#506779',font:{size:8},maxRotation:0,autoSkip:true}},
-              y:{title:{display:true,text:'Clinics (count)',color:'#506779',font:{size:10}},afterFit(axis){axis.width=64;},display:true,beginAtZero:true,ticks:{color:'#506779',font:{size:10},maxTicksLimit:3,precision:0},grid:{display:false},border:{display:false}}}}
+      scales:{x:{title:{display:true,text:'Month',color:'#334155',font:{size:11}},offset:false,grid:{display:false},border:{display:false},ticks:{color:'#334155',font:{size:11},maxRotation:0,autoSkip:true}},
+              y:{title:{display:true,text:'Clinics (count)',color:'#334155',font:{size:11}},afterFit(axis){axis.width=72;},display:true,beginAtZero:true,ticks:{color:'#334155',font:{size:11},maxTicksLimit:4,precision:0},grid:{display:false},border:{display:false}}}}
   });
 }
 
@@ -2925,9 +3096,9 @@ function renderDonorHbaDumbbell(){
       +'<line x1="38" y1="28" x2="38" y2="147" stroke="#cbdde8"/><line x1="222" y1="28" x2="222" y2="147" stroke="#cbdde8"/>'
       +'<line x1="38" y1="'+y(b)+'" x2="222" y2="'+y(l)+'" stroke="'+color+'" stroke-width="3"/>'
       +'<circle cx="38" cy="'+y(b)+'" r="5" fill="#577286"/><circle cx="222" cy="'+y(l)+'" r="5" fill="#0077a8"/>'
-      +'<text x="38" y="'+(y(b)-13)+'" text-anchor="middle" fill="#274e68" font-size="16">'+b.toFixed(1)+'%</text>'
-      +'<text x="222" y="'+(y(l)-13)+'" text-anchor="middle" fill="#0077a8" font-size="16">'+l.toFixed(1)+'%</text>'
-      +'<text x="38" y="172" text-anchor="middle" fill="#506779" font-size="11">At enrolment</text><text x="222" y="172" text-anchor="middle" fill="#506779" font-size="11">Latest</text></svg>'
+      +'<text x="38" y="'+(y(b)-13)+'" text-anchor="middle" fill="#274e68" font-size="18" font-weight="650">'+b.toFixed(1)+'%</text>'
+      +'<text x="222" y="'+(y(l)-13)+'" text-anchor="middle" fill="#0077a8" font-size="18" font-weight="650">'+l.toFixed(1)+'%</text>'
+      +'<text x="38" y="172" text-anchor="middle" fill="#334155" font-size="15">At enrolment</text><text x="222" y="172" text-anchor="middle" fill="#334155" font-size="15">Latest</text></svg>'
       +'<div class="dn-slope-result" style="color:'+color+'">'+(change<0?'−':change>0?'+':'')+Math.abs(change).toFixed(1)+' percentage points</div></div>';
   }).join('')+'</div><div class="cs" style="margin-top:12px">Shared HbA1c scale ('+lo+'–'+hi+'%). Lower is better.</div>';
 }
@@ -2960,9 +3131,14 @@ function buildDonorCadre(){
   const lg=document.getElementById('dn-cadre-lg');if(lg)lg.innerHTML='';
   el.innerHTML=[['Doctors',c.docs],['Staff nurses',c.nurses],['FLW attendances',c.flw]].map(([label,counts])=>{
     const total=states.reduce((sum,k)=>sum+(counts[k]||0),0);
+    const parts=states.filter(k=>counts[k]>0);
     return '<div class="dn-cadre-row"><div><div class="dn-cadre-name">'+label+'</div><div class="dn-cadre-total">'+total.toLocaleString()+'</div></div><div>'
-      +'<div class="dn-cadre-bar" aria-hidden="true">'+states.filter(k=>counts[k]>0).map(k=>'<span style="width:'+(counts[k]/total*100)+'%;background:'+DN_COL[k]+'"></span>').join('')+'</div>'
-      +'<div class="dn-cadre-counts">'+(total?states.filter(k=>counts[k]>0).map(k=>'<span><i class="ld" style="background:'+DN_COL[k]+'"></i>'+sln(k)+' <b>'+counts[k].toLocaleString()+'</b></span>').join(''):'No records in this view')+'</div></div></div>';
+      +'<div class="dn-cadre-bar">'+parts.map(k=>{
+        const pct=counts[k]/total*100;
+        const inline=pct>=14?'<b style="color:'+inkOn(DN_COL[k])+';font-size:11px;font-weight:700">'+counts[k].toLocaleString()+'</b>':'';
+        return '<span title="'+sln(k)+': '+counts[k].toLocaleString()+'" style="width:'+pct+'%;background:'+DN_COL[k]+';display:flex;align-items:center;justify-content:center">'+inline+'</span>';
+      }).join('')+'</div>'
+      +'<div class="dn-cadre-counts">'+(total?parts.map(k=>'<span><i class="ld" style="background:'+DN_COL[k]+'"></i>'+sln(k)+' <b>'+counts[k].toLocaleString()+'</b></span>').join(''):'No records in this view')+'</div></div></div>';
   }).join('');
 }
 
@@ -3026,8 +3202,8 @@ function renderActiveTab(){
 const STK_CANON=['Facility','Commodity','Month','Year','Month-Year','Meet Complete Demand','% Coverage','Stockout'];
 const STK_COMS=[
   {name:'Glucometer',          slug:'glm', color:'#0f3460'},
-  {name:'Glucostrips',         slug:'gst', color:'#1a5fa8'},
-  {name:'Long-acting Insulin', slug:'lai', color:'#2e86de'},
+  {name:'Glucostrips',         slug:'gst', color:'#0f766e'},
+  {name:'Long-acting Insulin', slug:'lai', color:'#2563eb'},
   {name:'Short-acting Insulin',slug:'sai', color:'#d97706'}
 ];
 const STK_MON_IDX={January:0,February:1,March:2,April:3,May:4,June:5,July:6,August:7,September:8,October:9,November:10,December:11};
@@ -3122,8 +3298,8 @@ function renderStockTrend(){
     responsive:true,maintainAspectRatio:false,
     plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'—':c.parsed.y+'%')}}},
     scales:{
-      y:{min:0,max:100,ticks:{font:{size:10},callback:v=>v+'%'},grid:{display:false}},
-      x:{ticks:{font:{size:10}},grid:{display:false}}
+      y:{min:0,max:100,ticks:{font:{size:11},color:'#334155',callback:v=>v+'%'},grid:{display:false},title:{display:false}},
+      x:{ticks:{font:{size:11},color:'#334155',maxRotation:0,autoSkip:true},grid:{display:false}}
     }
   }});
 }
@@ -3137,20 +3313,26 @@ function stkColorForCov(cov,stockout){
   if(cov>=25)  return '#fdba74';
   return '#f87171';
 }
+function stockLatestReportedKey(rows){
+  let latest=-1;
+  rows.forEach(r=>{
+    if(r.coverage==null && r.stockout==null) return;
+    const k=stkYmKey(r);
+    if(k>latest) latest=k;
+  });
+  return latest;
+}
 function renderStockHeatmap(){
   const com=document.getElementById('stk-heat-com'); const wrap=document.getElementById('stk-heat');
   if(!com||!wrap) return;
   const commodity=com.value;
   const rows=stockFiltered().filter(r=>r.commodity===commodity);
   if(!rows.length){ wrap.innerHTML='<div class="data-pending">No stock data for the current filter selection.</div>'; return; }
-  const keys=Array.from(new Set(rows.map(stkYmKey))).sort((a,b)=>a-b);
+  // Same cutoff as the stock KPIs: the latest month with a reported coverage
+  // or stock-out. Empty partial months and the old year-end padding stay off the axis.
+  const latest=stockLatestReportedKey(stockFiltered());
+  const keys=Array.from(new Set(rows.map(stkYmKey))).filter(k=>latest<0||k<=latest).sort((a,b)=>a-b);
   const lastKeys=keys.slice(-12);
-  // Extend the month axis through December of the latest data year, so the
-  // rest of the current year shows as "no data" cells that fill in over time.
-  if(lastKeys.length){
-    const endKey=Math.floor(lastKeys[lastKeys.length-1]/12)*12+11;
-    for(let k=lastKeys[lastKeys.length-1]+1;k<=endKey;k++) lastKeys.push(k);
-  }
   const lblByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!lblByKey[k]) lblByKey[k]=stkYmLabel(r);});
   lastKeys.forEach(k=>{if(!lblByKey[k]) lblByKey[k]=MON[k%12]+' '+String(Math.floor(k/12)).slice(2);});
   const byFK={}; rows.forEach(r=>{byFK[r.fac+'|'+stkYmKey(r)]=r;});
@@ -3165,21 +3347,21 @@ function renderStockHeatmap(){
   const states=Object.keys(byState).sort((a,b)=>{
     if(a==='UNSPECIFIED')return 1; if(b==='UNSPECIFIED')return -1; return a.localeCompare(b);});
   const ncol=lastKeys.length+1;
-  let html='<table style="border-collapse:separate;border-spacing:2px;font-size:10px">';
-  html+='<thead><tr><th style="text-align:left;padding:2px 6px;color:var(--tm);font-weight:600;font-size:9px;text-transform:uppercase;letter-spacing:.4px;position:sticky;left:0;background:#fff;z-index:2">Facility</th>';
-  lastKeys.forEach(k=>{html+='<th style="padding:2px 4px;color:var(--t2);font-weight:600;font-size:9px;writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap">'+lblByKey[k]+'</th>';});
+  let html='<table class="stk-heat"><colgroup><col class="stk-heat-name">'+lastKeys.map(()=>'<col>').join('')+'</colgroup>';
+  html+='<thead><tr><th class="stk-heat-fac">Facility</th>';
+  lastKeys.forEach(k=>{html+='<th class="stk-heat-m"><span>'+lblByKey[k]+'</span></th>';});
   html+='</tr></thead><tbody>';
   states.forEach(st=>{
-    html+='<tr><td colspan="'+ncol+'" style="padding:6px 6px 2px;color:var(--t1);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;position:sticky;left:0;background:#eef2f7;border-radius:2px">'+st+' <span style="color:var(--tm);font-weight:600">('+byState[st].length+')</span></td></tr>';
+    html+='<tr><td class="stk-heat-state" colspan="'+ncol+'">'+st+' <span style="color:var(--tm);font-weight:600">('+byState[st].length+')</span></td></tr>';
     byState[st].forEach(fac=>{
-      html+='<tr><td style="padding:2px 6px 2px 14px;color:var(--t1);font-size:10px;white-space:nowrap;position:sticky;left:0;background:#fff;z-index:1">'+fac+'</td>';
+      html+='<tr><td class="stk-heat-fac" title="'+String(fac).replace(/"/g,'&quot;')+'">'+fac+'</td>';
       lastKeys.forEach(k=>{
         const r=byFK[fac+'|'+k];
         const c=r?stkColorForCov(r.coverage,r.stockout):null;
         const title=r?(fac+' · '+lblByKey[k]+(r.coverage!=null?(' · '+r.coverage+'% coverage'):'')+(r.stockout===1?' · STOCKOUT':'')):(fac+' · '+lblByKey[k]+' · no data');
         const bg=c||'#f1f5f9';
-        const bdr=c?'':'1px solid var(--bdr)';
-        html+='<td title="'+title.replace(/"/g,'&quot;')+'" style="width:22px;height:18px;background:'+bg+';border:'+(bdr||'1px solid transparent')+';border-radius:2px"></td>';
+        const bdr=c?'1px solid transparent':'1px solid var(--bdr)';
+        html+='<td class="stk-heat-cell" title="'+title.replace(/"/g,'&quot;')+'" style="background:'+bg+';border:'+bdr+'"></td>';
       });
       html+='</tr>';
     });
@@ -3683,6 +3865,9 @@ function recompute(){
   const prePost=rows=>{const pr=[],po=[];rows.forEach(r=>{const a=num(r['Pre-test Score']),b=num(r['Post-test Score']),m=num(r['Maximum Score']);if(a!=null&&b!=null&&m>0){pr.push(a/m*100);po.push(b/m*100);}});const mean=x=>x.length?Math.round(x.reduce((s,y)=>s+y,0)/x.length):0;return{pre:mean(pr),post:mean(po),n:pr.length};};
   const drSc=prePost(drs),nrSc=prePost(nrs);
   const flwHr=oriF.reduce((s,r)=>s+(num(r['# of Service Providers'])||0),0);
+  const flwCounts={};
+  oriF.forEach(r=>{const name=String(r['Type of Service Provider']||'').trim(); if(name) flwCounts[name]=(flwCounts[name]||0)+(num(r['# of Service Providers'])||0);});
+  const flwCadres=Object.keys(flwCounts).sort((a,b)=>flwCounts[b]-flwCounts[a]||a.localeCompare(b)).join(' · ');
   const pilotDistricts=new Set(csF.map(r=>stUp(r)+'|'+normv(r['District'])).filter(k=>!k.endsWith('|')));
   const pilotSess={};oriF.forEach(r=>{const k=stUp(r)+'|'+normv(r['District']);if(isYes(r['Pilot District? (Yes/No)'])&&pilotDistricts.has(k))pilotSess[k]=true;});
 
@@ -3843,7 +4028,7 @@ function recompute(){
     dka:fupDen?Math.round(dkaN/fupDen*1000)/10:null, hypo:fupDen?Math.round(hypoN/fupDen*1000)/10:null,
     drBat:distinctCombo(drs,['State','Training Batch']), drTr:Object.keys(drNames).length, drPre:drSc.pre, drPost:drSc.post, drScoreN:drSc.n,
     nrBat:distinctCombo(nrs,['State','Training Batch']), nrTr:Object.keys(nrNames).length, nrPre:nrSc.pre, nrPost:nrSc.post, nrScoreN:nrSc.n,
-    flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwDist:Object.keys(pilotSess).length, flwTotDist:pilotDistricts.size
+    flwOk:flwHr>0, flwSes:distinct(oriF,'Session #'), flwHr, flwCadres, flwDist:Object.keys(pilotSess).length, flwTotDist:pilotDistricts.size
   };
 
   computeDonor({f,PGEO,csF,lt,months,clin,hba,smbg,fmom:fmom.mom,drs,nrs,oriF,csOp,
@@ -4200,7 +4385,7 @@ function computeHba1c(idSet){
     d1013:distPts.map(p=>p[2]), d1316:distPts.map(p=>p[3]),
     gt16:distPts.map(p=>p[4]),
     latest:distN.map((c,i)=>c?Math.round(latSum[i]/c*10)/10:0),
-    allDistLabels:ALL_LBL.map((l,i)=>[l,(allDistN[i]?'(n='+allDistN[i]+')':'')]),
+    allDistLabels:ALL_LBL.map((l,i)=>[l,'(n='+allDistN[i]+')']),
     allLt7:allDist.map(d=>pctParts(d)[0]), allD710:allDist.map(d=>pctParts(d)[1]),
     allD1013:allDist.map(d=>pctParts(d)[2]), allD1316:allDist.map(d=>pctParts(d)[3]),
     allGt16:allDist.map(d=>pctParts(d)[4])
