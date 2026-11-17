@@ -107,6 +107,57 @@ test('SMBG ignores the open month and future-dated columns', () => {
   assert.ok(!smbg.mom.some(r => r.m === 'Nov 26' || r.m === 'Jul 27' || r.m === 'Oct 27'));
 });
 
+function heatMonths(html){
+  return Array.from(html.matchAll(/class="stk-heat-m"><span>([^<]*)<\/span>/g), m => m[1]);
+}
+
+test('stock heatmap ends on the last completed month, with the open month and later months left off', () => {
+  const {run, elements} = setup(NOV_2026);
+  run(`document.getElementById('stk-heat-com').value='Glucometer';
+    const names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    const stock=[];
+    for(let k=2025*12+9;k<=2026*12+11;k++){
+      stock.push({fac:'A',commodity:'Glucometer',month:names[k%12],year:Math.floor(k/12),coverage:k===2026*12+9?40:15,stockout:k===2026*12+9?1:0});
+    }
+    stock.push({fac:'Goa Clinic',commodity:'Glucometer',month:'October',year:2026,coverage:100,stockout:0});
+    stock.push({fac:'Goa Clinic',commodity:'Glucostrips',month:'November',year:2026,coverage:5,stockout:1});
+    RAW={facAttr:{'goa clinic':{state:'GA'}},stock};
+    renderStockHeatmap();`);
+  const html = elements['stk-heat'].innerHTML;
+  const months = heatMonths(html);
+  assert.deepEqual(months, ['Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26','Aug 26','Sep 26','Oct 26']);
+  assert.match(html, /A · Oct 26 · 40% coverage · STOCKOUT/);
+  assert.match(html, /Goa Clinic · Oct 26 · 100% coverage/);
+  assert.match(html, />GA <span/);
+});
+
+test('stock heatmap advances when the month closes and still drops the open month', () => {
+  const {run, elements} = setup(new Date(2026, 11, 1, 12, 0, 0));
+  run(`document.getElementById('stk-heat-com').value='Glucometer';
+    RAW={facAttr:{},stock:[
+      {fac:'A',commodity:'Glucometer',month:'October',year:2025,coverage:11,stockout:0},
+      {fac:'A',commodity:'Glucometer',month:'November',year:2026,coverage:10,stockout:1},
+      {fac:'A',commodity:'Glucometer',month:'December',year:2026,coverage:99,stockout:0}
+    ]}; renderStockHeatmap();`);
+  const months = heatMonths(elements['stk-heat'].innerHTML);
+  assert.equal(months.at(-1), 'Nov 26');
+  assert.equal(months.includes('Dec 26'), false);
+  assert.match(elements['stk-heat'].innerHTML, /A · Nov 26 · 10% coverage · STOCKOUT/);
+});
+
+test('a partial current month does not appear when it is the only reported stock month', () => {
+  const {run, elements} = setup(NOV_2026);
+  run(`document.getElementById('stk-heat-com').value='Glucometer';
+    RAW={facAttr:{},stock:[
+      {fac:'A',commodity:'Glucometer',month:'October',year:2026,coverage:null,stockout:null},
+      {fac:'A',commodity:'Glucometer',month:'November',year:2026,coverage:10,stockout:1}
+    ]}; renderStockHeatmap();`);
+  const months = heatMonths(elements['stk-heat'].innerHTML);
+  assert.deepEqual(months, ['Oct 26']);
+  assert.match(elements['stk-heat'].innerHTML, /title="A · Oct 26"/);
+  assert.equal(elements['stk-heat'].innerHTML.includes('Nov 26'), false);
+});
+
 test('logframe 3.3 is assessed from the completed SMBG month', () => {
   const {run} = setup(NOV_2026);
   run(`RAW={smbgGrid:[

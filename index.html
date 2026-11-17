@@ -3339,10 +3339,14 @@ function renderStockHeatmap(){
   const commodity=com.value;
   const rows=stockFiltered().filter(r=>r.commodity===commodity);
   if(!rows.length){ wrap.innerHTML='<div class="data-pending">No stock data for the current filter selection.</div>'; return; }
-  // Same cutoff as the stock KPIs: the latest month with a reported coverage
-  // or stock-out. Empty partial months and the old year-end padding stay off the axis.
-  const latest=stockLatestReportedKey(stockFiltered());
-  const keys=Array.from(new Set(rows.map(stkYmKey))).filter(k=>latest<0||k<=latest).sort((a,b)=>a-b);
+  // Same completed-month window as the stock cards and the stock trend.
+  // openMonthKey() is the calendar month still in progress; that month and
+  // anything later stay off the axis even when some cells are already filled.
+  // Within the months before it, the axis still ends at the latest one that
+  // reported coverage or a stock-out, so blank trailing months stay off too.
+  const openKey=openMonthKey();
+  const latest=stockLatestReportedKey(stockFiltered().filter(r=>stkYmKey(r)<openKey));
+  const keys=Array.from(new Set(rows.map(stkYmKey))).filter(k=>k<openKey&&(latest<0||k<=latest)).sort((a,b)=>a-b);
   const lastKeys=keys.slice(-12);
   const lblByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!lblByKey[k]) lblByKey[k]=stkYmLabel(r);});
   lastKeys.forEach(k=>{if(!lblByKey[k]) lblByKey[k]=MON[k%12]+' '+String(Math.floor(k/12)).slice(2);});
