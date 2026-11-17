@@ -108,7 +108,7 @@ test('Goa with planned facilities and no patients stays in the roll-up at zero',
   assert.equal(run("DONOR.byState.find(r=>r.st==='GA').districts"),0);
   assert.equal(run('DONOR.enrolled'),0);
   assert.match(elements['dn-states-tbl'].innerHTML,/Goa/);
-  assert.match(elements['dn-states-tbl'].innerHTML,/#92400E/);
+  assert.match(elements['dn-states-tbl'].innerHTML,/#0a6b7d/);
   assert.equal(run("DN_DISTRICT_MAP.GA.map(d=>d.name).join('|')"),'North Goa|South Goa');
   elements['f-state'].value='GA';
   run('renderDonorStates();');
