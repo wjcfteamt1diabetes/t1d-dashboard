@@ -170,7 +170,10 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .mom-lbl{font-size:11px;color:var(--t2);width:54px;flex-shrink:0;font-weight:500}
 .mom-n{font-size:11px;color:var(--tm);width:72px;flex-shrink:0;text-align:right}
 .mom-bar{flex:1;height:18px;background:#f1f5f9;border-radius:2px;overflow:hidden;display:flex}
-.mom-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.mom-seg{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:0;padding:0;margin:0;min-width:0;font-family:inherit;cursor:pointer;appearance:none;-webkit-appearance:none}
+.ss.seg-hit{border:0;padding:0;margin:0;min-width:0;font-family:inherit;cursor:pointer;appearance:none;-webkit-appearance:none}
+.seg-tip{position:fixed;z-index:400;max-width:320px;background:#0f3460;color:#fff;font-size:12px;line-height:1.45;font-weight:600;padding:8px 10px;border-radius:6px;box-shadow:0 8px 24px rgba(15,52,96,.28);pointer-events:none}
+.seg-tip[hidden]{display:none}
 
 /* Info tab table */
 .info-table{width:100%;border-collapse:collapse;font-size:10px}
@@ -1390,33 +1393,109 @@ function paintChartLabel(ctx,text,x,y,fill,baseline,halo){
   ctx.fillText(text,x,y);
   ctx.restore();
 }
-function smallShareText(columns,series,min){
-  const bits=[];
-  series.forEach(s=>{
-    const small=[];
-    (s.d||[]).forEach((v,i)=>{
-      if(!(v>0)||v>=min) return;
-      const lb=columns[i];
-      const name=Array.isArray(lb)?lb.filter(Boolean).join(' '):String(lb||'');
-      small.push(name+' '+v+'%');
-    });
-    if(small.length) bits.push(s.l+': '+small.join(', '));
-  });
-  return bits.length?'Too small to label on the bar — '+bits.join(' · ')+'.':'';
+// Hover and tap detail for every stacked segment: category, share and count.
+function segmentTip(name, pct, count){
+  const who=count==null||count===''?'':' · n = '+Number(count).toLocaleString();
+  return String(name)+' · '+(pct==null?'—':pct+'%')+who;
 }
-function setShareNote(anchorId,text){
-  const anchor=document.getElementById(anchorId); if(!anchor) return;
+function stackAttr(values, names, counts){
+  return dnEscape(values.map((v,i)=>v>0?segmentTip(names[i], v, counts?counts[i]:null):'').filter(Boolean).join('\n'));
+}
+let segTipEl=null, segPin=null;
+function ensureSegTip(){
+  if(segTipEl) return segTipEl;
+  segTipEl=document.createElement('div');
+  segTipEl.className='seg-tip';
+  segTipEl.setAttribute('role','tooltip');
+  segTipEl.hidden=true;
+  document.body.appendChild(segTipEl);
+  return segTipEl;
+}
+function hideSegTip(){ if(segTipEl) segTipEl.hidden=true; }
+function showSegTip(anchor, text){
+  if(!text||!anchor||!anchor.getBoundingClientRect||!document.body) return;
+  const tip=ensureSegTip();
+  tip.replaceChildren();
+  String(text).split('\n').forEach((line,i)=>{
+    if(i) tip.appendChild(document.createElement('br'));
+    tip.appendChild(document.createTextNode(line));
+  });
+  tip.hidden=false;
+  const r=anchor.getBoundingClientRect();
+  const margin=8;
+  const width=tip.offsetWidth, height=tip.offsetHeight;
+  let left=r.left+r.width/2-width/2;
+  left=Math.max(margin, Math.min(left, window.innerWidth-width-margin));
+  let top=r.top-height-margin;
+  if(top<margin) top=Math.min(r.bottom+margin, window.innerHeight-height-margin);
+  tip.style.left=left+'px';
+  tip.style.top=top+'px';
+}
+function bindSegTips(){
+  if(!document.addEventListener||bindSegTips.done) return;
+  bindSegTips.done=true;
+  document.addEventListener('pointerover', e=>{
+    const hit=e.target.closest?.('.seg-hit');
+    if(!hit||segPin) return;
+    if(e.pointerType&&e.pointerType!=='mouse') return;
+    showSegTip(hit, hit.getAttribute('data-tip')||'');
+  });
+  document.addEventListener('pointerout', e=>{
+    if(segPin) return;
+    if(e.target.closest?.('.seg-hit')) hideSegTip();
+  });
+  document.addEventListener('focusin', e=>{
+    const hit=e.target.closest?.('.seg-hit');
+    if(!hit) return;
+    const bar=hit.closest('.mom-bar,.sbar');
+    showSegTip(hit, (bar&&bar.getAttribute('data-stack'))||hit.getAttribute('data-tip')||'');
+  });
+  document.addEventListener('focusout', ()=>{ if(!segPin) hideSegTip(); });
+  document.addEventListener('click', e=>{
+    const hit=e.target.closest?.('.seg-hit');
+    if(hit){
+      const bar=hit.closest('.mom-bar,.sbar')||hit;
+      segPin=hit;
+      showSegTip(bar, bar.getAttribute('data-stack')||hit.getAttribute('data-tip')||'');
+      return;
+    }
+    segPin=null; hideSegTip();
+  });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ segPin=null; hideSegTip(); } });
+  window.addEventListener?.('scroll', ()=>{ if(!segPin) hideSegTip(); }, true);
+}
+bindSegTips();
+function shareTooltip(){
+  return {
+    enabled:true,
+    backgroundColor:'#0f3460',
+    titleColor:'#ffffff',
+    bodyColor:'#ffffff',
+    titleFont:{size:12, weight:'700', family:'Trebuchet MS, sans-serif'},
+    bodyFont:{size:12, family:'Trebuchet MS, sans-serif'},
+    padding:10,
+    cornerRadius:6,
+    displayColors:true,
+    callbacks:{
+      title(items){
+        const label=items[0]&&items[0].label;
+        return Array.isArray(label)?label.filter(Boolean).join(' '):label;
+      },
+      label(ctx){
+        const counts=ctx.dataset._counts;
+        const n=counts?counts[ctx.dataIndex]:null;
+        const pct=ctx.parsed&&ctx.parsed.y!=null?ctx.parsed.y:ctx.parsed;
+        const share=ctx.dataset._pct===false?null:(pct==null?'—':pct+'%');
+        return ' '+ctx.dataset.label+(share==null?'':' · '+share)+(n==null?'':' · n = '+Number(n).toLocaleString());
+      }
+    }
+  };
+}
+function clearShareNotes(anchorId){
+  const anchor=document.getElementById(anchorId); if(!anchor||!anchor.closest) return;
   const host=anchor.closest('.card')||anchor.parentElement;
-  let note=host.querySelector('.share-callout[data-for="'+anchorId+'"]');
-  if(!text){ if(note) note.remove(); return; }
-  if(!note){
-    note=document.createElement('div');
-    note.className='share-callout';
-    note.dataset.for=anchorId;
-    const wrap=anchor.parentElement;
-    (wrap&&wrap!==host?wrap:anchor).insertAdjacentElement('afterend', note);
-  }
-  note.textContent=text;
+  if(!host||!host.querySelectorAll) return;
+  host.querySelectorAll('.share-callout').forEach(n=>n.remove());
 }
 const SMBG_COLS=['#475569','#93c5fd','#1d4ed8','#1e1b4b'];
 const SMBG_NAMES=['Not monitoring','<3 per day','3–4 per day','>4 per day'];
@@ -1644,8 +1723,8 @@ let DATA=null;         // {demographics, insulin, capacity} for the active filte
 let CURD=null;         // merged geo+patient object consumed by renderKPIs
 let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL,TREND_GAP,CURRENT_CLIN,CS_AVGCL,CS_AVG_N,CS_UNKNOWN_OPEN;
 let DONOR=null;        // everything the Donor Reporting tab renders
-let FUP_MOM,FUP_PENDING,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
-let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
+let FUP_MOM,FUP_PENDING,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D,HYPER_CN,HYPO_CN;
+let CLINOPS_M,CLINOPS_V,OFFDAYS_D,OFFDAYS_N,TRAINED_STAFF;
 function ymKey(y,m){return y*12+m;}
 // The calendar month still in progress is not a finished figure: stock rows and
 // SMBG columns keep filling in until it ends, and a few SMBG headers are dated
@@ -1655,6 +1734,7 @@ function openMonthKey(now){
   return ymKey(d.getFullYear(), d.getMonth());
 }
 let HBA_N,HBA_LBLS,HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4;
+let HBA_I4N,HBA_I2N,HBA_ILN,HBA_NCN,HBA_WLN,HBA_W2N,HBA_W4N,HBA_DIST_N,HBA_ALL_N;
 let HBA_AVG_BASE,HBA_AVG_LAST,HBA_DIST_LBLS,HBA_D_LT7,HBA_D_7_10,HBA_D_10_13,HBA_D_13_16,HBA_D_GT16,HBA_LATEST;
 let HBA_ALL_LBLS,HBA_ALL_LT7,HBA_ALL_710,HBA_ALL_1013,HBA_ALL_1316,HBA_ALL_GT16;
 
@@ -1778,40 +1858,50 @@ function renderKPIs(d,f){
   sv('spec-total',b.drTr);
 }
 
-function momSegs(values, cols, names){
-  return values.map((v,i)=>`<div class="mom-seg" title="${names[i]}: ${v}%" style="width:${v}%;background:${cols[i]};color:${inkOn(cols[i])}">${v>=8?v+'%':''}</div>`).join('');
+function momSegs(values, cols, names, counts){
+  return values.map((v,i)=>{
+    if(!(v>0)) return '';
+    const tip=segmentTip(names[i], v, counts?counts[i]:null);
+    return `<button type="button" class="mom-seg seg-hit" data-tip="${dnEscape(tip)}" aria-label="${dnEscape(tip)}" style="width:${v}%;background:${cols[i]};color:${inkOn(cols[i])}">${v>=8?v+'%':''}</button>`;
+  }).join('');
+}
+function momBar(values, cols, names, counts){
+  return `<div class="mom-bar" data-stack="${stackAttr(values, names, counts)}">${momSegs(values, cols, names, counts)}</div>`;
 }
 function renderSmbg(){
-  const el=document.getElementById('smbg-mom'); el.innerHTML='';
+  const el=document.getElementById('smbg-mom'); if(!el) return;
+  clearShareNotes('smbg-mom');
+  el.innerHTML='';
   const lg=document.getElementById('smbg-lg');
   if(lg) lg.innerHTML=SMBG_NAMES.map((n,i)=>`<span><span class="ld" style="background:${SMBG_COLS[i]}"></span>${n}</span>`).join('');
-  SMBG_MOM.forEach(r=>{
+  (SMBG_MOM||[]).forEach(r=>{
     const d=document.createElement('div'); d.className='mom-row';
-    d.innerHTML=`<span class="mom-lbl">${r.m}</span><div class="mom-bar">${momSegs(r.v,SMBG_COLS,SMBG_NAMES)}</div><span class="mom-n">n = ${r.n.toLocaleString()}</span>`;
+    d.innerHTML=`<span class="mom-lbl">${r.m}</span>${momBar(r.v,SMBG_COLS,SMBG_NAMES,r.c)}<span class="mom-n">n = ${r.n.toLocaleString()}</span>`;
     el.appendChild(d);
   });
-  const el2=document.getElementById('smbg-last'); el2.innerHTML='';
+  const el2=document.getElementById('smbg-last'); if(!el2) return;
+  el2.innerHTML='';
   const d=document.createElement('div'); d.className='mom-row';
-  d.innerHTML=`<span class="mom-lbl" style="font-weight:700">${SMBG_LAST.m}</span><div class="mom-bar">${momSegs(SMBG_LAST.v,SMBG_COLS,SMBG_NAMES)}</div><span class="mom-n">n = ${SMBG_LAST.n.toLocaleString()}</span>`;
+  d.innerHTML=`<span class="mom-lbl" style="font-weight:700">${SMBG_LAST.m}</span>${momBar(SMBG_LAST.v,SMBG_COLS,SMBG_NAMES,SMBG_LAST.c)}<span class="mom-n">n = ${SMBG_LAST.n.toLocaleString()}</span>`;
   el2.appendChild(d);
-  const rows=SMBG_MOM.concat([SMBG_LAST]);
-  setShareNote('smbg-last', smallShareText(rows.map(r=>r.m), SMBG_NAMES.map((l,i)=>({l,d:rows.map(r=>r.v[i])})), 8));
 }
 
 function renderHyperHypo(){
   const lg=document.getElementById('hyper-lg');
   if(lg) lg.innerHTML=HH_NAMES.map((n,i)=>`<span><span class="ld" style="background:${HH_COLS[i]}"></span>${n}</span>`).join('');
   ['hyper-rows','hypo-rows'].forEach((elId,isHypo)=>{
-    const el=document.getElementById(elId); el.innerHTML='';
+    const el=document.getElementById(elId); if(!el) return;
+    el.innerHTML='';
+    clearShareNotes(elId);
     const data=isHypo?HYPO_D:HYPER_D;
-    HYPER_M.forEach((m,i)=>{
+    const counts=isHypo?HYPO_CN:HYPER_CN;
+    const names=HH_NAMES.map(n=>(isHypo?'Hypo ':'Hyper ')+n);
+    (HYPER_M||[]).forEach((m,i)=>{
       const d=document.createElement('div'); d.className='mom-row';
-      const segs=momSegs(data[i],HH_COLS,HH_NAMES);
-      d.innerHTML=m.n?`<span class="mom-lbl">${m.m}</span><div class="mom-bar">${segs}</div><span class="mom-n">n = ${m.n.toLocaleString()}</span>`:`<span class="mom-lbl">${m.m}</span><div class="mom-bar">No data reported</div><span class="mom-n">n = 0</span>`;
+      const rowCounts=counts&&counts[i];
+      d.innerHTML=m.n?`<span class="mom-lbl">${m.m}</span>${momBar(data[i],HH_COLS,names,rowCounts)}<span class="mom-n">n = ${m.n.toLocaleString()}</span>`:`<span class="mom-lbl">${m.m}</span><div class="mom-bar">No data reported</div><span class="mom-n">n = 0</span>`;
       el.appendChild(d);
     });
-    const rows=HYPER_M.map((m,i)=>({m:m.m,v:data[i]}));
-    setShareNote(elId, smallShareText(rows.map(r=>r.m), HH_NAMES.map((l,i)=>({l:(isHypo?'Hypo ':'')+l,d:rows.map(r=>r.v[i])})), 8));
   });
 }
 
@@ -1853,9 +1943,10 @@ function renderPTF(){
 
   // flex-grow carries the raw counts, so segment widths are exact rather than
   // rounded, and the 2px spacers come out of the total instead of overflowing it.
+  const tips=secs.map((x,i)=>segmentTip(x, pts[i], bySec[x]));
   const bar=secs.map((x,i)=>
-    `<div title="${x}: ${fmt(bySec[x])} PLT1D (${pts[i]}%)" style="flex:${bySec[x]} 1 0;background:${PTF_SEC_COL[x]};border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden">`
-    +`<span style="font-size:11px;font-weight:700;color:${PTF_SEC_INK[x]}">${pts[i]>=6?pts[i]+'%':''}</span></div>`).join('');
+    `<button type="button" class="seg-hit" data-tip="${dnEscape(tips[i])}" aria-label="${dnEscape(tips[i])}" style="flex:${bySec[x]} 1 0;min-width:0;border:0;padding:0;background:${PTF_SEC_COL[x]};border-radius:3px;display:flex;align-items:center;justify-content:center;overflow:hidden">`
+    +`<span style="font-size:11px;font-weight:700;color:${PTF_SEC_INK[x]};pointer-events:none">${pts[i]>=6?pts[i]+'%':''}</span></button>`).join('');
 
   const legend=secs.map((x,i)=>
     `<div style="display:flex;align-items:center;gap:6px;font-size:10px">`
@@ -1871,9 +1962,8 @@ function renderPTF(){
   let foot=parts.join(' · ')+'.';
   if(unclassified) foot+=' '+fmt(unclassified)+' PLT1D '+(unclassified===1?'has':'have')
     +' a facility type outside these groups and '+(unclassified===1?'is':'are')+' not shown.';
-  foot+=' Shares are rounded to whole numbers and adjusted to total 100%.';
 
-  el.innerHTML=`<div style="display:flex;gap:2px;height:26px;margin-bottom:10px">${bar}</div>`
+  el.innerHTML=`<div class="sbar" data-stack="${dnEscape(tips.join('\n'))}" style="display:flex;gap:2px;height:26px;margin-bottom:10px">${bar}</div>`
     +`<div style="display:flex;flex-direction:column;gap:6px">${legend}</div>`
     +`<details class="sum-note"><summary>Category details</summary>${foot}</details>`;
 }
@@ -1898,11 +1988,11 @@ function renderTDD(){
   grps.forEach(g=>{
     const div=document.createElement('div');
     const bg=bgMap[g.grp]||'#f8fafc';
-    const parts=bands.map(b=>({l:b.l,c:b.c,v:g[b.k]}));
-    const bar=parts.map(p=>`<div class="ss" title="${p.l}: ${p.v}%" style="width:${p.v}%;background:${p.c};color:${inkOn(p.c)}">${p.v>=8?p.v+'%':''}</div>`).join('');
-    const small=parts.filter(p=>p.v>0&&p.v<8).map(p=>p.l+' '+p.v+'%').join(' · ');
+    const parts=bands.map(b=>({l:b.l,c:b.c,v:g[b.k],n:g.counts?g.counts[b.k]:null}));
+    const tips=parts.map(p=>segmentTip(p.l, p.v, p.n));
+    const bar=parts.map((p,i)=>p.v>0?`<button type="button" class="ss seg-hit" data-tip="${dnEscape(tips[i])}" aria-label="${dnEscape(tips[i])}" style="width:${p.v}%;background:${p.c};color:${inkOn(p.c)}">${p.v>=8?p.v+'%':''}</button>`:'').join('');
     div.innerHTML=`<div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:3px;background:${bg};padding:2px 6px;border-radius:3px">${g.grp} <span style="font-weight:400;color:var(--tm)">(n=${fmt(g.n)})</span></div>
-    <div class="sbar">${bar}</div>`+(small?`<div class="share-callout">${small}</div>`:'');
+    <div class="sbar" data-stack="${dnEscape(tips.filter((_,i)=>parts[i].v>0).join('\n'))}">${bar}</div>`;
     el.appendChild(div);
   });
 }
@@ -2105,11 +2195,13 @@ function buildOffDays(){
     type:'bar',
     data:{labels:CLINOPS_M, datasets:lbls.map((l,i)=>({
       label:l, data:OFFDAYS_D.map(r=>r[i]),
+      _counts:(OFFDAYS_N||[]).map(r=>r[i]),
       backgroundColor:cols[i], stack:'s', _minVal:8, _minH:16, _lc:inkOn(cols[i])
     }))},
     options:{
       responsive:true, maintainAspectRatio:false, layout:{padding:{top:16}},
-      plugins:{legend:{display:false}},
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:false}, tooltip:shareTooltip()},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11},color:'#334155'}},
         y:{stacked:true, display:false}
@@ -2148,18 +2240,21 @@ function hbaPending(canvasId){
 
 function buildHbaChange(){
   if(_chc)_chc.destroy();
-  if(hbaPending('c-hba-change')){ setShareNote('c-hba-change',''); return; }
+  clearShareNotes('c-hba-change');
+  if(hbaPending('c-hba-change')) return;
   const series=[HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4];
-  const defs=HBA_CHG_COLS.map((d,i)=>({l:d.l,d:series[i],c:d.c}));
+  const counts=[HBA_I4N,HBA_I2N,HBA_ILN,HBA_NCN,HBA_WLN,HBA_W2N,HBA_W4N];
+  const defs=HBA_CHG_COLS.map((d,i)=>({l:d.l,d:series[i],c:d.c,n:counts[i]}));
   _chc=createDashboardChart(document.getElementById('c-hba-change'),{
     type:'bar',
     data:{labels:HBA_LBLS, datasets:defs.map(d=>({
-      label:d.l, data:d.d, backgroundColor:d.c, stack:'s',
+      label:d.l, data:d.d, _counts:d.n, backgroundColor:d.c, stack:'s',
       _lc:inkOn(d.c), _minVal:8, _minH:16
     }))},
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:false}, tooltip:shareTooltip()},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false},
            ticks:{font:{size:11}, color:'#334155', maxRotation:0},
@@ -2168,7 +2263,6 @@ function buildHbaChange(){
       }
     }
   });
-  setShareNote('c-hba-change', smallShareText(HBA_LBLS, defs, 8));
 }
 
 function buildHbaAvg(){
@@ -2223,19 +2317,22 @@ function buildHbaAvg(){
 
 function buildHbaDist(){
   if(window._chdist)window._chdist.destroy();
-  if(hbaPending('c-hba-dist')){ setShareNote('c-hba-dist',''); return; }
+  clearShareNotes('c-hba-dist');
+  if(hbaPending('c-hba-dist')) return;
+  const dn=HBA_DIST_N||[[],[],[],[],[]];
   window._chdist=createDashboardChart(document.getElementById('c-hba-dist'),{
     type:'bar',
     data:{labels:HBA_DIST_LBLS, datasets:[
-      {label:'<7%',  data:HBA_D_LT7,   backgroundColor:HBA_BAND_COLS[0], stack:'s', _lc:inkOn(HBA_BAND_COLS[0]), _minVal:8, _minH:16},
-      {label:'7–10%', data:HBA_D_7_10, backgroundColor:HBA_BAND_COLS[1], stack:'s', _lc:inkOn(HBA_BAND_COLS[1]), _minVal:8, _minH:16},
-      {label:'10–13%',data:HBA_D_10_13,backgroundColor:HBA_BAND_COLS[2], stack:'s', _lc:inkOn(HBA_BAND_COLS[2]), _minVal:8, _minH:16},
-      {label:'13–16%',data:HBA_D_13_16,backgroundColor:HBA_BAND_COLS[3], stack:'s', _lc:inkOn(HBA_BAND_COLS[3]), _minVal:8, _minH:16},
-      {label:'>16%', data:HBA_D_GT16,  backgroundColor:HBA_BAND_COLS[4], stack:'s', _lc:inkOn(HBA_BAND_COLS[4]), _minVal:8, _minH:16},
+      {label:'<7%',  data:HBA_D_LT7,   _counts:dn[0], backgroundColor:HBA_BAND_COLS[0], stack:'s', _lc:inkOn(HBA_BAND_COLS[0]), _minVal:8, _minH:16},
+      {label:'7–10%', data:HBA_D_7_10, _counts:dn[1], backgroundColor:HBA_BAND_COLS[1], stack:'s', _lc:inkOn(HBA_BAND_COLS[1]), _minVal:8, _minH:16},
+      {label:'10–13%',data:HBA_D_10_13,_counts:dn[2], backgroundColor:HBA_BAND_COLS[2], stack:'s', _lc:inkOn(HBA_BAND_COLS[2]), _minVal:8, _minH:16},
+      {label:'13–16%',data:HBA_D_13_16,_counts:dn[3], backgroundColor:HBA_BAND_COLS[3], stack:'s', _lc:inkOn(HBA_BAND_COLS[3]), _minVal:8, _minH:16},
+      {label:'>16%', data:HBA_D_GT16,  _counts:dn[4], backgroundColor:HBA_BAND_COLS[4], stack:'s', _lc:inkOn(HBA_BAND_COLS[4]), _minVal:8, _minH:16},
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:false}, tooltip:shareTooltip()},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false},
            ticks:{font:{size:11}, color:'#334155', maxRotation:0},
@@ -2244,9 +2341,6 @@ function buildHbaDist(){
       }
     }
   });
-  setShareNote('c-hba-dist', smallShareText(HBA_DIST_LBLS, [
-    {l:'<7%',d:HBA_D_LT7},{l:'7–10%',d:HBA_D_7_10},{l:'10–13%',d:HBA_D_10_13},{l:'13–16%',d:HBA_D_13_16},{l:'>16%',d:HBA_D_GT16}
-  ], 8));
 }
 
 function buildHbaLatest(){
@@ -2286,19 +2380,22 @@ function buildHbaLatest(){
 
 function buildHbaAll(){
   if(window._chbaAll) window._chbaAll.destroy();
-  if(hbaPending('c-hba-all')){ setShareNote('c-hba-all',''); return; }
+  clearShareNotes('c-hba-all');
+  if(hbaPending('c-hba-all')) return;
+  const an=HBA_ALL_N||[[],[],[],[],[]];
   window._chbaAll=createDashboardChart(document.getElementById('c-hba-all'),{
     type:'bar',
     data:{labels:HBA_ALL_LBLS, datasets:[
-      {label:'<7%',   data:HBA_ALL_LT7,  backgroundColor:HBA_BAND_COLS[0], stack:'s', _lc:inkOn(HBA_BAND_COLS[0]), _minVal:8, _minH:16},
-      {label:'7–10%', data:HBA_ALL_710,  backgroundColor:HBA_BAND_COLS[1], stack:'s', _lc:inkOn(HBA_BAND_COLS[1]), _minVal:8, _minH:16},
-      {label:'10–13%',data:HBA_ALL_1013, backgroundColor:HBA_BAND_COLS[2], stack:'s', _lc:inkOn(HBA_BAND_COLS[2]), _minVal:8, _minH:16},
-      {label:'13–16%',data:HBA_ALL_1316, backgroundColor:HBA_BAND_COLS[3], stack:'s', _lc:inkOn(HBA_BAND_COLS[3]), _minVal:8, _minH:16},
-      {label:'>16%',  data:HBA_ALL_GT16, backgroundColor:HBA_BAND_COLS[4], stack:'s', _lc:inkOn(HBA_BAND_COLS[4]), _minVal:8, _minH:16},
+      {label:'<7%',   data:HBA_ALL_LT7,  _counts:an[0], backgroundColor:HBA_BAND_COLS[0], stack:'s', _lc:inkOn(HBA_BAND_COLS[0]), _minVal:8, _minH:16},
+      {label:'7–10%', data:HBA_ALL_710,  _counts:an[1], backgroundColor:HBA_BAND_COLS[1], stack:'s', _lc:inkOn(HBA_BAND_COLS[1]), _minVal:8, _minH:16},
+      {label:'10–13%',data:HBA_ALL_1013, _counts:an[2], backgroundColor:HBA_BAND_COLS[2], stack:'s', _lc:inkOn(HBA_BAND_COLS[2]), _minVal:8, _minH:16},
+      {label:'13–16%',data:HBA_ALL_1316, _counts:an[3], backgroundColor:HBA_BAND_COLS[3], stack:'s', _lc:inkOn(HBA_BAND_COLS[3]), _minVal:8, _minH:16},
+      {label:'>16%',  data:HBA_ALL_GT16, _counts:an[4], backgroundColor:HBA_BAND_COLS[4], stack:'s', _lc:inkOn(HBA_BAND_COLS[4]), _minVal:8, _minH:16},
     ]},
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}},
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:false}, tooltip:shareTooltip()},
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false},
            ticks:{font:{size:11}, color:'#334155', maxRotation:0},
@@ -2328,9 +2425,6 @@ function buildHbaAll(){
       }
     }]
   });
-  setShareNote('c-hba-all', smallShareText(HBA_ALL_LBLS, [
-    {l:'<7%',d:HBA_ALL_LT7},{l:'7–10%',d:HBA_ALL_710},{l:'10–13%',d:HBA_ALL_1013},{l:'13–16%',d:HBA_ALL_1316},{l:'>16%',d:HBA_ALL_GT16}
-  ], 8));
 }
 
 function buildStaticCharts(){
@@ -2740,24 +2834,13 @@ function safe(name, fn){
   try{ fn(); } catch(e){ console.warn('[Dashboard] '+name+':', e.message); }
 }
 
-// One-time caption under each part-of-whole chart explaining the rounding
-function addSumNotes(){
-  ['c-gender','c-age','smbg-mom','hyper-rows','c-offdays',
-   'c-hba-change','c-hba-all','c-hba-dist','tdd-groups','basal-bars','c-spec','c-pilot','c-flw']
-  .forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    const card=el.closest('.card'); if(!card||card.querySelector('.sum-note')) return;
-    const n=document.createElement('div');
-    n.className='sum-note';
-    n.textContent='Rounded shares total 100%.';
-    card.appendChild(n);
-  });
-}
+// Segment tooltips carry the share and count. No rounding caption is added.
+function addSumNotes(){}
 
 // ═══════════ DONOR REPORTING ═══════════
-// Blue lightness ramp for the first four states, plus an amber for Goa so the
-// fifth state stays distinct under common colour-vision deficiencies.
-const DN_COL={MP:'#003b71',RJ:'#0077a8',UK:'#548bae',CG:'#a3c6df',GA:'#92400E'};
+// All five states stay in the blue family. Goa is a teal-leaning blue so it
+// stays distinct from MP, RJ, UK and CG.
+const DN_COL={MP:'#003b71',RJ:'#0077a8',UK:'#548bae',CG:'#a3c6df',GA:'#0a6b7d'};
 let _dnGrowth,_dnClinics,_dnCadre;
 
 function dnFmt(v,fmt){
@@ -3765,17 +3848,17 @@ function parseOps(grid){
 function computeClinicOps(){
   const ops=parseOps(RAW.opsGrid),offs=parseOps(RAW.offsGrid);
   const offsMap={};offs.months.forEach(m=>offsMap[m.label]=m);
-  const M=[],FP=[],OD=[];
+  const M=[],FP=[],OD=[],RAWOD=[];
   ops.months.forEach(om=>{
     let den=0,nf=0; om.vals.forEach(v=>{const x=opNum(v);if(x!=null){den++;if(x>=0.75)nf++;}});
     if(den===0)return;
     M.push(om.label);FP.push(pctC(nf,den));
     const o2=offsMap[om.label];const b=[0,0,0,0,0];let od=0;
     if(o2)o2.vals.forEach(v=>{const x=opNum(v);if(x!=null){od++;if(x===0)b[0]++;else if(x===1)b[1]++;else if(x===2)b[2]++;else if(x===3)b[3]++;else b[4]++;}});
-    OD.push(pctParts(b));
+    OD.push(pctParts(b)); RAWOD.push(b.slice());
   });
   const take=Math.min(8,M.length),s=M.length-take;
-  CLINOPS_M=M.slice(s);CLINOPS_V=FP.slice(s);OFFDAYS_D=OD.slice(s);
+  CLINOPS_M=M.slice(s);CLINOPS_V=FP.slice(s);OFFDAYS_D=OD.slice(s);OFFDAYS_N=RAWOD.slice(s);
 }
 
 // ── Build facility → geo attributes + the geo list used to populate filter dropdowns ──
@@ -4033,7 +4116,7 @@ function recompute(){
       inactiveReasons:Object.keys(inactMap).map(l=>({l,v:inactMap[l]})).sort((x,y)=>y.v-x.v)
     },
     insulin:{
-      tdd:['ped','adu'].map(g=>{const p=pctParts([tdd[g].b,tdd[g].i,tdd[g].a]);return{grp:g==='ped'?'Pediatric 0–17':'Adults ≥18',n:tdd[g].n,below:p[0],inRange:p[1],above:p[2]};}),
+      tdd:['ped','adu'].map(g=>{const p=pctParts([tdd[g].b,tdd[g].i,tdd[g].a]);return{grp:g==='ped'?'Pediatric 0–17':'Adults ≥18',n:tdd[g].n,below:p[0],inRange:p[1],above:p[2],counts:{below:tdd[g].b,inRange:tdd[g].i,above:tdd[g].a}};}),
       basal:[{l:'<20%',v:basPts[0]},{l:'20–30%',v:basPts[1]},{l:'30–50%',v:basPts[2],ideal:true},{l:'50–60%',v:basPts[3]},{l:'> 60%',v:basPts[4]}]
     },
     capacity:computeCapacity(capF,oriF)
@@ -4041,10 +4124,12 @@ function recompute(){
 
   // ── SMBG, Hyper/Hypo, HbA1c (real data, joined to filtered patients by ID) ──
   const smbg=computeSmbg(idSet); SMBG_MOM=smbg.mom; SMBG_LAST=smbg.last;
-  const hh=computeHyperHypo(idSet); HYPER_M=hh.months; HYPER_D=hh.hyper; HYPO_D=hh.hypo;
+  const hh=computeHyperHypo(idSet); HYPER_M=hh.months; HYPER_D=hh.hyper; HYPO_D=hh.hypo; HYPER_CN=hh.hyperN||[]; HYPO_CN=hh.hypoN||[];
   const hba=computeHba1c(idSet);
   HBA_LBLS=hba.changeLabels; HBA_N=hba.changeN; HBA_I4=hba.i4; HBA_I2=hba.i2; HBA_IL=hba.iL;
   HBA_NC=hba.nc; HBA_WL=hba.wL; HBA_W2=hba.w2; HBA_W4=hba.w4;
+  HBA_I4N=hba.i4n||[]; HBA_I2N=hba.i2n||[]; HBA_ILN=hba.iLn||[]; HBA_NCN=hba.ncn||[]; HBA_WLN=hba.wLn||[]; HBA_W2N=hba.w2n||[]; HBA_W4N=hba.w4n||[];
+  HBA_DIST_N=hba.distN||[]; HBA_ALL_N=hba.allN||[];
   HBA_AVG_BASE=hba.avgB; HBA_AVG_LAST=hba.avgL; HBA_DIST_LBLS=hba.distLabels;
   HBA_D_LT7=hba.lt7; HBA_D_7_10=hba.d710; HBA_D_10_13=hba.d1013; HBA_D_13_16=hba.d1316; HBA_D_GT16=hba.gt16; HBA_LATEST=hba.latest;
   HBA_ALL_LBLS=hba.allDistLabels; HBA_ALL_LT7=hba.allLt7; HBA_ALL_710=hba.allD710; HBA_ALL_1013=hba.allD1013; HBA_ALL_1316=hba.allD1316; HBA_ALL_GT16=hba.allGt16;
@@ -4314,9 +4399,9 @@ function computeSmbg(idSet){
   }
   const openKey=openMonthKey();
   const wd=mc.filter(m=>acc[m.label].n>0 && ymKey(m.year,m.month)<openKey).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
-  const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label];return{m:m.label,v:pctParts(a.b),n:a.n};});
-  let last={m:'',v:[0,0,0,0],n:0};
-  if(wd.length){const m=wd[wd.length-1],a=acc3[m.label];last={m:m.label,v:pctParts(a.b),n:a.n,count34:a.b[2]};}
+  const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label];return{m:m.label,v:pctParts(a.b),n:a.n,c:a.b.slice()};});
+  let last={m:'',v:[0,0,0,0],n:0,c:[0,0,0,0]};
+  if(wd.length){const m=wd[wd.length-1],a=acc3[m.label];last={m:m.label,v:pctParts(a.b),n:a.n,count34:a.b[2],c:a.b.slice()};}
   return {mom,last};
 }
 
@@ -4345,7 +4430,9 @@ function computeHyperHypo(idSet){
   return {
     months:last3.map(a=>({m:MON[a.mo]+' '+String(a.y).slice(2),n:a.n})),
     hyper:last3.map(a=>pctParts(a.hy)),
-    hypo:last3.map(a=>pctParts(a.ho))
+    hypo:last3.map(a=>pctParts(a.ho)),
+    hyperN:last3.map(a=>a.hy.slice()),
+    hypoN:last3.map(a=>a.ho.slice())
   };
 }
 
@@ -4413,6 +4500,9 @@ function computeHba1c(idSet){
     changeN:C.map(c=>c.n),
     i4:chgPts.map(p=>p[0]), i2:chgPts.map(p=>p[1]), iL:chgPts.map(p=>p[2]),
     nc:chgPts.map(p=>p[3]), wL:chgPts.map(p=>p[4]), w2:chgPts.map(p=>p[5]), w4:chgPts.map(p=>p[6]),
+    i4n:C.map(c=>c.i4), i2n:C.map(c=>c.i2), iLn:C.map(c=>c.iL), ncn:C.map(c=>c.nc), wLn:C.map(c=>c.wL), w2n:C.map(c=>c.w2), w4n:C.map(c=>c.w4),
+    distN:[0,1,2,3,4].map(i=>dist.map(d=>d[i])),
+    allN:[0,1,2,3,4].map(i=>allDist.map(d=>d[i])),
     rawAvgLatest:latestN?latestSum/latestN:null, latestN,
     avgB:cntB.map((c,i)=>c?Math.round(sumB[i]/c*10)/10:0),
     avgL:cntB.map((c,i)=>c?Math.round(sumL[i]/c*10)/10:0),
