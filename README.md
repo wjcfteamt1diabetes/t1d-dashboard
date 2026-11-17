@@ -2,6 +2,8 @@
 
 A live program-monitoring dashboard for India's Type 1 Diabetes programme across Rajasthan, Madhya Pradesh, Uttarakhand, and Chhattisgarh.
 
+Maintenance runbook: [docs/RUNBOOK.md](docs/RUNBOOK.md).
+
 [![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-Open%20%E2%86%92-1a5fa8?style=for-the-badge&logo=github)](https://wjcfteamt1diabetes.github.io/t1d-dashboard/)
 
 ---
