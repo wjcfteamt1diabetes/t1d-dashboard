@@ -1149,7 +1149,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="tc" id="tab-3">
 <div class="tc-wrap">
 
-<div class="sl">Stock availability — latest reported month <span id="stk-period-tag" style="font-weight:600;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:2px 8px;font-size:10px;margin-left:8px"></span></div>
+<div class="sl">Stock availability — last completed month <span id="stk-period-tag" style="font-weight:600;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:2px 8px;font-size:10px;margin-left:8px"></span></div>
 <div class="g4">
   <div class="card cab">
     <div class="ct">Glucometer</div>
@@ -1509,6 +1509,13 @@ let DONOR=null;        // everything the Donor Reporting tab renders
 let FUP_MOM,FUP_PENDING,SMBG_MOM,SMBG_LAST,HYPER_M,HYPER_D,HYPO_D;
 let CLINOPS_M,CLINOPS_V,OFFDAYS_D,TRAINED_STAFF;
 function ymKey(y,m){return y*12+m;}
+// The calendar month still in progress is not a finished figure: stock rows and
+// SMBG columns keep filling in until it ends, and a few SMBG headers are dated
+// in 2027. KPIs, the stock trend and the SMBG window stop before this key.
+function openMonthKey(now){
+  const d=now||new Date();
+  return ymKey(d.getFullYear(), d.getMonth());
+}
 let HBA_N,HBA_LBLS,HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4;
 let HBA_AVG_BASE,HBA_AVG_LAST,HBA_DIST_LBLS,HBA_D_LT7,HBA_D_7_10,HBA_D_10_13,HBA_D_13_16,HBA_D_GT16,HBA_LATEST;
 let HBA_ALL_LBLS,HBA_ALL_LT7,HBA_ALL_710,HBA_ALL_1013,HBA_ALL_1316,HBA_ALL_GT16;
@@ -3083,7 +3090,8 @@ function stockFiltered(){
 }
 function renderStockKPIs(){
   const rows=stockFiltered();
-  const reported=rows.filter(r=>r.coverage!=null || r.stockout!=null);
+  const openKey=openMonthKey();
+  const reported=rows.filter(r=>(r.coverage!=null || r.stockout!=null) && stkYmKey(r)<openKey);
   let latestKey=-1, latestLabel='';
   reported.forEach(r=>{const k=stkYmKey(r); if(k>latestKey){latestKey=k; latestLabel=stkYmLabel(r);}});
   const tag=document.getElementById('stk-period-tag'); if(tag) tag.textContent=latestLabel||'No data';
@@ -3092,7 +3100,9 @@ function renderStockKPIs(){
     const withCov=cRows.filter(r=>r.coverage!=null);
     const avg=withCov.length?Math.round(withCov.reduce((a,r)=>a+r.coverage,0)/withCov.length):null;
     const stockouts=cRows.filter(r=>r.stockout===1).length;
-    const total=cRows.length;
+    // Roster rows are pre-filled for every facility. A blank stock-out flag means
+    // that facility has not reported, so it stays out of the denominator.
+    const total=cRows.filter(r=>r.stockout!=null).length;
     const stkRate=total?Math.round(stockouts/total*100):null;
     const covEl=document.getElementById('stk-'+c.slug+'-cov');
     const stkEl=document.getElementById('stk-'+c.slug+'-stk');
@@ -3103,7 +3113,8 @@ function renderStockKPIs(){
 let _cstk;
 function renderStockTrend(){
   const rows=stockFiltered();
-  const keys=Array.from(new Set(rows.filter(r=>r.coverage!=null).map(stkYmKey))).sort((a,b)=>a-b);
+  const openKey=openMonthKey();
+  const keys=Array.from(new Set(rows.filter(r=>r.coverage!=null).map(stkYmKey))).filter(k=>k<openKey).sort((a,b)=>a-b);
   const lastKeys=keys.slice(-12);
   const sampleByKey={}; rows.forEach(r=>{const k=stkYmKey(r); if(!sampleByKey[k]) sampleByKey[k]=stkYmLabel(r);});
   const labels=lastKeys.map(k=>sampleByKey[k]||'');
@@ -4092,7 +4103,8 @@ function computeSmbg(idSet){
     const is3=m3C>=0&&isYes(row[m3C]);
     mc.forEach(m=>{const bk=bucket(row[m.i]); if(bk>=0){acc[m.label].b[bk]++;acc[m.label].n++; if(is3){acc3[m.label].b[bk]++;acc3[m.label].n++;}}});
   }
-  const wd=mc.filter(m=>acc[m.label].n>0).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+  const openKey=openMonthKey();
+  const wd=mc.filter(m=>acc[m.label].n>0 && ymKey(m.year,m.month)<openKey).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
   const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label];return{m:m.label,v:pctParts(a.b),n:a.n};});
   let last={m:'',v:[0,0,0,0],n:0};
   if(wd.length){const m=wd[wd.length-1],a=acc3[m.label];last={m:m.label,v:pctParts(a.b),n:a.n,count34:a.b[2]};}
