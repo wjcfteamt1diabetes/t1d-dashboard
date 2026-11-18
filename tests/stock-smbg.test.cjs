@@ -67,7 +67,7 @@ test('stock cards use the last completed month and facilities that reported', ()
   assert.equal(elements['stk-gst-cov'].textContent, '—');
 });
 
-test('stock trend drops the current month and any later column', () => {
+test('stock trend keeps the current month as a partial point and drops later columns', () => {
   const {run, charts} = setup(NOV_2026);
   run(`RAW={facAttr:{},stock:[
     {fac:'A',commodity:'Glucometer',month:'September',year:2026,coverage:50,stockout:0},
@@ -75,8 +75,15 @@ test('stock trend drops the current month and any later column', () => {
     {fac:'A',commodity:'Glucometer',month:'November',year:2026,coverage:10,stockout:1},
     {fac:'A',commodity:'Glucometer',month:'December',year:2026,coverage:99,stockout:0}
   ]}; renderStockTrend();`);
-  assert.deepEqual(Array.from(charts.at(-1).data.labels, String), ['Sep 26', 'Oct 26']);
-  assert.deepEqual(Array.from(charts.at(-1).data.datasets[0].data, Number), [50, 40]);
+  const chart = charts.at(-1);
+  const line = chart.data.datasets[0];
+  assert.deepEqual(Array.from(chart.data.labels, String), ['Sep 26', 'Oct 26', 'Nov 26 (partial)']);
+  assert.deepEqual(Array.from(line.data, Number), [50, 40, 10]);
+  assert.equal(line.pointBackgroundColor.at(-1), '#ffffff');
+  assert.equal(Array.from(line.segment.borderDash({p1DataIndex: 2})).join(','), '5,4');
+  assert.equal(line.segment.borderDash({p1DataIndex: 1}), undefined);
+  const tip = chart.options.plugins.tooltip.callbacks.label({dataset: line, dataIndex: 2, parsed: {y: 10}});
+  assert.match(tip, /Glucometer: 10% · partial month/);
 });
 
 test('a new calendar month promotes the month that just closed', () => {
@@ -108,10 +115,10 @@ test('SMBG ignores the open month and future-dated columns', () => {
 });
 
 function heatMonths(html){
-  return Array.from(html.matchAll(/class="stk-heat-m"><span>([^<]*)<\/span>/g), m => m[1]);
+  return Array.from(html.matchAll(/class="stk-heat-m[^"]*"><span>([^<]*)<\/span>/g), m => m[1]);
 }
 
-test('stock heatmap ends on the last completed month, with the open month and later months left off', () => {
+test('stock heatmap runs through the current month and leaves later months off', () => {
   const {run, elements} = setup(NOV_2026);
   run(`document.getElementById('stk-heat-com').value='Glucometer';
     const names=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -125,13 +132,15 @@ test('stock heatmap ends on the last completed month, with the open month and la
     renderStockHeatmap();`);
   const html = elements['stk-heat'].innerHTML;
   const months = heatMonths(html);
-  assert.deepEqual(months, ['Nov 25','Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26','Aug 26','Sep 26','Oct 26']);
+  assert.deepEqual(months, ['Dec 25','Jan 26','Feb 26','Mar 26','Apr 26','May 26','Jun 26','Jul 26','Aug 26','Sep 26','Oct 26','Nov 26 (partial)']);
   assert.match(html, /A · Oct 26 · 40% coverage · STOCKOUT/);
+  assert.match(html, /A · Nov 26 \(partial\) · 15% coverage · partial month/);
   assert.match(html, /Goa Clinic · Oct 26 · 100% coverage/);
   assert.match(html, />GA <span/);
+  assert.equal(html.includes('Dec 26'), false);
 });
 
-test('stock heatmap advances when the month closes and still drops the open month', () => {
+test('stock heatmap advances when the month closes and marks the new open month partial', () => {
   const {run, elements} = setup(new Date(2026, 11, 1, 12, 0, 0));
   run(`document.getElementById('stk-heat-com').value='Glucometer';
     RAW={facAttr:{},stock:[
@@ -140,12 +149,13 @@ test('stock heatmap advances when the month closes and still drops the open mont
       {fac:'A',commodity:'Glucometer',month:'December',year:2026,coverage:99,stockout:0}
     ]}; renderStockHeatmap();`);
   const months = heatMonths(elements['stk-heat'].innerHTML);
-  assert.equal(months.at(-1), 'Nov 26');
-  assert.equal(months.includes('Dec 26'), false);
+  assert.equal(months.at(-2), 'Nov 26');
+  assert.equal(months.at(-1), 'Dec 26 (partial)');
   assert.match(elements['stk-heat'].innerHTML, /A · Nov 26 · 10% coverage · STOCKOUT/);
+  assert.match(elements['stk-heat'].innerHTML, /A · Dec 26 \(partial\) · 99% coverage · partial month/);
 });
 
-test('a partial current month does not appear when it is the only reported stock month', () => {
+test('the partial current month stays on the heatmap when it is the only reported stock month', () => {
   const {run, elements} = setup(NOV_2026);
   run(`document.getElementById('stk-heat-com').value='Glucometer';
     RAW={facAttr:{},stock:[
@@ -153,9 +163,25 @@ test('a partial current month does not appear when it is the only reported stock
       {fac:'A',commodity:'Glucometer',month:'November',year:2026,coverage:10,stockout:1}
     ]}; renderStockHeatmap();`);
   const months = heatMonths(elements['stk-heat'].innerHTML);
-  assert.deepEqual(months, ['Oct 26']);
+  assert.deepEqual(months, ['Oct 26', 'Nov 26 (partial)']);
   assert.match(elements['stk-heat'].innerHTML, /title="A · Oct 26"/);
-  assert.equal(elements['stk-heat'].innerHTML.includes('Nov 26'), false);
+  assert.match(elements['stk-heat'].innerHTML, /Nov 26 \(partial\) · 10% coverage · STOCKOUT · partial month/);
+  assert.match(elements['stk-heat'].innerHTML, /stk-heat-cell partial/);
+});
+
+test('a period that ends before the current month does not add a partial column', () => {
+  const {run, elements, charts} = setup(NOV_2026);
+  run(`PERIOD=resolvePeriod('custom','2026-08','2026-08', new Date(2026,10,17));
+    RAW={facAttr:{},stock:[
+      {fac:'A',commodity:'Glucometer',month:'August',year:2026,coverage:40,stockout:0},
+      {fac:'A',commodity:'Glucometer',month:'November',year:2026,coverage:10,stockout:1}
+    ]};
+    document.getElementById('stk-heat-com').value='Glucometer';
+    renderStockHeatmap(); renderStockTrend(); renderStockKPIs();`);
+  assert.deepEqual(heatMonths(elements['stk-heat'].innerHTML), ['Aug 26']);
+  assert.deepEqual(Array.from(charts.at(-1).data.labels, String), ['Aug 26']);
+  assert.equal(elements['stk-period-tag'].textContent, 'Aug 26');
+  assert.equal(elements['stk-heat'].innerHTML.includes('partial'), false);
 });
 
 test('logframe 3.3 is assessed from the completed SMBG month', () => {

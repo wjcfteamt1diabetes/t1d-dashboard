@@ -96,10 +96,11 @@ test('actual Stock Levels renderer restarts each filtered dataset and keeps null
     {fac:'B',commodity:'Glucometer',month:'January',year:2026,coverage:50}],facAttr:{a:{state:'MP'},b:{state:'RJ'}}};
     getF=()=>({state:document.getElementById('f-state').value,facility:'all',division:'all',district:'all',dpc:'all'});`);
   canvas('f-state').value='all';run('renderStockTrend()');
-  assert.deepEqual(Array.from(run('_cstk.data.datasets[0].data')),[25,100]);
+  assert.deepEqual(Array.from(run('_cstk.data.datasets[0].data')).slice(0,2),[25,100]);
+  assert.match(String(run('_cstk.data.labels.at(-1)')), /\(partial\)$/);
   const old=run('_cstk');canvas('f-state').value='MP';run('renderStockTrend()');
-  assert.equal(old.canvas,null);assert.deepEqual(Array.from(run('_cstk.data.datasets[0].data')),[0,100]);
-  assert.deepEqual(Array.from(run('_cstk.data.datasets[1].data')),[null,null]);assert.equal(frames.size,1);
+  assert.equal(old.canvas,null);assert.deepEqual(Array.from(run('_cstk.data.datasets[0].data')).slice(0,2),[0,100]);
+  assert.ok(Array.from(run('_cstk.data.datasets[1].data')).every(v=>v==null));assert.equal(frames.size,1);
   canvas('f-state').value='CG';run('renderStockTrend()');assert.equal(run('_cstk.data.labels.length'),0);
   assert.equal(run('chartEntrances.size'),0);assert.equal(frames.size,0);
 });
