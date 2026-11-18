@@ -84,6 +84,54 @@ test('headers are read by name, and a missing or empty tab is not an error', () 
   assert.equal(adults.message, 'Not applicable for adults');
 });
 
+test('blank numeric growth headers are refilled, and a fully blank header stays hidden', () => {
+  const {run} = setup();
+  const got = run(`(() => {
+    const keep = new Set(['Claude_ID','State','BAZ_bucket','Time_in_care_bucket','Growth_group']);
+    const hdr = GR_CHILD_CANON.map(h => keep.has(h) ? h : '');
+    const row = GR_CHILD_CANON.map(h => h==='Claude_ID'?'c1':h==='State'?'RJ':h==='dHAZ'?'0.04':h==='Latest_HbA1c'?'10.70':h==='BAZ_bucket'?'Stable':h==='Time_in_care_bucket'?'18+ months':h==='Growth_group'?'steady or improved':'');
+    const child=[hdr, row];
+    const mileHdr = GR_MILE_CANON.map(h => ['Claude_ID','Enrolment_quarter','State'].includes(h) ? h : '');
+    const mileRow = GR_MILE_CANON.map(h => h==='Claude_ID'?'c1':h==='Month_bin'?'6':h==='Mean_BAZ'?'-0.40':h==='Mean_HAZ'?'-1.20':h==='Enrolment_quarter'?'2025-Q3':h==='State'?'RJ':'');
+    const miles=[mileHdr, mileRow];
+    const childFilled = fillGrowthHeaders(child, ['Claude_ID','State','BAZ_bucket'], GR_CHILD_CANON);
+    const mileFilled = fillGrowthHeaders(miles, ['Claude_ID','Enrolment_quarter','State'], GR_MILE_CANON);
+    const parsed = growthObjects(child)[0];
+    const mile = growthObjects(miles)[0];
+    const blank = [GR_CHILD_CANON.map(()=>''), GR_CHILD_CANON.map((_,i)=> i===0 ? 'c1' : '1')];
+    const blankFilled = fillGrowthHeaders(blank, ['Claude_ID','State','BAZ_bucket'], GR_CHILD_CANON);
+    const blankMile = [GR_MILE_CANON.map(()=>''), ['c1','0','1','1','1','1','2025-Q1','RJ','M','CS Jaipur','Jaipur']];
+    const blankMileFilled = fillGrowthHeaders(blankMile, ['Claude_ID','Enrolment_quarter','State'], GR_MILE_CANON);
+    return {
+      childFilled, mileFilled,
+      dHaz: parsed.dHAZ, hba: parsed.Latest_HbA1c, baz: parsed.BAZ_bucket,
+      dHazHeader: child[0][GR_CHILD_CANON.indexOf('dHAZ')],
+      hbaHeader: child[0][GR_CHILD_CANON.indexOf('Latest_HbA1c')],
+      kept: child[0][GR_CHILD_CANON.indexOf('BAZ_bucket')],
+      bin: mile.Month_bin, bazMean: mile.Mean_BAZ, hazMean: mile.Mean_HAZ,
+      blankFilled, blankHeader: blank[0].every(c => c===''), blankRows: growthObjects(blank),
+      blankMileFilled, blankMileHeader: blankMile[0].every(c => c===''), blankMileRows: growthObjects(blankMile)
+    };
+  })()`);
+  assert.equal(got.childFilled, true);
+  assert.equal(got.mileFilled, true);
+  assert.equal(got.dHaz, '0.04');
+  assert.equal(got.hba, '10.70');
+  assert.equal(got.baz, 'Stable');
+  assert.equal(got.dHazHeader, 'dHAZ');
+  assert.equal(got.hbaHeader, 'Latest_HbA1c');
+  assert.equal(got.kept, 'BAZ_bucket');
+  assert.equal(got.bin, '6');
+  assert.equal(got.bazMean, '-0.40');
+  assert.equal(got.hazMean, '-1.20');
+  assert.equal(got.blankFilled, false);
+  assert.equal(got.blankHeader, true);
+  assert.equal(got.blankRows, null);
+  assert.equal(got.blankMileFilled, false);
+  assert.equal(got.blankMileHeader, true);
+  assert.equal(got.blankMileRows, null);
+});
+
 test('filter join, bucket aggregation, min-N and period independence', () => {
   const {run, context} = setup();
   const rows = [];
