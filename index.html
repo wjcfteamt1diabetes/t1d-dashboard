@@ -4115,6 +4115,26 @@ const HH_CANON=['Claude ID','Facility Name','Date of visit','% Hypo readings','%
 const CS_CANON=['','State','Division','District','Block','Facility category','Facility name','DPC','Block&FC','Directive for operationalisation issued from the state?','Directive for operationalisation issued from CS office?','T1D Clinic Operational?','Date of Operationalisation','Clinic Day','HbA1c Available?','Trained pediatrician available?','Trained MD Medicine available?','Trained Medical Officer available?','Referral pathway developed?','Peer support groups formed?','Number of peer support camps held'];
 const LT_CANON=['T1D Clinic Operational?','State','District','Facility category','Facility name','Total enrolments (autocalculated)'];
 const ORI_CANON=['State','District','Block','Type of Service Provider','# of Service Providers','Session #','Pilot District? (Yes/No)','Month of Orientation','Year of Orientation','Remarks'];
+const GR_CHILD_CANON=['Claude_ID','State','District','Facility','Sex','Age_at_enrolment_y','Enrolment_date','Enrolment_quarter','N_visits_measured','N_clean_BMI_visits','N_QC_flagged_visits','N_carried_fwd_heights','Carried_fwd_flag','Baseline_date','Baseline_age_y','Baseline_height_cm','Baseline_weight_kg','Baseline_BMI','Baseline_BAZ','Latest_date','Latest_age_y','Latest_height_cm','Latest_weight_kg','Latest_BMI','Latest_BAZ','HAZ_baseline_date','Baseline_HAZ','HAZ_latest_date','Latest_HAZ','dBAZ','dHAZ','BAZ_bucket','HAZ_bucket','Growth_group','Months_in_care','Time_in_care_bucket','BMI_category_latest','Stunted_latest','Latest_BMI_within_6m','Latest_HAZ_within_6m','Baseline_HbA1c','Latest_HbA1c','Latest_HbA1c_date','dHbA1c','Latest_HbA1c_days_after_enrol'];
+const GR_MILE_CANON=['Claude_ID','Month_bin','Mean_BAZ','Mean_HAZ','N_BAZ_visits','N_HAZ_visits','Enrolment_quarter','State','Sex','Facility','District'];
+// Growth.gs clears the whole header when IDs misalign. fillRow would invent
+// names for that blank row and show a section that should stay hidden, so only
+// refill blanks once a real anchor header is present.
+function growthHeaderAnchored(grid, anchors){
+  if(!Array.isArray(grid)) return false;
+  for(let r=0;r<Math.min(grid.length,10);r++){
+    const row=grid[r];
+    if(!Array.isArray(row)) continue;
+    const cells=row.map(c=>String(c==null?'':c).trim());
+    if(anchors.some(nm=>cells.indexOf(nm)>=0)) return true;
+  }
+  return false;
+}
+function fillGrowthHeaders(grid, anchors, canon){
+  if(!growthHeaderAnchored(grid, anchors)) return false;
+  fillRow(grid, anchors, canon);
+  return true;
+}
 
 // Capacity_Building: gviz returns BLANK headers for Training Batch / Maximum Score /
 // Pre-test / Post-test (values are present). Recover them by anchoring off known headers.
@@ -6299,6 +6319,8 @@ async function boot({forceFresh=false}={}){
     fillRow(csFac,  ['State','Facility name','T1D Clinic Operational?'], CS_CANON);
     fillRow(ltGrid, ['State','Facility name'],                     LT_CANON);
     fillRow(orient, ['State','Type of Service Provider','Pilot District? (Yes/No)'], ORI_CANON);
+    fillGrowthHeaders(growthChildGrid, ['Claude_ID','State','BAZ_bucket'], GR_CHILD_CANON);
+    fillGrowthHeaders(growthMileGrid, ['Claude_ID','Enrolment_quarter','State'], GR_MILE_CANON);
     // Every row the tab returned, before we drop the blank placeholders. Kept so the
     // guard below can tell "the tab is unreachable" apart from "the tab is empty".
     const enrRows=toObjects(enr, ['Claude_ID','State','Survival Status']);
