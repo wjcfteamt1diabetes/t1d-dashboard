@@ -61,11 +61,24 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .fbar-inner{max-width:1380px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center}
 /* Each label travels with its own select, so a wrap never strands a label on the row above. */
 .fgrp{display:inline-flex;align-items:center;gap:5px;min-width:0}
+[hidden]{display:none !important}
 /* Facility and DPC hold the longest option text; cap them so one filter cannot swallow the row. */
 .fsel-w{max-width:210px}
 .fnote{font-size:10px;color:var(--tm);background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:4px 9px;margin-top:6px;width:100%;line-height:1.45}
 .flbl{font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .fsel{font-size:11px;font-family:var(--fn);padding:3px 20px 3px 6px;border:1px solid var(--bdr);border-radius:4px;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 5px center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--t1)}
+#f-support,#f-period{max-width:158px}
+input.fsel{padding:2px 6px;min-height:22px;background-image:none}
+.cs-only-note{display:none}
+body.support-lt .cs-only-note{display:block}
+body.support-lt .cs-only{display:none !important}
+body.support-lt .enrol-grid{grid-template-columns:minmax(0,1fr)}
+@media(max-width:700px){
+  .fbar{padding:6px 10px}
+  .fbar-inner{gap:6px 8px}
+  #f-custom{flex-basis:100%}
+  input.fsel{max-width:42vw}
+}
 .fdiv{width:1px;height:20px;background:var(--bdr);margin:0 2px}
 .ftag{font-size:10px;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:3px 8px;font-weight:600}
 
@@ -636,9 +649,28 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
       <option value="adu">Adults (≥18)</option>
     </select></span>
     <div class="fdiv"></div>
+    <span class="fgrp"><span class="flbl">Support</span>
+    <select class="fsel" id="f-support" onchange="applyFilters()">
+      <option value="all">All</option>
+      <option value="cs">Complete support</option>
+      <option value="lt">Light support</option>
+    </select></span>
+    <span class="fgrp"><span class="flbl">Period</span>
+    <select class="fsel" id="f-period" onchange="applyFilters()">
+      <option value="all">All time</option>
+      <option value="3">Last 3 months</option>
+      <option value="6">Last 6 months</option>
+      <option value="12">Last 12 months</option>
+      <option value="fy">This financial year</option>
+      <option value="custom">Custom range</option>
+    </select></span>
+    <span class="fgrp" id="f-custom" hidden>
+      <span class="flbl">From</span><input class="fsel" id="f-from" type="month" aria-label="From month" onchange="applyFilters()">
+      <span class="flbl">To</span><input class="fsel" id="f-to" type="month" aria-label="To month" onchange="applyFilters()">
+    </span>
     <span class="ftag" id="n-tag">n = 2,216 PLT1D</span>
   </div>
-  <div class="fbar-inner"><div class="fnote" id="lt-excl" hidden></div></div>
+  <div class="fbar-inner"><div class="fnote" id="scope-note" hidden></div><div class="fnote" id="lt-excl" hidden></div></div>
 </div>
 
 <div class="tabs-bar">
@@ -687,15 +719,15 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     </div>
   </div>
   <div class="card cab">
-    <div class="ct">PLT1D enrolled</div>
-    <div class="cs">Progress towards programme enrolment target</div>
+    <div class="ct" id="k-enr-title">PLT1D enrolled</div>
+    <div class="cs" id="k-enr-sub">Progress towards programme enrolment target</div>
     <div class="kv b" id="k-enr">2,216</div>
     <div class="gauge-row"><div class="gauge-tr"><div class="gauge-fl" id="k-gauge" style="width:0%"></div></div><div class="gauge-pct" id="k-gaugeN">—</div></div>
     <div class="kn" id="k-target">Target not loaded</div>
   </div>
   <div class="card">
-    <div class="ct">New enrolments — last month</div>
-    <div class="cs">Complete support + light touch</div>
+    <div class="ct" id="k-new-title">New enrolments — last month</div>
+    <div class="cs" id="k-new-sub">Complete support + light touch</div>
     <div class="kv g2c" id="k-new">51</div>
     <div class="ks" id="k-avgclin">Avg/clinic: 0.9</div>
     <div class="ktr dn" id="k-newtrend">↓ vs 96 prior month</div>
@@ -704,33 +736,33 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div class="g3">
   <div class="card">
-    <div class="ct">Total enrolled</div>
-    <div class="cs">Complete support + light touch</div>
+    <div class="ct" id="k-tot-title">Total enrolled</div>
+    <div class="cs" id="k-tot-sub">Complete support + light touch</div>
     <div class="kv" id="k-tot">2,216</div>
     <div class="kn" id="k-tot-n">n = 2,216 PLT1D</div>
   </div>
   <div class="card cab">
     <div class="ct">Complete support</div>
-    <div class="cs">Share of total enrolment · RJ, MP, UK, CG and GA</div>
+    <div class="cs" id="k-cs-sub">Share of total enrolment · RJ, MP, UK, CG and GA</div>
     <div class="kv b" id="k-cs">1,647</div>
     <div class="ks" id="k-cs-pct">74.3% of enrolled · 38 facilities</div>
   </div>
   <div class="card">
     <div class="ct">Light touch</div>
-    <div class="cs">Share of total enrolment · Rajasthan only</div>
+    <div class="cs" id="k-lt-sub">Share of total enrolment · Rajasthan only</div>
     <div class="kv g2c" id="k-lt">569</div>
     <div class="ks" id="k-lt-pct">25.7% of enrolled · 18 facilities</div>
   </div>
 </div>
 
 <div class="sl">Enrolment trends</div>
-<div class="g2" style="align-items:start">
+<div class="g2 enrol-grid" style="align-items:start">
   <div class="card">
-    <div class="ct">Cumulative enrolments & complete-support clinics</div><div class="cs" id="c1-clinics"></div>
+    <div class="ct" id="c1-title">Cumulative enrolments &amp; complete-support clinics</div><div class="cs" id="c1-clinics"></div>
     <div class="lg">
-      <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
-      <span><span class="ld" style="background:var(--b4)"></span>Light touch</span>
-      <span><span class="ldc" style="background:#d97706"></span>CS clinics open</span>
+      <span id="c1-lg-cs"><span class="ld" style="background:var(--b2)"></span>Complete support</span>
+      <span id="c1-lg-lt"><span class="ld" style="background:var(--b4)"></span>Light touch</span>
+      <span id="c1-lg-clin"><span class="ldc" style="background:#d97706"></span>CS clinics open</span>
     </div>
     <div class="nr">
       <button class="nb" id="p1" onclick="shift(0,-1)">← Back</button>
@@ -740,9 +772,9 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div style="height:240px;position:relative"><canvas id="c1"></canvas></div>
     <span id="c1-note" hidden></span>
   </div>
-  <div class="card">
+  <div class="card cs-only">
     <div class="ct">Monthly complete-support enrolments</div>
-    <div class="cs">Complete support only · * partial month</div>
+    <div class="cs" id="c2-sub">Complete support only · * partial month</div>
     <div class="lg">
       <span><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span><span class="ldc" style="background:#d97706"></span>Enrolments/open CS clinic</span>
@@ -757,6 +789,8 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
 </div>
 
+<div class="cs-only-note fnote">Complete support only. Light support records enrolment counts, not patient clinical, HbA1c, SMBG, follow-up or stock data.</div>
+<div class="cs-only">
 <div class="sl">PLT1D profile</div>
 <div class="g3">
   <div class="card">
@@ -835,7 +869,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div id="smbg-last"></div>
   </div>
   <div class="card">
-    <div class="ct">Hyper/hypoglycaemic readings — last 3 months</div>
+    <div class="ct" id="hh-title">Hyper/hypoglycaemic readings — last 3 months</div>
     <div class="cs">Share of visits with SMBG data, by reading band</div>
     <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:4px">% Hyper readings</div>
     <div class="lg" id="hyper-lg" style="margin-bottom:4px">
@@ -852,8 +886,9 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
 </div>
 
+</div>
 <div class="sl">Clinic operations</div>
-<div class="g2" style="margin-bottom:7px;align-items:start">
+<div class="g2 cs-only" style="margin-bottom:7px;align-items:start">
   <div class="card cab">
     <div class="ct">On-site HbA1c testing</div>
     <div class="cs">Share of operational clinics</div>
@@ -886,6 +921,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
 </div>
 
+<div class="cs-only">
 <div class="sl">Peer support</div>
 <div class="card" id="peer-support-card">
   <div class="ct">Peer-support camps conducted</div>
@@ -895,12 +931,14 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div id="peer-camps-legend" class="peer-camps-legend"></div>
   </div>
 </div>
+</div>
 
 </div></div><!-- /tab-0 -->
 
 <!-- ══════════ TAB 1 — CLINICAL OUTCOMES ══════════ -->
 <div class="tc" id="tab-1">
-<div class="tc-wrap">
+<div class="cs-only-note fnote">Complete support only. Light support records enrolment counts, not patient clinical, HbA1c, SMBG, follow-up or stock data.</div>
+<div class="tc-wrap cs-only">
 
 <div class="sl">Glycaemic control — overview</div>
 <div class="g4">
@@ -1165,7 +1203,8 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <!-- ══════════ TAB 3 — INFO ══════════ -->
 <!-- ══════════ TAB 3 — STOCK LEVELS ══════════ -->
 <div class="tc" id="tab-3">
-<div class="tc-wrap">
+<div class="cs-only-note fnote">Complete support only. Stock levels are reported for complete-support facilities.</div>
+<div class="tc-wrap cs-only">
 
 <div class="sl">Stock availability — last completed month <span id="stk-period-tag" style="font-weight:600;color:var(--b2);background:#eff6ff;border:1px solid var(--b5);border-radius:4px;padding:2px 8px;font-size:10px;margin-left:8px"></span></div>
 <div class="g4">
@@ -1248,7 +1287,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="card dn-hero-card">
   <div class="dn-hero">
     <div class="dn-hero-fig">
-      <div class="dn-hero-lbl">PLT1D enrolled</div>
+      <div class="dn-hero-lbl" id="dn-enr-lbl">PLT1D enrolled</div>
       <div class="dn-hero-val" id="dn-enr">—</div>
       <div class="dn-hero-sub" id="dn-enr-n">—</div>
     </div>
@@ -1268,7 +1307,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="sl">Enrolment and clinic growth</div>
 <div class="card">
   <div class="ct">Cumulative PLT1D enrolled, by state</div>
-  <div class="cs">Both support models · month-end totals; current month to date</div>
+  <div class="cs" id="dn-growth-sub">Both support models · month-end totals; current month to date</div>
   <div class="lg" id="dn-growth-lg"></div>
   <div style="height:220px;position:relative"><canvas id="dn-growth"></canvas></div>
   <div class="dn-panel-lbl">Documented clinic activity — incomplete history</div>
@@ -1276,6 +1315,8 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 </div>
 
 <div class="fnote" id="dn-growth-note"></div>
+<div class="cs-only-note fnote">Complete support only. Clinical results are not recorded for light support.</div>
+<div class="cs-only">
 <div class="sl">Quality of care</div>
 <div class="fnote">Clinical results: complete-support patients only.</div>
 <div class="g2">
@@ -1298,6 +1339,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     </div>
     <div id="dn-hba-dumb" style="margin-top:12px"></div>
   </div>
+</div>
 </div>
 
 <div class="sl">Capacity building</div>
@@ -1719,6 +1761,8 @@ Chart.register({
 
 // ── Live data globals (recomputed from RAW on every filter change) ──
 let RAW=null;          // parsed sheets: {enrolled, csFac, ltGrid, cap, orient, targets, opsGrid, offsGrid}
+let PERIOD=null;       // null = all time. {from,to,preset} ym keys, inclusive.
+let periodStamp='';
 let DATA=null;         // {demographics, insulin, capacity} for the active filter
 let CURD=null;         // merged geo+patient object consumed by renderKPIs
 let STATE,MONTHS,CS_CUM,LT_CUM,CLIN,CLIN_CS,CLIN_LT,NEWENR_CS,NEWENR_LT,NEWENR,AVGCL,TREND_GAP,CURRENT_CLIN,CS_AVGCL,CS_AVG_N,CS_UNKNOWN_OPEN;
@@ -1769,11 +1813,125 @@ const LOGFRAME=[
 ];
 
 function fval(id){const e=document.getElementById(id);return e?e.value:'all';}
+function normSupport(v){return v==='cs'||v==='lt'?v:'all';}
+function normPeriod(v){return v==='3'||v==='6'||v==='12'||v==='fy'||v==='custom'?v:'all';}
 function getF(){return{
   state:fval('f-state'), division:fval('f-division'), district:fval('f-district'),
   facility:fval('f-facility'), dpc:fval('f-dpc'),
-  status:fval('f-status'), sex:fval('f-sex'), age:fval('f-age')
+  status:fval('f-status'), sex:fval('f-sex'), age:fval('f-age'),
+  support:normSupport(fval('f-support')), period:normPeriod(fval('f-period')),
+  from:fval('f-from'), to:fval('f-to')
 };}
+// Geography and patient filters, plus a real support slice or a resolved period.
+// Blank custom months are not a filter: an empty from/to must not mark the
+// programme-wide grant view as filtered.
+function dashboardFiltered(f, period){
+  f=f||{};
+  if(['state','division','district','facility','dpc','status','sex','age'].some(k=>f[k]&&f[k]!=='all')) return true;
+  if(normSupport(f.support)!=='all') return true;
+  return !!period;
+}
+function parseMonthValue(v){
+  const m=/^(\d{4})-(\d{2})$/.exec(String(v||'').trim());
+  if(!m) return null;
+  const y=+m[1], mo=+m[2]-1;
+  if(mo<0||mo>11||y<2000||y>2100) return null;
+  return {y,m:mo};
+}
+// null means all time, so every caller can skip the window and keep today's numbers.
+function resolvePeriod(period, from, to, now){
+  period=normPeriod(period);
+  now=now||new Date();
+  const endY=now.getFullYear(), endM=now.getMonth(), end=ymKey(endY,endM);
+  if(period==='3'||period==='6'||period==='12') return {from:end-(+period-1), to:end, preset:period};
+  if(period==='fy'){
+    const startYear=endM>=3?endY:endY-1;
+    return {from:ymKey(startYear,3), to:ymKey(startYear+1,2), preset:'fy'};
+  }
+  if(period==='custom'){
+    const a=parseMonthValue(from), b=parseMonthValue(to);
+    if(!a||!b) return null;
+    let lo=ymKey(a.y,a.m), hi=ymKey(b.y,b.m);
+    if(lo>hi){const t=lo; lo=hi; hi=t;}
+    return {from:lo, to:hi, preset:'custom'};
+  }
+  return null;
+}
+function formatYm(k){return MON[((k%12)+12)%12]+' '+Math.floor(k/12);}
+function periodLabel(range){
+  if(!range) return 'All time';
+  if(range.preset==='fy'){
+    const y=Math.floor(range.from/12);
+    return 'FY '+y+'–'+String(y+1).slice(2)+' (Apr–Mar)';
+  }
+  return formatYm(range.from)+' – '+formatYm(range.to);
+}
+function lastCompletedKey(range, now){
+  const latest=openMonthKey(now)-1;
+  if(!range) return latest;
+  const k=Math.min(latest, range.to);
+  return k<range.from?null:k;
+}
+function countEnrolledInPeriod(patients, range, cap){
+  let n=0;
+  (patients||[]).forEach(p=>{
+    const e=parseDate(p['Date of enrolment']);
+    if(!e) return;
+    const k=ymKey(e.getFullYear(), e.getMonth());
+    if(k>=range.from&&k<=range.to&&k<=cap) n++;
+  });
+  return n;
+}
+function ltMonthlyInRange(lt, range, cap){
+  let n=0;
+  Object.keys((lt&&lt.monthly)||{}).forEach(lbl=>{
+    const h=hdrMonth(lbl);
+    if(!h) return;
+    const k=ymKey(h.y,h.m);
+    if(k>=range.from&&k<=range.to&&k<=cap) n+=lt.monthly[lbl];
+  });
+  return n;
+}
+function countMonthFlow(enrDates, lt, key){
+  if(key==null) return {cs:0,lt:0,label:''};
+  const y=Math.floor(key/12), m=((key%12)+12)%12;
+  const label=MON[m]+' '+String(y).slice(2);
+  let cs=0;
+  (enrDates||[]).forEach(e=>{if(e&&e.getFullYear()===y&&e.getMonth()===m) cs++;});
+  return {cs, lt:(lt&&lt.monthly&&lt.monthly[label])||0, label};
+}
+function monthIsOpen(label){
+  const h=hdrMonth(String(label||'').replace(/\*$/,''));
+  return !!(h&&ymKey(h.y,h.m)===openMonthKey());
+}
+function oriMonthKey(r){
+  const monthRaw=String(r['Month of Orientation']||'').trim();
+  const yearRaw=String(r['Year of Orientation']||'').trim();
+  const combined=hdrMonth(monthRaw)||hdrMonth((monthRaw+' '+yearRaw).trim())||hdrMonth((yearRaw+' '+monthRaw).trim());
+  if(combined) return ymKey(combined.y, combined.m);
+  let y=num(yearRaw); if(y!=null&&y<100) y+=2000;
+  let mi=MON.findIndex(m=>monthRaw.toLowerCase().startsWith(m.toLowerCase()));
+  if(mi<0){const n=num(monthRaw); if(n!=null&&n>=1&&n<=12) mi=n-1;}
+  if(mi>=0&&y!=null) return ymKey(y, mi);
+  const d=parseDate(monthRaw);
+  return d?ymKey(d.getFullYear(), d.getMonth()):null;
+}
+function oriInPeriod(r){
+  if(!PERIOD) return true;
+  const k=oriMonthKey(r);
+  return k!=null&&k>=PERIOD.from&&k<=PERIOD.to;
+}
+function facSupportOf(name){
+  const tag=(RAW&&RAW.facAttr||{})[facKey(name)];
+  return tag&&tag.support;
+}
+function facSupportOk(name, support){
+  support=normSupport(support);
+  if(support==='all') return true;
+  const tag=facSupportOf(name);
+  if(!tag) return support==='cs';
+  return tag===support;
+}
 function getD(){ return CURD; }
 // Values are updated immediately; motion only draws attention to a changed figure.
 const valueAnimations=new WeakMap();
@@ -1802,7 +1960,7 @@ function sln(s){return{all:'All states',RJ:'Rajasthan',MP:'Madhya Pradesh',UK:'U
 
 function renderKPIs(d,f){
   const b=d;  // d is a merged geo+patient object
-  sv('k-states',b.states); sv('k-states-n',f.state==='all'?'RJ · MP · UK · CG · GA':sln(f.state));
+  sv('k-states',b.states); sv('k-states-n',f.state==='all'?(b.stateList||'RJ · MP · UK · CG · GA'):sln(f.state));
   sv('k-dist',b.dist); sv('k-dist-n','n = '+b.dist+' districts');
   sv('k-plan',b.plan); sv('k-plan-n',b.plan+' facilities');
   sv('k-op',b.op);
@@ -1811,18 +1969,44 @@ function renderKPIs(d,f){
   if(opEl){opEl.textContent=op==null?'no planned facilities':op+'% of planned';
            opEl.style.color=(op!=null&&op>=90)?'var(--b2)':'var(--g2)';}
   sv('k-cs-op',b.csOp); sv('k-lt-op',b.ltOp);
-  sv('k-enr',fmt(d.enr)); sv('k-tot',fmt(d.enr)); sv('k-tot-n','n = '+fmt(d.enr)+' PLT1D');
-  const gp=share(d.enr,b.target); sw('k-gauge',gp==null?0:Math.min(gp,100));
-  sv('k-gaugeN',gp==null?'—':gp+'%');
-  sv('k-target',b.target==null?'Target unavailable · check Targets sheet':'of target '+fmt(b.target));
-  sv('n-tag','n = '+fmt(d.enr)+' PLT1D');
-  sv('k-cs',fmt(d.csEnr)); sv('k-cs-pct',sharePct(d.csEnr,d.enr)+' of enrolled · '+b.csOp+' facilities');
-  sv('k-lt',fmt(d.ltEnr)); sv('k-lt-pct',sharePct(d.ltEnr,d.enr)+' of enrolled · '+b.ltOp+' facilities');
+  sv('k-enr',fmt(d.enr)); sv('k-tot',fmt(d.enr));
+  const csN=d.csShown!=null?d.csShown:d.csEnr, ltN=d.ltShown!=null?d.ltShown:d.ltEnr;
+  const sup=d.support||'all', period=d.periodLabel||'';
+  const slice=sup==='cs'?'Complete support':sup==='lt'?'Light support':'Complete support + light touch';
+  sv('k-enr-title', period?'Enrolled in period':'PLT1D enrolled');
+  sv('k-enr-sub', period?slice+' · '+period:(sup==='all'?'Progress towards programme enrolment target':slice));
+  sv('k-tot-title', period?'Enrolled in period':'Total enrolled');
+  sv('k-tot-sub', period?slice+' · '+period:(sup==='all'?'Complete support + light touch':slice));
+  sv('k-tot-n', period?'n = '+fmt(d.enr)+' enrolled in '+period:'n = '+fmt(d.enr)+' PLT1D');
+  if(period){
+    sw('k-gauge',0); sv('k-gaugeN','—');
+    sv('k-target','Enrolments in '+period+(b.target==null?'':' · all-time target '+fmt(b.target)));
+  }else{
+    const gp=share(d.enr,b.target); sw('k-gauge',gp==null?0:Math.min(gp,100));
+    sv('k-gaugeN',gp==null?'—':gp+'%');
+    sv('k-target',b.target==null?'Target unavailable · check Targets sheet':((d.support&&d.support!=='all')?'of programme target '+fmt(b.target):'of target '+fmt(b.target)));
+  }
+  sv('n-tag', period?'n = '+fmt(d.enr)+' enrolled in period':'n = '+fmt(d.enr)+' PLT1D');
+  sv('k-cs',fmt(csN));
+  sv('k-cs-sub', sup==='lt'?'Not included in this view':(period?'Complete support · '+period:'Share of total enrolment · RJ, MP, UK, CG and GA'));
+  sv('k-cs-pct', sup==='lt'?'Not included in this view':sharePct(csN,d.enr)+' of enrolled · '+b.csOp+' facilities');
+  sv('k-lt',fmt(ltN));
+  sv('k-lt-sub', sup==='cs'?'Not included in this view':(period?'Light support · '+period:'Share of total enrolment · Rajasthan only'));
+  sv('k-lt-pct', sup==='cs'?'Not included in this view':sharePct(ltN,d.enr)+' of enrolled · '+b.ltOp+' facilities');
+  sv('k-new-title', !period?'New enrolments — last month':(d.noCompletedMonth?'New enrolments — in period':'New enrolments — '+(d.newMonthLabel||'in period')));
+  sv('k-new-sub', (sup==='cs'?'Complete support':sup==='lt'?'Light support':'Complete support + light touch')+(period?' · '+period:''));
   const nL=d.newLast, nP=d.newPrev;
-  sv('k-new',nL); sv('k-avgclin','CS: '+d.csNewLast+' · avg/open clinic: '+(d.csAvgClin==null?'N/A':d.csAvgClin.toFixed(1)));
   const nt=document.getElementById('k-newtrend');
-  nt.textContent=(nL<nP?'↓':nL>nP?'↑':'=')+' vs '+nP+' prior month';
-  nt.className='ktr '+(nL<nP?'dn':nL>nP?'up':'');
+  if(d.noCompletedMonth){
+    sv('k-new','—'); sv('k-avgclin','No completed month in this period');
+    if(nt){nt.textContent='No finished month in this range'; nt.className='ktr';}
+  }else{
+    sv('k-new',nL);
+    sv('k-avgclin', d.support==='lt'
+      ? 'Light support'
+      : 'CS: '+d.csNewLast+' · avg/open clinic: '+(d.csAvgClin==null?'N/A':d.csAvgClin.toFixed(1)));
+    if(nt){nt.textContent=(nL<nP?'↓':nL>nP?'↑':'=')+' vs '+nP+' prior month'; nt.className='ktr '+(nL<nP?'dn':nL>nP?'up':'');}
+  }
   sv('ins-base-v',d.insBase+'%'); sw('ins-base',d.insBase); sv('ins-last-v',d.insLast+'%'); sw('ins-last',d.insLast);
   const insD=d.insLast-d.insBase;
   sv('ins-delta', insD>0 ? '▲ +'+insD+'pp improvement from baseline'
@@ -2088,14 +2272,18 @@ function buildC1(o){
   const cs=CS_CUM.slice(o,o+WIN);
   const lt=LT_CUM.slice(o,o+WIN);
   const cl=CLIN_CS.slice(o,o+WIN);
-  const tots=cs.map((v,i)=>v+lt[i]);
+  const sup=normSupport(getF().support);
+  const showCs=sup!=='lt', showLt=sup!=='cs';
+  const tots=cs.map((v,i)=>(showCs?v:0)+(showLt?(lt[i]||0):0));
+  const datasets=[];
+  if(showCs) datasets.push({label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16});
+  if(showLt) datasets.push({label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_lc:'#0f172a',_minVal:1,_minH:16});
+  if(showCs) datasets.push({label:'CS clinics open',data:cl,type:'line',order:-1,borderColor:'#d97706',backgroundColor:'transparent',borderWidth:3.5,pointRadius:4.5,pointHoverRadius:6,pointBorderColor:'#fff',pointBorderWidth:1.5,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true});
+  const lgCs=document.getElementById('c1-lg-cs'), lgLt=document.getElementById('c1-lg-lt'), lgClin=document.getElementById('c1-lg-clin');
+  if(lgCs) lgCs.hidden=!showCs; if(lgLt) lgLt.hidden=!showLt; if(lgClin) lgClin.hidden=!showCs;
   _c1=createDashboardChart(document.getElementById('c1'),{
     type:'bar',
-    data:{labels:lb,datasets:[
-      {label:'Complete support',data:cs,backgroundColor:'#1a5fa8',stack:'s',_pct:false,_minVal:1,_minH:16},
-      {label:'Light touch',data:lt,backgroundColor:'#7db8e8',stack:'s',_pct:false,_lc:'#0f172a',_minVal:1,_minH:16},
-      {label:'CS clinics open',data:cl,type:'line',order:-1,borderColor:'#d97706',backgroundColor:'transparent',borderWidth:3.5,pointRadius:4.5,pointHoverRadius:6,pointBorderColor:'#fff',pointBorderWidth:1.5,pointBackgroundColor:'#d97706',yAxisID:'y2',_noLabel:true}
-    ]},
+    data:{labels:lb,datasets},
     options:{
       responsive:true, maintainAspectRatio:false, _absoluteTotals:true, _clinicLabels:true, layout:{padding:{top:48}},
       plugins:{legend:{display:false},tooltip:{callbacks:{
@@ -2109,15 +2297,25 @@ function buildC1(o){
       scales:{
         x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11},color:'#334155'}},
         y:{stacked:true,beginAtZero:true,grid:{display:false},border:{display:false},title:{display:true,text:'People enrolled',font:{size:11},color:'#334155'},ticks:{font:{size:11},color:'#334155',maxTicksLimit:4},suggestedMax:tots.length?Math.max(...tots)*1.2:undefined},
-        y2:{position:'right',beginAtZero:true,title:{display:true,text:'Complete-support clinics',font:{size:11},color:'#334155'},ticks:{precision:0,font:{size:11},color:'#334155',maxTicksLimit:4},grid:{display:false},border:{display:false}}
+        y2:{display:showCs,position:'right',beginAtZero:true,title:{display:true,text:'Complete-support clinics',font:{size:11},color:'#334155'},ticks:{precision:0,font:{size:11},color:'#334155',maxTicksLimit:4},grid:{display:false},border:{display:false}}
       }
     }
   });
   _c1._tots=tots;
+  const c1Title=document.getElementById('c1-title');
+  if(c1Title){
+    const sup=normSupport(getF().support);
+    c1Title.textContent=PERIOD
+      ?(sup==='lt'?'Cumulative light-support enrolments in period':sup==='cs'?'Cumulative complete-support enrolments in period':'Cumulative enrolments in period')
+      :(sup==='lt'?'Cumulative light-support enrolments':sup==='cs'?'Cumulative complete-support enrolments':'Cumulative enrolments & complete-support clinics');
+  }
   const note=document.getElementById('c1-note');
   const gap=Math.max(0,CURD.enr-(CS_CUM.at(-1)||0)-(LT_CUM.at(-1)||0));
   if(note) note.textContent=gap.toLocaleString()+' enrolments are included in the headline total but cannot be placed in monthly history. The clinic line counts complete-support sites with a usable opening date; light touch is excluded.';
-  document.getElementById('c1-clinics').textContent='CS clinics: '+CURD.csOp.toLocaleString()+(CS_UNKNOWN_OPEN?' · '+CS_UNKNOWN_OPEN+' undated':'');
+  const clinicBit=showCs
+    ? 'CS clinics: '+CURD.csOp.toLocaleString()+(CS_UNKNOWN_OPEN?' · '+CS_UNKNOWN_OPEN+' undated':'')
+    : 'Light-support clinics: '+(CURD.ltOp||0).toLocaleString();
+  document.getElementById('c1-clinics').textContent=(PERIOD?periodLabel(PERIOD)+' · ':'')+clinicBit;
   document.getElementById('nl1').textContent=winLabel(o);
   document.getElementById('p1').disabled=o<=0;
   document.getElementById('n1').disabled=o>=MAX;
@@ -2125,11 +2323,12 @@ function buildC1(o){
 
 function buildC2(o){
   if(_c2)_c2.destroy();
-  const lb=MONTHS.slice(o,o+WIN).map((label,i)=>label+(o+i===MONTHS.length-1?'*':''));
+  const raw=MONTHS.slice(o,o+WIN);
+  const lb=raw.map(label=>label+(monthIsOpen(label)?'*':''));
   const cs=NEWENR_CS.slice(o,o+WIN);
   const tot=cs;
   const matched=CS_AVG_N.slice(o,o+WIN);
-  const av=CS_AVGCL.slice(o,o+WIN).map((v,i)=>o+i===MONTHS.length-1?null:v);
+  const av=CS_AVGCL.slice(o,o+WIN).map((v,i)=>monthIsOpen(raw[i])?null:v);
   const cl=CLIN_CS.slice(o,o+WIN);
   _c2=createDashboardChart(document.getElementById('c2'),{
     type:'bar',
@@ -2161,6 +2360,8 @@ function buildC2(o){
   _c2._tots=tot;
   const note2=document.getElementById('c2-note');
   if(note2) note2.textContent='Average = monthly enrolments at complete-support clinics open by month-end ÷ those clinics. Missing opening dates, unmatched facilities and enrolments at sites not yet open are excluded from the average, but retained in the bars. Current month average is withheld.';
+  const c2Sub=document.getElementById('c2-sub');
+  if(c2Sub) c2Sub.textContent='Complete support only'+(PERIOD?' · '+periodLabel(PERIOD):'')+' · * partial month';
   document.getElementById('c2').title=note2?note2.textContent:'';
   document.getElementById('nl2').textContent=winLabel(o);
   document.getElementById('p2').disabled=o<=0;
@@ -2495,14 +2696,20 @@ function activeFilterSummary(){
   const map=[
     ['f-state','State'],['f-division','Division'],['f-district','District'],
     ['f-facility','Facility'],['f-dpc','DPC'],
-    ['f-status','Status'],['f-sex','Sex'],['f-age','Age group']
+    ['f-status','Status'],['f-sex','Sex'],['f-age','Age group'],
+    ['f-support','Support'],['f-period','Period']
   ];
   const parts=[];
   map.forEach(([id,lbl])=>{
     const s=document.getElementById(id); if(!s||s.value==='all') return;
-    const txt=s.options[s.selectedIndex]?s.options[s.selectedIndex].text:s.value;
+    const txt=s.options&&s.options[s.selectedIndex]?s.options[s.selectedIndex].text:s.value;
     parts.push(lbl+': '+txt);
   });
+  const from=document.getElementById('f-from'), to=document.getElementById('f-to');
+  const period=document.getElementById('f-period');
+  if(period&&period.value==='custom'&&from&&to&&parseMonthValue(from.value)&&parseMonthValue(to.value)){
+    parts.push('From: '+from.value); parts.push('To: '+to.value);
+  }
   return parts.length?parts.join('   ·   '):'No filters applied — all patients & facilities';
 }
 
@@ -2731,6 +2938,7 @@ function fupNote(){
   const pending=FUP_PENDING||[];
   if(pending.length) parts.push(monthList(pending.map(x=>x.m))+': not marked Y/N; blank means unreported, not 0%.');
   if(pending.some(x=>x.visits>0)) parts.push('SMBG visits exist but do not establish the attendance denominator.');
+  if(PERIOD) parts.push('Months in '+periodLabel(PERIOD)+'.');
   return parts.join(' ');
 }
 
@@ -2862,10 +3070,18 @@ function renderDonorKPIs(){
   const sv=(id,t)=>{const e=document.getElementById(id); if(e)e.textContent=t;};
   sv('dn-enr',d.enrolled.toLocaleString());
   const story=document.getElementById('dn-story');
-  if(story)story.innerHTML='The programme supports <strong>'+d.enrolled.toLocaleString()+' people living with T1D</strong> through <strong>'+d.clinics+' operational clinics</strong> across <strong>'+d.states+' '+(d.states===1?'state':'states')+'</strong>.';
+  const scoped=!!(d.periodLabel||(d.support&&d.support!=='all'));
+  if(story){
+    if(scoped){
+      const who=d.support==='cs'?'complete support':d.support==='lt'?'light support':'the programme';
+      story.innerHTML='<strong>'+d.enrolled.toLocaleString()+'</strong> people were enrolled through '+who+(d.periodLabel?' in '+d.periodLabel:'')+', across <strong>'+d.clinics+' operational clinics</strong> in <strong>'+d.states+' '+(d.states===1?'state':'states')+'</strong>.';
+    }else story.innerHTML='The programme supports <strong>'+d.enrolled.toLocaleString()+' people living with T1D</strong> through <strong>'+d.clinics+' operational clinics</strong> across <strong>'+d.states+' '+(d.states===1?'state':'states')+'</strong>.';
+  }
+  sv('dn-enr-lbl', d.periodLabel?'Enrolled in period':d.support==='cs'?'Complete support enrolled':d.support==='lt'?'Light support enrolled':'PLT1D enrolled');
 
   const tgt=LOGFRAME.find(r=>r.key==='enrolled');
-  sv('dn-enr-n','across '+d.clinics+' T1D clinics in '+d.states+' '+(d.states===1?'state':'states')
+  const where=d.periodLabel?d.periodLabel+' · ':(d.support==='cs'?'Complete support · ':(d.support==='lt'?'Light support · ':''));
+  sv('dn-enr-n',where+'across '+d.clinics+' T1D clinics in '+d.states+' '+(d.states===1?'state':'states')
     +(tgt&&!d.filtered?' · '+Math.round(d.enrolled/tgt.target*10)/10+'× the Jul ’26 target of '+tgt.target.toLocaleString():''));
   const tiles=[
     {l:'T1D clinics operational', v:d.clinics.toLocaleString(), s:d.byState.map(r=>r.st+' '+r.clinics).join(' · ')},
@@ -3136,6 +3352,14 @@ function buildDonorGrowth(){
   const lg=document.getElementById('dn-growth-lg');
   const gap=d.enrolled-(g.series.reduce((a,sr)=>a+(sr.data[sr.data.length-1]||0),0));
   const clinicGap=d.clinics-(g.clinics[g.clinics.length-1]||0);
+  const growthSub=document.getElementById('dn-growth-sub');
+  if(growthSub){
+    const sup=DONOR.support||'all';
+    const when=DONOR.periodLabel||'';
+    growthSub.textContent=sup==='cs'?(when?when+' · complete support':'Complete support · month-end totals')
+      :sup==='lt'?(when?when+' · light support':'Light support · month-end totals')
+      :(when?'Cumulative enrolments in '+when:'Both support models · month-end totals; current month to date');
+  }
   const note=document.getElementById('dn-growth-note');
   if(note)note.textContent=(gap>0?gap.toLocaleString()+' enrolments are in the headline total but cannot be placed on this time axis (undated enrolments or unreconciled monthly records). ':'')+(clinicGap>0?clinicGap+' currently operational clinics lack a dated opening / first monthly report on this axis; the history is incomplete.':'');
   if(lg) lg.innerHTML=g.series.map(sr=>'<span><span class="ld" style="background:'+(DN_COL[sr.st]||'#94a3b8')+'"></span>'+sr.name+'</span>').join('');
@@ -3248,9 +3472,29 @@ function buildDonorCadre(){
 // Division and DPC exist only on the complete-support facility list. ltData() bails
 // out entirely when either is set, so light touch silently leaves every total. Say so,
 // and say how much, rather than letting the number read as the whole programme.
+function renderScopeNote(){
+  const el=document.getElementById('scope-note'); if(!el) return;
+  const f=getF(), bits=[];
+  if(f.support==='lt') bits.push('Light support shows enrolment only. Clinical outcomes, HbA1c, SMBG, follow-up and stock are complete-support records and are hidden.');
+  else if(f.support==='cs') bits.push('Complete support only. Light-support enrolment is excluded from this view.');
+  if(PERIOD&&f.support!=='lt') bits.push('Enrolment totals count people enrolled in '+periodLabel(PERIOD)+'. Follow-up, SMBG, stock, clinic months and orientation use that range. HbA1c and other clinical outcomes stay the complete-support cohort enrolled to date.');
+  else if(PERIOD) bits.push('Light-support enrolment is limited to '+periodLabel(PERIOD)+'.');
+  if(f.support!=='all') bits.push('Clinic functionality and FLW orientation are not split by support type.');
+  if(f.period==='custom'&&!PERIOD) bits.push('Choose a from and to month to apply a custom range.');
+  el.textContent=bits.join(' ');
+  el.hidden=!bits.length;
+}
+function syncFilterChrome(){
+  const custom=document.getElementById('f-custom');
+  if(custom) custom.hidden=getF().period!=='custom';
+  if(document.body&&document.body.classList) document.body.classList.toggle('support-lt', getF().support==='lt');
+  const hh=document.getElementById('hh-title');
+  if(hh) hh.textContent=PERIOD?'Hyper/hypoglycaemic readings — in '+periodLabel(PERIOD):'Hyper/hypoglycaemic readings — last 3 months';
+}
 function renderLtExclusionNote(){
   const el=document.getElementById('lt-excl'); if(!el) return;
   const f=getF(), byDiv=f.division!=='all', byDpc=f.dpc!=='all';
+  if(f.support==='cs'){ el.hidden=true; return; }
   if(!byDiv&&!byDpc){ el.hidden=true; return; }
   // What light touch would still contribute on the rest of the selection.
   const lt=ltData(Object.assign({},f,{division:'all',dpc:'all'}));
@@ -3269,6 +3513,8 @@ function applyFilters(){
   recompute();
   dashboardRenderVersion++;
   safe('renderLtExclusionNote', renderLtExclusionNote);
+  safe('renderScopeNote', renderScopeNote);
+  safe('syncFilterChrome', syncFilterChrome);
   const f=getF(), d=getD();
   safe('renderKPIs',      ()=>renderKPIs(d,f));
   return renderActiveTab();
@@ -3348,6 +3594,7 @@ function parseStock(grid){
   }).filter(r=>r.fac && r.commodity && r.month && r.year);
 }
 function stockFiltered(){
+  if(normSupport(getF().support)==='lt') return [];
   const rows=RAW&&RAW.stock?RAW.stock:[];
   const f=getF(), fa=RAW.facAttr||{};
   return rows.filter(r=>{
@@ -3357,6 +3604,7 @@ function stockFiltered(){
     if(f.division!=='all'&&normv(a.division||'')!==normv(f.division))return false;
     if(f.district!=='all'&&normv(a.district||'')!==normv(f.district))return false;
     if(f.dpc!=='all'&&normv(a.dpc||'')!==normv(f.dpc))return false;
+    if(PERIOD){const k=stkYmKey(r); if(k<PERIOD.from||k>PERIOD.to) return false;}
     return true;
   });
 }
@@ -3785,6 +4033,7 @@ function parseCapacity(grid){
 // ── Light-touch facility data, filtered by State / District / Facility (Division & DPC don't apply to LT) ──
 function ltData(f){
   f=f||{state:'all',district:'all',facility:'all',division:'all',dpc:'all'};
+  if(f.support==='cs') return {facCount:0,opCount:0,totalEnr:0,monthly:{},opStarts:[]};
   const g=RAW.ltGrid; if(!g||g.length<2) return {facCount:0,totalEnr:0,monthly:{},opStarts:[]};
   const hr=headerRowOf(g,['Facility name','Total enrolments (autocalculated)']);
   const hdr=g[hr];
@@ -3857,8 +4106,10 @@ function computeClinicOps(){
     if(o2)o2.vals.forEach(v=>{const x=opNum(v);if(x!=null){od++;if(x===0)b[0]++;else if(x===1)b[1]++;else if(x===2)b[2]++;else if(x===3)b[3]++;else b[4]++;}});
     OD.push(pctParts(b)); RAWOD.push(b.slice());
   });
-  const take=Math.min(8,M.length),s=M.length-take;
-  CLINOPS_M=M.slice(s);CLINOPS_V=FP.slice(s);OFFDAYS_D=OD.slice(s);OFFDAYS_N=RAWOD.slice(s);
+  let rows=M.map((label,i)=>({label,fp:FP[i],od:OD[i],raw:RAWOD[i]}));
+  if(PERIOD) rows=rows.filter(r=>{const h=hdrMonth(r.label);return h&&ymKey(h.y,h.m)>=PERIOD.from&&ymKey(h.y,h.m)<=PERIOD.to;});
+  const take=Math.min(8,rows.length), slice=rows.slice(rows.length-take);
+  CLINOPS_M=slice.map(r=>r.label);CLINOPS_V=slice.map(r=>r.fp);OFFDAYS_D=slice.map(r=>r.od);OFFDAYS_N=slice.map(r=>r.raw);
 }
 
 // ── Build facility → geo attributes + the geo list used to populate filter dropdowns ──
@@ -3866,7 +4117,7 @@ function buildGeo(){
   const facAttr={}, geo=[];
   (RAW.csFac||[]).forEach(x=>{
     const o={state:String(x['State']||'').trim().toUpperCase(),division:String(x['Division']||'').trim(),
-             district:String(x['District']||'').trim(),dpc:String(x['DPC']||'').trim(),facility:canonFac(x['Facility name'])};
+             district:String(x['District']||'').trim(),dpc:String(x['DPC']||'').trim(),facility:canonFac(x['Facility name']),support:'cs'};
     if(o.facility){facAttr[facKey(o.facility)]=o; geo.push(o);}
   });
   // LT facilities from the grid (State, District, Facility name; no Division/DPC)
@@ -3878,7 +4129,7 @@ function buildGeo(){
     for(let r=hr+1;r<g.length;r++){
       const fn=ni>=0?String(g[r][ni]||'').trim():''; if(!fn)continue;
       const o={state:si>=0?String(g[r][si]||'').trim().toUpperCase():'',division:'',
-               district:di>=0?String(g[r][di]||'').trim():'',dpc:'',facility:canonFac(fn)};
+               district:di>=0?String(g[r][di]||'').trim():'',dpc:'',facility:canonFac(fn),support:'lt'};
       if(!facAttr[facKey(fn)])facAttr[facKey(fn)]=o; geo.push(o);
     }
   }
@@ -3890,7 +4141,8 @@ function buildGeo(){
   // facility list tab with its State filled in.
   const EXTRA_FAC_STATE={'sdh mussoorie':'UK'};
   Object.keys(EXTRA_FAC_STATE).forEach(k=>{
-    const o=facAttr[k]||(facAttr[k]={division:'',district:'',dpc:'',facility:k});
+    const o=facAttr[k]||(facAttr[k]={division:'',district:'',dpc:'',facility:k,support:'cs'});
+    if(!o.support) o.support='cs';
     if(!String(o.state||'').trim()) o.state=EXTRA_FAC_STATE[k];
   });
   RAW.facAttr=facAttr; RAW.geo=geo;
@@ -3907,18 +4159,57 @@ function fillSelect(id,opts,allLabel){
 // Cascading: Division/District/Facility narrow to the current higher-level selection
 function populateFilters(){
   const f=getF(), G=RAW.geo||[];
+  const inSupport=g=>f.support==='all'||g.support===f.support||(!g.support&&f.support==='cs');
   const inState=g=>f.state==='all'||String(g.state).toUpperCase()===f.state;
   const inDiv  =g=>f.division==='all'||normv(g.division)===normv(f.division);
   const inDist =g=>f.district==='all'||normv(g.district)===normv(f.district);
-  fillSelect('f-division', distinctSorted(G.filter(inState).map(g=>g.division)), 'All divisions');
-  fillSelect('f-district', distinctSorted(G.filter(g=>inState(g)&&inDiv(g)).map(g=>g.district)), 'All districts');
-  fillSelect('f-facility', distinctSorted(G.filter(g=>inState(g)&&inDiv(g)&&inDist(g)).map(g=>g.facility)), 'All facilities');
-  fillSelect('f-dpc',      distinctSorted(G.filter(inState).map(g=>g.dpc)), 'All DPCs');
+  fillSelect('f-division', distinctSorted(G.filter(g=>inSupport(g)&&inState(g)).map(g=>g.division)), 'All divisions');
+  fillSelect('f-district', distinctSorted(G.filter(g=>inSupport(g)&&inState(g)&&inDiv(g)).map(g=>g.district)), 'All districts');
+  fillSelect('f-facility', distinctSorted(G.filter(g=>inSupport(g)&&inState(g)&&inDiv(g)&&inDist(g)).map(g=>g.facility)), 'All facilities');
+  fillSelect('f-dpc',      distinctSorted(G.filter(g=>inSupport(g)&&inState(g)).map(g=>g.dpc)), 'All DPCs');
 }
 
 // ── Recompute everything for the current filter ──
+function buildPeriodSeries(range, now, PGEO, lt, csF, opConv){
+  const cap=openMonthKey(now);
+  const end=Math.min(range.to, cap);
+  const months=[];
+  for(let k=range.from;k<=end;k++){
+    const y=Math.floor(k/12), m=((k%12)+12)%12;
+    months.push({label:MON[m]+' '+String(y).slice(2), y, m});
+  }
+  const datedOpen=csF.filter(x=>isYes(x['T1D Clinic Operational?'])).map(x=>({key:stUp(x)+'|'+facKey(x['Facility name']),date:parseDate(x['Date of Operationalisation'],opConv)}));
+  const enrDates=PGEO.map(p=>parseDate(p['Date of enrolment']));
+  const ltStarts=lt.opStarts||[];
+  const currentClinics=csF.filter(x=>isYes(x['T1D Clinic Operational?'])).length+(lt.opCount||0);
+  const csCum=[],ltCum=[],clin=[],clinCs=[],clinLt=[],neCs=[],neLt=[],avg=[],csAvg=[],csAvgN=[];
+  let runLt=0;
+  months.forEach(mo=>{
+    const eom=new Date(mo.y,mo.m+1,0,23,59,59);
+    let nw=0;
+    enrDates.forEach(e=>{if(e&&e.getFullYear()===mo.y&&e.getMonth()===mo.m)nw++;});
+    neCs.push(nw);
+    csCum.push((csCum.length?csCum[csCum.length-1]:0)+nw);
+    const op=csF.filter(x=>{if(!isYes(x['T1D Clinic Operational?']))return false;const o=parseDate(x['Date of Operationalisation'],opConv);return o&&o<=eom;}).length;
+    const opLt=ltStarts.filter(s=>ymKey(s.y,s.m)<=ymKey(mo.y,mo.m)).length;
+    clinCs.push(op);clinLt.push(opLt);clin.push(op+opLt);
+    const openKeys=new Set(datedOpen.filter(x=>x.date&&x.date<=eom).map(x=>x.key));
+    let matchedNew=0;
+    PGEO.forEach((p,i)=>{const e=enrDates[i];if(e&&e.getFullYear()===mo.y&&e.getMonth()===mo.m&&openKeys.has(stUp(p)+'|'+facKey(p['Facility Name'])))matchedNew++;});
+    csAvgN.push(matchedNew);csAvg.push(op>0?matchedNew/op:null);
+    const nl=(lt.monthly&&lt.monthly[mo.label])||0;
+    neLt.push(nl); runLt+=nl; ltCum.push(runLt);
+    avg.push(currentClinics>0?(nw+nl)/currentClinics:null);
+  });
+  return {months,csCum,ltCum,clin,clinCs,clinLt,neCs,neLt,avg,csAvg,csAvgN};
+}
 function recompute(){
   const f=getF();
+  const range=resolvePeriod(f.period, f.from, f.to, new Date());
+  const stamp=range?range.from+':'+range.to:'all';
+  if(stamp!==periodStamp){off=[null,null]; fupOff=null; periodStamp=stamp;}
+  PERIOD=range;
+  const support=normSupport(f.support);
   const fa=RAW.facAttr||{};
   const attr=name=>fa[facKey(name)]||{};
   // Geography matchers — patients/capacity resolve division/dpc via the facility lookup;
@@ -3945,7 +4236,7 @@ function recompute(){
     if(f.state!=='all'&&String(r['State']).trim().toUpperCase()!==f.state)return false;
     if(f.district!=='all'&&normv(r['District'])!==normv(f.district))return false; return true;};
 
-  const survAll=RAW.enrolled.filter(p=>normv(p['Survival Status'])!=='no');
+  const survAll=(support==='lt'?[]:RAW.enrolled).filter(p=>normv(p['Survival Status'])!=='no');
   // Enrolment trends are geography-only (architecture §Pattern A): light touch
   // contributes aggregate counts with no sex/age/status attached, so filtering the
   // complete-support half by those would stack a filtered series on an unfiltered
@@ -3958,10 +4249,11 @@ function recompute(){
     (f.status==='all'||statusTok(p)===f.status));
   const patFilter=(f.sex!=='all'||f.age!=='all'||f.status!=='all');
 
-  const csF =RAW.csFac.filter(geoCS);
+  const csGeo=RAW.csFac.filter(geoCS);
+  const csF =support==='lt'?[]:csGeo;
   PEER_SUPPORT=computePeerSupport(csF);
-  const capF=RAW.cap.filter(geoCap);
-  const oriF=RAW.orient.filter(geoOri);
+  const capF=RAW.cap.filter(geoCap).filter(r=>facSupportOk(r['Facility Name'], support));
+  const oriF=RAW.orient.filter(geoOri).filter(oriInPeriod);
   const lt  =ltData(f);
 
   // ── Geography (state-scoped) ──
@@ -3977,14 +4269,19 @@ function recompute(){
   const nrNames={};nrs.forEach(r=>{const n=normv(r['Name of Service Provider']);if(n)nrNames[stUp(r)+'|'+n]=true;});
   const distinct=(rows,col)=>{const s={};rows.forEach(r=>{const v=normv(r[col]);if(v)s[v]=true;});return Object.keys(s).length;};
   const distinctCombo=(rows,cols)=>{const s={};rows.forEach(r=>{if(cols.some(c=>normv(r[c]))){s[cols.map(c=>normv(r[c])).join('|')]=true;}});return Object.keys(s).length;};
-  const statesCount=distinct(csF,'State');
+  const STATE_ORDER=['RJ','MP','UK','CG','GA'];
+  const stateCodes=support==='lt'
+    ? new Set(ltRows(f).map(r=>r.state).filter(s=>STATE_ORDER.includes(s)))
+    : new Set(csF.map(r=>stUp(r)).filter(s=>STATE_ORDER.includes(s)));
+  const statesCount=support==='lt'?stateCodes.size:distinct(csF,'State');
+  const stateList=support==='all'?null:STATE_ORDER.filter(s=>stateCodes.has(s)).join(' · ');
   const prePost=rows=>{const pr=[],po=[];rows.forEach(r=>{const a=num(r['Pre-test Score']),b=num(r['Post-test Score']),m=num(r['Maximum Score']);if(a!=null&&b!=null&&m>0){pr.push(a/m*100);po.push(b/m*100);}});const mean=x=>x.length?Math.round(x.reduce((s,y)=>s+y,0)/x.length):0;return{pre:mean(pr),post:mean(po),n:pr.length};};
   const drSc=prePost(drs),nrSc=prePost(nrs);
   const flwHr=oriF.reduce((s,r)=>s+(num(r['# of Service Providers'])||0),0);
   const flwCounts={};
   oriF.forEach(r=>{const name=String(r['Type of Service Provider']||'').trim(); if(name) flwCounts[name]=(flwCounts[name]||0)+(num(r['# of Service Providers'])||0);});
   const flwCadres=Object.keys(flwCounts).sort((a,b)=>flwCounts[b]-flwCounts[a]||a.localeCompare(b)).join(' · ');
-  const pilotDistricts=new Set(csF.map(r=>stUp(r)+'|'+normv(r['District'])).filter(k=>!k.endsWith('|')));
+  const pilotDistricts=new Set(csGeo.map(r=>stUp(r)+'|'+normv(r['District'])).filter(k=>!k.endsWith('|')));
   const pilotSess={};oriF.forEach(r=>{const k=stUp(r)+'|'+normv(r['District']);if(isYes(r['Pilot District? (Yes/No)'])&&pilotDistricts.has(k))pilotSess[k]=true;});
 
   // ── Patient metrics (all-filter-scoped) ──
@@ -4021,7 +4318,7 @@ function recompute(){
 
   // ── Series (responds to all filters; LT aggregate by state) ──
   // Master month axis: Jan 2025 → current month.
-  const months=[];let dcur=new Date(2025,0,1);
+  let months=[];let dcur=new Date(2025,0,1);
   while(dcur.getFullYear()<now.getFullYear()||(dcur.getFullYear()===now.getFullYear()&&dcur.getMonth()<=now.getMonth())){
     months.push({label:MON[dcur.getMonth()]+' '+String(dcur.getFullYear()).slice(2),y:dcur.getFullYear(),m:dcur.getMonth()});
     dcur.setMonth(dcur.getMonth()+1);
@@ -4030,7 +4327,7 @@ function recompute(){
   // ambiguous values in it (e.g. 1/9/2026) must not be read as dd/mm — that pushed
   // a January clinic into September and dropped it from the line.
   const opConv=dateConv((RAW.csFac||[]).map(x=>x['Date of Operationalisation']));
-  const csCum=[],ltCum=[],clin=[],clinCs=[],clinLt=[],neCs=[],neLt=[],avg=[];let cumLt=0;
+  let csCum=[],ltCum=[],clin=[],clinCs=[],clinLt=[],neCs=[],neLt=[],avg=[];let cumLt=0;
   const ltStarts=lt.opStarts||[];
   const currentClinics=csOp+lt.opCount;
   // CS cumulative is as-of each month, so LT cumulative must also carry in the
@@ -4042,7 +4339,7 @@ function recompute(){
   }
   const datedOpen=opF.map(x=>({key:stUp(x)+'|'+facKey(x['Facility name']),date:parseDate(x['Date of Operationalisation'],opConv)}));
   CS_UNKNOWN_OPEN=datedOpen.filter(x=>!x.date).length;
-  const csAvg=[],csAvgN=[];
+  let csAvg=[],csAvgN=[];
   const enrDates=PGEO.map(p=>parseDate(p['Date of enrolment']));
   months.forEach(mo=>{
     const eom=new Date(mo.y,mo.m+1,0,23,59,59);
@@ -4076,16 +4373,35 @@ function recompute(){
   // New-enrolments card: same two halves and same clinic count as the chart, so the
   // card total remains CS + LT. Its explicitly labelled CS average follows the same historical clinic cohort as C2.
   const mLabel=d=>MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
-  const lastLbl=mLabel(lastM), prevLbl=mLabel(prevM);
+  let lastLbl=mLabel(lastM), prevLbl=mLabel(prevM);
   let csLast=0,csPrev=0;
   enrDates.forEach(e=>{
     if(!e) return;
     if(e.getFullYear()===lastM.getFullYear()&&e.getMonth()===lastM.getMonth())csLast++;
     if(e.getFullYear()===prevM.getFullYear()&&e.getMonth()===prevM.getMonth())csPrev++;
   });
-  const newLast=csLast+(lt.monthly[lastLbl]||0), newPrev=csPrev+(lt.monthly[prevLbl]||0);
-  const iLast=months.findIndex(m=>m.label===lastLbl);
+  let newLast=csLast+(lt.monthly[lastLbl]||0), newPrev=csPrev+(lt.monthly[prevLbl]||0);
+  let iLast=months.findIndex(m=>m.label===lastLbl);
   const clinLast=csOp+lt.opCount;
+  let periodCsShown=null, periodLtShown=null, noCompletedMonth=false;
+  if(PERIOD){
+    const built=buildPeriodSeries(PERIOD, now, PGEO, lt, csF, opConv);
+    months=built.months; csCum=built.csCum; ltCum=built.ltCum; clin=built.clin; clinCs=built.clinCs; clinLt=built.clinLt;
+    neCs=built.neCs; neLt=built.neLt; avg=built.avg; csAvg=built.csAvg; csAvgN=built.csAvgN;
+    const cap=openMonthKey(now);
+    periodCsShown=countEnrolledInPeriod(P, PERIOD, cap);
+    periodLtShown=ltMonthlyInRange(lt, PERIOD, cap);
+    const lastK=lastCompletedKey(PERIOD, now);
+    if(lastK==null){csLast=0; csPrev=0; newLast=0; newPrev=0; lastLbl=''; iLast=-1; noCompletedMonth=true;}
+    else{
+      const prev=countMonthFlow(enrDates, lt, lastK-1), cur=countMonthFlow(enrDates, lt, lastK);
+      csLast=cur.cs; newLast=cur.cs+cur.lt; lastLbl=cur.label;
+      csPrev=prev.cs; newPrev=prev.cs+prev.lt;
+      iLast=months.findIndex(m=>m.label===lastLbl);
+    }
+    TREND_GAP={total:countEnrolledInPeriod(PGEO, PERIOD, cap), plotted:csCum.length?csCum[csCum.length-1]:0, patFilter,
+               noDate:0, after:0, lastLabel:months.length?months[months.length-1].label:''};
+  }
 
   // ── Follow-up MoM (join followup sheet to filtered survivor IDs) ──
   const idSet={};P.forEach(p=>idSet[normv(p['Claude_ID'])]=true);
@@ -4136,9 +4452,11 @@ function recompute(){
 
   // merged object for renderKPIs (geo + patient)
   const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]??null;
+  const csShown=PERIOD?periodCsShown:csEnr, ltShown=PERIOD?periodLtShown:ltEnr;
   CURD={
-    states:statesCount, dist, plan:csF.length+lt.facCount, op:csOp+lt.opCount, csOp, ltOp:lt.opCount,
-    enr:csEnr+ltEnr, csEnr, ltEnr, target,
+    states:statesCount, stateList, dist, plan:csF.length+lt.facCount, op:csOp+lt.opCount, csOp, ltOp:lt.opCount,
+    enr:csShown+ltShown, csEnr, ltEnr, csShown, ltShown, target,
+    support, periodLabel:PERIOD?periodLabel(PERIOD):null, noCompletedMonth, newMonthLabel:lastLbl,
     csNewLast:csLast,csAvgClin:iLast>=0?csAvg[iLast]:null, newLast, newPrev, avgClin:clinLast>0?newLast/clinLast:null,
     insBase:pctC(insB,n), insLast:pctC(insL,n),
     fupDen, hbTest:hba.hbTest, hbDec:hba.hbDec, hbDecN:hba.hbDecN,
@@ -4179,7 +4497,10 @@ function computeDonor(x){
     const clinics=cs.filter(r=>isYes(r['T1D Clinic Operational?'])).length+ltk.opCount;
     const ds={}; cs.forEach(r=>{if(isYes(r['T1D Clinic Operational?'])){const d=normv(r['District']);if(d)ds[d]=true;}});
     ltRows(Object.assign({},f,{state:k})).forEach(r=>{if(r.operational&&r.district)ds[normv(r.district)]=true;});
-    const enr=(stCs[k]||0)+ltk.totalEnr;
+    const capNow=openMonthKey();
+    const enr=PERIOD
+      ? countEnrolledInPeriod(PGEO.filter(p=>stUp(p)===k), PERIOD, capNow)+ltMonthlyInRange(ltk, PERIOD, capNow)
+      : (stCs[k]||0)+ltk.totalEnr;
     stLt[k]=ltk;
     // A rostered state with no open clinic and no patients (Goa, for now) still
     // counts as finalised. States with no facilities and no enrolment stay out.
@@ -4198,13 +4519,18 @@ function computeDonor(x){
     const mon=stLt[k]?stLt[k].monthly:{};
     // light touch trimmed off the front still counts, same rule as the CS side
     let cum=0;
-    if(months.length){const first=ymKey(months[0].y,months[0].m);
+    if(months.length&&!PERIOD){const first=ymKey(months[0].y,months[0].m);
       Object.keys(mon).forEach(l=>{const h=hdrMonth(l); if(h&&ymKey(h.y,h.m)<first)cum+=mon[l];});}
-    const row=[];
+    const row=[], capKey=openMonthKey();
     months.forEach(mo=>{
       const eom=new Date(mo.y,mo.m+1,0,23,59,59);
       cum+=(mon[mo.label]||0);
-      row.push(stDates[k].filter(e=>e&&e<=eom).length+cum);
+      row.push(stDates[k].filter(e=>{
+        if(!e||e>eom) return false;
+        if(!PERIOD) return true;
+        const key=ymKey(e.getFullYear(),e.getMonth());
+        return key>=PERIOD.from&&key<=PERIOD.to&&key<=capKey;
+      }).length+cum);
     });
     growth.series.push({st:k,name:sln(k),data:row});
   });
@@ -4271,9 +4597,10 @@ function computeDonor(x){
 
   const hbaLast=hba.rawAvgLatest??null;
   DONOR={
-    filtered:Object.values(f).some(v=>v!=='all'),
+    filtered:dashboardFiltered(f, PERIOD),
+    support:normSupport(f&&f.support), periodLabel:PERIOD?periodLabel(PERIOD):null,
     states:byState.length, dist:Object.keys(dOp).length, pilotDist:new Set(csF.map(r=>stUp(r)+'|'+normv(r['District'])).filter(k=>!k.endsWith('|'))).size,
-    clinics:csOp+lt.opCount, enrolled:PGEO.length+lt.totalEnr,
+    clinics:csOp+lt.opCount, enrolled:PERIOD?countEnrolledInPeriod(PGEO, PERIOD, openMonthKey())+ltMonthlyInRange(lt, PERIOD, openMonthKey()):PGEO.length+lt.totalEnr,
     docs:sum(docBy), specialists:sum(specialistBy), nurses:sum(nrsBy), flw:sum(flwBy),
     bb:x.insLast, bbBase:x.insBase,
     hba:hbaLast, hbaN:hba.latestN||0, hbaBase:hba.avgB&&hba.avgB[0]?hba.avgB[0]:null,
@@ -4291,6 +4618,7 @@ function computeDonor(x){
 // Light-touch rows as objects, for counts ltData() does not return
 function ltRows(f){
   const g=RAW.ltGrid; if(!g||g.length<2) return [];
+  if(f.support==='cs') return [];
   if(f.division!=='all'||f.dpc!=='all') return [];
   const hr=headerRowOf(g,['Facility name','Total enrolments (autocalculated)']);
   const h=g[hr].map(c=>String(c).trim());
@@ -4333,8 +4661,9 @@ function visitsByMonth(idSet){
 
 function computeFollowup(idSet){
   const g=RAW.fupGrid; if(!g||g.length<2) return {mom:[],pending:[],matched:0};
-  const hdr=g[0];const cols=[];
+  const hdr=g[0];let cols=[];
   for(let i=2;i<hdr.length;i++){const hm=hdrMonth(hdr[i]);if(hm)cols.push({i:i,label:MON[hm.m]+' '+String(hm.y).slice(2),year:hm.y,month:hm.m});}
+  if(PERIOD) cols=cols.filter(c=>ymKey(c.year,c.month)>=PERIOD.from&&ymKey(c.year,c.month)<=PERIOD.to);
   const stat={};cols.forEach(c=>stat[c.label]={y:0,n:0});
   let matched=0;
   for(let r=1;r<g.length;r++){if(!idSet[normv(g[r][0])])continue;
@@ -4398,7 +4727,9 @@ function computeSmbg(idSet){
     mc.forEach(m=>{const bk=bucket(row[m.i]); if(bk>=0){acc[m.label].b[bk]++;acc[m.label].n++; if(is3){acc3[m.label].b[bk]++;acc3[m.label].n++;}}});
   }
   const openKey=openMonthKey();
-  const wd=mc.filter(m=>acc[m.label].n>0 && ymKey(m.year,m.month)<openKey).sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
+  let wd=mc.filter(m=>acc[m.label].n>0 && ymKey(m.year,m.month)<openKey);
+  if(PERIOD) wd=wd.filter(m=>ymKey(m.year,m.month)>=PERIOD.from&&ymKey(m.year,m.month)<=PERIOD.to);
+  wd.sort((a,b)=>a.year!==b.year?a.year-b.year:a.month-b.month);
   const mom=wd.slice(-6).reverse().map(m=>{const a=acc[m.label];return{m:m.label,v:pctParts(a.b),n:a.n,c:a.b.slice()};});
   let last={m:'',v:[0,0,0,0],n:0,c:[0,0,0,0]};
   if(wd.length){const m=wd[wd.length-1],a=acc3[m.label];last={m:m.label,v:pctParts(a.b),n:a.n,count34:a.b[2],c:a.b.slice()};}
@@ -4423,9 +4754,20 @@ function computeHyperHypo(idSet){
     const bh=bin(row[hyperC]),bo=bin(row[hypoC]); if(bh>=0)a.hy[bh]++; if(bo>=0)a.ho[bo]++; a.n++;
   }
   const now=new Date(), last3=[];
-  for(let i=1;i<=3;i++){
-    const d=new Date(now.getFullYear(),now.getMonth()-i,1),label=MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
-    last3.push(acc[label]||{hy:[0,0,0,0,0],ho:[0,0,0,0,0],n:0,y:d.getFullYear(),mo:d.getMonth()});
+  if(!PERIOD){
+    for(let i=1;i<=3;i++){
+      const d=new Date(now.getFullYear(),now.getMonth()-i,1),label=MON[d.getMonth()]+' '+String(d.getFullYear()).slice(2);
+      last3.push(acc[label]||{hy:[0,0,0,0,0],ho:[0,0,0,0,0],n:0,y:d.getFullYear(),mo:d.getMonth()});
+    }
+  }else{
+    const open=openMonthKey(now);
+    const keys=[];
+    for(let k=Math.min(open-1, PERIOD.to); k>=PERIOD.from && keys.length<3; k--) keys.push(k);
+    keys.forEach(k=>{
+      const y=Math.floor(k/12), m=((k%12)+12)%12;
+      const label=MON[m]+' '+String(y).slice(2);
+      last3.push(acc[label]||{hy:[0,0,0,0,0],ho:[0,0,0,0,0],n:0,y,mo:m});
+    });
   }
   return {
     months:last3.map(a=>({m:MON[a.mo]+' '+String(a.y).slice(2),n:a.n})),
