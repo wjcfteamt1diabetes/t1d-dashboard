@@ -22,6 +22,22 @@ function setup(){
   return {run: code => vm.runInContext(code, context)};
 }
 
+test('chart tooltips are compact and stacked rows use a short count', () => {
+  const {run} = setup();
+  assert.equal(run(`shareTooltip().callbacks.label({dataset:{label:'Improved ≥4 pp', _counts:[20]}, dataIndex:0, parsed:{y:13}})`), 'Improved ≥4 pp  13% (20)');
+  assert.equal(run(`shareTooltip().callbacks.label({dataset:{label:'0 offs', _counts:[4], _pct:false}, dataIndex:0, parsed:{y:4}})`), '0 offs (4)');
+  assert.equal(run(`shareTooltip().callbacks.label({dataset:{label:'Improved ≥4 pp'}, dataIndex:0, parsed:{y:13}})`), 'Improved ≥4 pp  13%');
+  assert.equal(run('shareTooltip().enabled'), false);
+  assert.equal(run('shareTooltip().bodyFont.size'), 11);
+  assert.equal(run('shareTooltip().titleFont.size'), 12);
+  assert.equal(run('shareTooltip().padding'), 5);
+  assert.equal(run('typeof shareTooltip().external'), 'function');
+  assert.equal(run('Chart.defaults.plugins.tooltip.enabled'), false);
+  assert.equal(run('Chart.defaults.plugins.tooltip.bodyFont.size'), 11);
+  assert.equal(run('Chart.defaults.plugins.tooltip.titleFont.size'), 12);
+  assert.equal(run('typeof Chart.defaults.plugins.tooltip.external'), 'function');
+});
+
 test('segment tooltip names the category, share and count and the page has no footnote paragraphs', () => {
   const {run} = setup();
   assert.equal(run("segmentTip('Improved ≥4 pp', 16, 189)"), 'Improved ≥4 pp · 16% · n = 189');
