@@ -271,3 +271,101 @@ test('missing growth tabs and the adult filter show a friendly state', async () 
   assert.equal(calls.length, 14);
   assert.equal(elements['overlay'].style.display, 'none');
 });
+
+test('takeaways describe the filtered trend and skip groups under 20', () => {
+  const {run} = setup();
+  const text = run(`(() => {
+    const bar = (time, label, n, behind) => ({time, label, n, suppressed:n<20, shares:n<20?null:[behind, 100-behind, 0, 0]});
+    const rising = growthBazTakeaway([
+      bar('all','All',40,12),
+      bar('0–6','0–6 months',20,8),
+      bar('6–12','6–12 months',15,40),
+      bar('12–18','12–18 months',24,16)
+    ]);
+    const onlyOne = growthBazTakeaway([bar('0–6','0–6 months',20,8)]);
+    const trend = growthTrendTakeaway([
+      {bin:'0', bazN:30, bazMean:-1, hazN:30, hazMean:-1.5},
+      {bin:'3', bazN:10, bazMean:2, hazN:10, hazMean:2},
+      {bin:'12', bazN:28, bazMean:-0.81, hazN:28, hazMean:-1.52}
+    ]);
+    const thin = growthBmiTakeaway({
+      overallN:60, overallThin:14, overallStunt:0, overallStuntN:10,
+      bars:[
+        {label:'Rajasthan', n:40, suppressed:false, counts:[1,7,32,0,0], stuntN:8, stuntPct:50},
+        {label:'Uttarakhand', n:12, suppressed:true, counts:[6,6,0,0,0], stuntN:12, stuntPct:80},
+        {label:'Madhya Pradesh', n:20, suppressed:false, counts:[2,4,14,0,0], stuntN:8, stuntPct:10}
+      ]
+    });
+    const hba = growthHbaTakeaway([
+      {key:'behind', n:20, suppressed:false, mean:10.70},
+      {key:'steady', n:40, suppressed:false, mean:10.24},
+      {key:'excess', n:10, suppressed:true, mean:null}
+    ]);
+    const hbaSmall = growthHbaTakeaway([
+      {key:'behind', n:12, suppressed:true, mean:null},
+      {key:'steady', n:40, suppressed:false, mean:10.24}
+    ]);
+    return {rising, onlyOne, trend, thin, hba, hbaSmall};
+  })()`);
+  assert.equal(text.rising, 'Falling behind rises from 8% at 0–6 months to 16% at 12–18 months');
+  assert.equal(text.onlyOne, 'Not enough data for a takeaway');
+  assert.equal(text.trend, 'BMI-for-age improves +0.19 SD by 12 months; height-for-age stays flat');
+  assert.equal(text.thin, 'Madhya Pradesh has the highest thinness, 30% against 23.3% overall');
+  assert.equal(text.hba, 'Children who fell behind have 0.46 points higher mean HbA1c');
+  assert.equal(text.hbaSmall, 'Not enough data for a takeaway');
+});
+
+test('drill-down lists only the children in the clicked slice', () => {
+  const {run, context} = setup();
+  const rows = [];
+  const miles = [];
+  for(let i = 0; i < 20; i++){
+    rows.push(child('b'+i, {BAZ_bucket:i<12?'Faltering':'Stable', Time_in_care_bucket:'0-6 months', State:'RJ', District:'Jaipur', Facility:'CS Jaipur', BMI_category_latest:i<5?'Thinness':'Normal', Growth_group:'fell behind', Latest_HbA1c:'10.7', Enrolment_quarter:'2025-Q1'}));
+    miles.push({Claude_ID:'b'+i, 'month bin':'0', 'mean BAZ in the bin':'1', 'mean HAZ in the bin':'-1', Enrolment_quarter:'2025-Q1'});
+  }
+  for(let i = 0; i < 20; i++){
+    rows.push(child('s'+i, {BAZ_bucket:'Healthy shift', Time_in_care_bucket:'18+ months', State:'MP', District:'Bhopal', Facility:'CS Bhopal', BMI_category_latest:'Normal', Growth_group:'steady or improved', Latest_HbA1c:'10.2', Enrolment_quarter:'2025-Q3'}));
+    miles.push({Claude_ID:'s'+i, 'month bin':'6', 'mean BAZ in the bin':'0.2', 'mean HAZ in the bin':'-0.4', Enrolment_quarter:'2025-Q3'});
+  }
+  rows.push(child('out', {BAZ_bucket:'Faltering', Time_in_care_bucket:'0-6 months', Latest_HbA1c:'99'}));
+  rows.push(child('blank', {Growth_group:'fell behind', Latest_HbA1c:'', BAZ_bucket:'Stable', Time_in_care_bucket:'18+ months'}));
+  context.rows = rows;
+  context.miles = miles;
+  const ids = rows.map(r => r.Claude_ID).filter(id => id !== 'out');
+  context.ids = idSet(ids);
+  const got = run(`(() => {
+    const data = computeGrowth(ids, rows, miles, {state:'all', district:'all', facility:'all', age:'all'});
+    const idsOf = spec => growthDrill(data, spec).map(r => r.id).sort();
+    const cols = growthDrillColumns('baz').map(c => c.label).join('|');
+    const csv = growthCsv([{key:'facility', label:'Facility'}], [{facility:'CS, Jaipur'}]);
+    return {
+      behind: idsOf({chart:'baz', time:'0–6', seg:'behind'}).length,
+      steadyEarly: idsOf({chart:'baz', time:'0–6', seg:'steady'}).length,
+      allImproved: idsOf({chart:'baz', time:'all', seg:'improved'}).length,
+      outsider: idsOf({chart:'baz', time:'all', seg:'behind'}).includes('out'),
+      bazPoint: idsOf({chart:'trend', bin:'0', series:'baz'}).length,
+      otherBin: idsOf({chart:'trend', bin:'0', series:'baz'}).filter(id => id.startsWith('s')).length,
+      cohort: idsOf({chart:'trend', bin:'6', series:'cohort', quarter:'2025-Q3'}).length,
+      otherCohort: idsOf({chart:'trend', bin:'6', series:'cohort', quarter:'2025-Q1'}).length,
+      thin: idsOf({chart:'bmi', place:'RJ', category:'Thinness'}).length,
+      normalMp: idsOf({chart:'bmi', place:'MP', category:'Normal'}).length,
+      hba: idsOf({chart:'hba', group:'behind'}).length,
+      cols,
+      csv
+    };
+  })()`);
+  assert.equal(got.behind, 12);
+  assert.equal(got.steadyEarly, 8);
+  assert.equal(got.allImproved, 20);
+  assert.equal(got.outsider, false);
+  assert.equal(got.bazPoint, 20);
+  assert.equal(got.otherBin, 0);
+  assert.equal(got.cohort, 20);
+  assert.equal(got.otherCohort, 0);
+  assert.equal(got.thin, 5);
+  assert.equal(got.normalMp, 20);
+  assert.equal(got.hba, 20);
+  assert.match(got.cols, /Claude_ID/);
+  assert.equal(/name|phone|unique/i.test(got.cols), false);
+  assert.equal(got.csv, 'Facility\n"CS, Jaipur"');
+});
