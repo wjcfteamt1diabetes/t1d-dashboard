@@ -205,6 +205,11 @@ body.support-lt .enrol-grid{grid-template-columns:minmax(0,1fr)}
 .data-pending{font-size:10px;color:var(--tm);font-style:normal;background:#f8fafc;border:1px dashed var(--bdr);border-radius:5px;padding:8px 12px;text-align:center;margin-top:4px}
 .data-pending-chart{margin-top:10px;padding:18px 16px;background:#f8fafc;border:1.5px dashed #64748b;border-radius:8px;color:#334155;font-size:12px;font-weight:600;line-height:1.45}
 .data-pending-kicker{display:block;margin-bottom:3px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#1a5fa8}
+.growth-lead{font-size:11px;color:var(--t2);margin:-2px 0 8px;line-height:1.45}
+.growth-toggle{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--t2);margin:0 0 6px;cursor:pointer}
+.growth-toggle input{margin:0}
+.growth-foot{font-size:10px;color:var(--t2);margin-top:8px;line-height:1.45}
+.growth-delta{font-size:10px;color:var(--t2);margin-top:6px;line-height:1.45}
 .share-callout{font-size:11px;line-height:1.45;color:#334155;margin-top:6px}
 .bar-out{position:absolute;top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:#0f172a;white-space:nowrap;line-height:1}
 #peer-support-card{max-width:560px}
@@ -1053,6 +1058,47 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
 </div>
 
+<div class="sl">Growth (ages 2–18)</div>
+<p class="growth-lead" id="growth-lead">BMI-for-age and height-for-age for children aged 2–18 in complete support. The period filter does not apply.</p>
+<div id="growth-status" class="data-pending-chart" role="status" hidden></div>
+<div id="growth-body">
+<div class="g2">
+  <div class="card">
+    <div class="ct">Baseline vs latest BMI-for-age by time in care</div>
+    <div class="cs">Fell behind = Faltering or Watch · Steady = Stable · Improved = Healthy shift · Excess gain stays its own segment</div>
+    <div class="lg" id="growth-baz-lg"></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-baz" role="img" aria-label="BMI-for-age change by time in care"></canvas></div>
+    <div class="growth-foot" id="growth-baz-foot"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Month-on-month growth trend</div>
+    <div class="cs">Mean of each child’s bin mean. Bins and cohorts with n&lt;20 are omitted.</div>
+    <div class="lg" id="growth-trend-lg"></div>
+    <label class="growth-toggle" for="growth-cohort"><input type="checkbox" id="growth-cohort" onchange="renderGrowthTrend()"> By enrolment cohort</label>
+    <div class="lg" id="growth-cohort-lg"></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-trend" role="img" aria-label="Mean BAZ and HAZ by months since enrolment"></canvas></div>
+    <div class="growth-foot" id="growth-trend-foot"></div>
+  </div>
+</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct" id="growth-bmi-title">Current growth status</div>
+    <div class="cs" id="growth-bmi-sub">Latest BMI category for children measured in the last 6 months. The label above each bar is stunting among children with a height-for-age in the last 6 months.</div>
+    <div class="lg" id="growth-bmi-lg"></div>
+    <div style="height:300px;position:relative"><canvas id="c-growth-bmi" role="img" aria-label="Current BMI category by place"></canvas></div>
+    <div class="growth-foot" id="growth-bmi-foot"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Growth vs HbA1c</div>
+    <div class="cs">Mean latest HbA1c by growth group. Mean change since enrolment is included when the sheet recorded it.</div>
+    <div class="lg" id="growth-hba-lg"></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-hba" role="img" aria-label="Mean latest HbA1c by growth group"></canvas></div>
+    <div class="growth-delta" id="growth-hba-delta"></div>
+    <div class="growth-foot" id="growth-hba-foot"></div>
+  </div>
+</div>
+</div>
+
 </div></div><!-- /tab-1 -->
 
 <!-- ══════════ TAB 2 — CAPACITY BUILDING ══════════ -->
@@ -1784,6 +1830,7 @@ let HBA_N,HBA_LBLS,HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4;
 let HBA_I4N,HBA_I2N,HBA_ILN,HBA_NCN,HBA_WLN,HBA_W2N,HBA_W4N,HBA_DIST_N,HBA_ALL_N;
 let HBA_AVG_BASE,HBA_AVG_LAST,HBA_DIST_LBLS,HBA_D_LT7,HBA_D_7_10,HBA_D_10_13,HBA_D_13_16,HBA_D_GT16,HBA_LATEST;
 let HBA_ALL_LBLS,HBA_ALL_LT7,HBA_ALL_710,HBA_ALL_1013,HBA_ALL_1316,HBA_ALL_GT16;
+let GROWTH=null,_gBaz=null,_gTrend=null,_gBmi=null,_gHba=null;
 
 const WIN=6;
 let MAX=0, off=[null,null];   // null = not yet positioned → defaults to latest window
@@ -2897,6 +2944,10 @@ function buildInfoTable(){
     {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1D enrolled >3m with both values. Target: <8.5',sheet:'Hba1c_Baseline/Latest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
     {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1D by TDD/kg range: below/in/above · Pediatric 0–17: 0.7-1.0 u/kg · Adults ≥18: 1.0-1.5 u/kg',den:'PLT1D with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
     {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1D by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1D with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
+    {n:'22a',ind:'BMI-for-age change by time in care',tab:'T2',type:'%',num:'Children 2–18 by BAZ change: Fell behind (Faltering+Watch) / Steady (Stable) / Improved (Healthy shift) / Excess gain, plus an All bar',den:'Joined complete-support children with a classified BAZ bucket. Bars and percentages with n<20 are withheld. Period filter does not apply.',sheet:'Growth_child',cols:'Claude_ID, BAZ_bucket, HAZ_bucket, dHAZ, Time_in_care_bucket'},
+    {n:'22b',ind:'Growth trend by months since enrolment',tab:'T2',type:'Average',num:'Mean of per-child mean BAZ and mean HAZ in each month bin (0, 3, 6, 9, 12, 15, 18+). Optional BAZ line per enrolment quarter with n≥20',den:'Joined children with a milestone mean. Points and cohort lines with n<20 are omitted.',sheet:'Growth_milestones',cols:'Claude_ID, month bin, mean BAZ, mean HAZ, Enrolment_quarter'},
+    {n:'22c',ind:'Current BMI category and stunting',tab:'T2',type:'%',num:'Latest BMI category (Severe thinness / Thinness / Normal / Overweight / Obese) by state, or by district or facility when that geography is selected',den:'Children with Latest_BMI_within_6m. Stunting % uses Stunted_latest among Latest_HAZ_within_6m. n<20 withheld.',sheet:'Growth_child',cols:'State, District, Facility, BMI_category_latest, Stunted_latest, Latest_BMI_within_6m, Latest_HAZ_within_6m'},
+    {n:'22d',ind:'Growth group vs HbA1c',tab:'T2',type:'Average',num:'Mean latest HbA1c by growth group (fell behind / steady or improved / excess gain), with mean dHbA1c where the sheet recorded a change',den:'Joined children with a growth group and a latest HbA1c. Groups with n<20 are withheld.',sheet:'Growth_child',cols:'Growth_group, Latest_HbA1c, dHbA1c'},
     {sec:'TAB 3 — Capacity Building'},
     {n:'23',ind:'Batches held — doctors / nurses',tab:'T3',type:'Absolute #',num:'Count of distinct training batches by date and state',den:'—',sheet:'Capacity_Building',cols:'Training Batch, Type of Service Provider'},
     {n:'24',ind:'Doctors / nurses trained',tab:'T3',type:'Absolute #',num:'Distinct participant names within each state; ≥1 session',den:'—',sheet:'Capacity_Building',cols:'Name of Service Provider, Type of Service Provider'},
@@ -3538,7 +3589,8 @@ function renderActiveTab(){
        ['buildClinOps',buildClinOps],['buildOffDays',buildOffDays]],
     1:[['renderTDD',renderTDD],['renderBasal',renderBasal],['buildHbaChange',buildHbaChange],
        ['buildHbaAvg',buildHbaAvg],['buildHbaAll',buildHbaAll],
-       ['buildHbaDist',buildHbaDist],['buildHbaLatest',buildHbaLatest]],
+       ['buildHbaDist',buildHbaDist],['buildHbaLatest',buildHbaLatest],
+       ['renderGrowth',renderGrowth]],
     2:[['buildStaticCharts',buildStaticCharts]],
     3:[['renderStockKPIs',renderStockKPIs],['renderStockTrend',renderStockTrend],
        ['renderStockHeatmap',renderStockHeatmap]],
@@ -4654,6 +4706,7 @@ function recompute(){
   HBA_AVG_BASE=hba.avgB; HBA_AVG_LAST=hba.avgL; HBA_DIST_LBLS=hba.distLabels;
   HBA_D_LT7=hba.lt7; HBA_D_7_10=hba.d710; HBA_D_10_13=hba.d1013; HBA_D_13_16=hba.d1316; HBA_D_GT16=hba.gt16; HBA_LATEST=hba.latest;
   HBA_ALL_LBLS=hba.allDistLabels; HBA_ALL_LT7=hba.allLt7; HBA_ALL_710=hba.allD710; HBA_ALL_1013=hba.allD1013; HBA_ALL_1316=hba.allD1316; HBA_ALL_GT16=hba.allGt16;
+  GROWTH=computeGrowth(idSet, RAW.growthChild, RAW.growthMilestones, f);
 
   // merged object for renderKPIs (geo + patient)
   const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]??null;
@@ -5066,6 +5119,621 @@ function computeHba1c(idSet){
 }
 function hbaEmpty(){return{hbTest:null,hbDec:null,hbDecN:0,changeLabels:[['Overall','']],changeN:[0],i4:[0],i2:[0],iL:[0],nc:[0],wL:[0],w2:[0],w4:[0],avgB:[0],avgL:[0],distLabels:[['3–6m','']],lt7:[0],d710:[0],d1013:[0],d1316:[0],gt16:[0],latest:[0],allDistLabels:[['0–3m','']],allLt7:[0],allD710:[0],allD1013:[0],allD1316:[0],allGt16:[0]};}
 
+// ═══════════ GROWTH (ages 2–18) ═══════════
+// Z-scores and buckets are already computed on Growth_child and Growth_milestones.
+// The dashboard joins those rows to the filtered patient set and draws them.
+// Columns are found by header text, never by position. A missing or empty tab
+// is a quiet empty state, not a load failure. The period filter is not applied.
+const GROWTH_MIN_N=20;
+const GROWTH_TIME=['0–6','6–12','12–18','18+'];
+const GROWTH_BINS=['0','3','6','9','12','15','18+'];
+const GROWTH_SEG=[
+  {key:'behind', label:'Fell behind', color:'#9f1239'},
+  {key:'steady', label:'Steady', color:'#1d6cb5'},
+  {key:'improved', label:'Improved', color:'#059669'},
+  {key:'excess', label:'Excess gain', color:'#d97706'}
+];
+const GROWTH_BMI=[
+  {key:'Severe thinness', color:'#7f1d1d'},
+  {key:'Thinness', color:'#ea580c'},
+  {key:'Normal', color:'#1d6cb5'},
+  {key:'Overweight', color:'#d97706'},
+  {key:'Obese', color:'#7c2d12'}
+];
+const GROWTH_GROUP=[
+  {key:'behind', label:'Fell behind', color:'#9f1239'},
+  {key:'steady', label:'Steady or improved', color:'#1d6cb5'},
+  {key:'excess', label:'Excess gain', color:'#d97706'}
+];
+const GROWTH_STATE={RJ:'RJ',RAJASTHAN:'RJ',MP:'MP','MADHYA PRADESH':'MP',UK:'UK',UTTARAKHAND:'UK',CG:'CG',CHHATTISGARH:'CG',CHHATISGARH:'CG',GA:'GA',GOA:'GA'};
+function growthNormHeader(h){
+  return String(h==null?'':h).trim().toLowerCase().replace(/[^a-z0-9+]+/g,'_').replace(/^_|_$/g,'');
+}
+function growthKey(row, aliases){
+  if(!row) return null;
+  const want={};
+  aliases.forEach(a=>{want[growthNormHeader(a)]=true;});
+  const keys=Object.keys(row);
+  for(let i=0;i<keys.length;i++){ if(want[growthNormHeader(keys[i])]) return keys[i]; }
+  return null;
+}
+function growthVal(row, aliases){
+  const k=growthKey(row, aliases);
+  return k==null?'':row[k];
+}
+function growthObjects(grid){
+  if(!Array.isArray(grid)||!grid.length) return null;
+  if(!grid.every(r=>Array.isArray(r))) return null;
+  const hr=headerRowOf(grid, ['Claude_ID','Claude ID']);
+  const hdr=(grid[hr]||[]).map(h=>String(h==null?'':h).trim());
+  if(!hdr.some(h=>growthNormHeader(h)==='claude_id')) return null;
+  const rows=grid.slice(hr+1).map(r=>{
+    const o={};
+    hdr.forEach((h,i)=>{ if(h) o[h]=r[i]!==undefined?r[i]:''; });
+    return o;
+  }).filter(o=>String(growthVal(o,['Claude_ID','Claude ID'])).trim()!=='');
+  return rows.length?rows:null;
+}
+function pctTenths(counts){
+  const total=counts.reduce((a,b)=>a+(Number(b)||0),0);
+  if(!total) return counts.map(()=>0);
+  const scaled=counts.map(c=>(Number(c)||0)/total*1000);
+  const base=scaled.map(v=>Math.floor(v+1e-8));
+  let rem=1000-base.reduce((a,b)=>a+b,0);
+  const order=scaled.map((v,i)=>({i,f:v-Math.floor(v+1e-8)})).sort((a,b)=>b.f-a.f||a.i-b.i);
+  for(let k=0;k<rem&&order.length;k++) base[order[k%order.length].i]++;
+  return base.map(v=>v/10);
+}
+function growthPct(n,d){ return d?Math.round(n/d*1000)/10:null; }
+function growthMean(vals){
+  const xs=[];
+  for(let i=0;i<vals.length;i++){ const n=num(vals[i]); if(n!=null) xs.push(n); }
+  if(!xs.length) return null;
+  return Math.round(xs.reduce((a,b)=>a+b,0)/xs.length*100)/100;
+}
+function growthAvg(vals){
+  if(!vals.length) return null;
+  return vals.reduce((a,b)=>a+b,0)/vals.length;
+}
+function growthBazSeg(v){
+  const s=normv(v);
+  if(!s) return '';
+  if(s.indexOf('falter')>=0||s.indexOf('watch')>=0) return 'behind';
+  if(s.indexOf('excess')>=0) return 'excess';
+  if(s.indexOf('healthy')>=0||s.indexOf('improv')>=0) return 'improved';
+  if(s.indexOf('stable')>=0||s==='steady') return 'steady';
+  return '';
+}
+function growthGroupKey(v){
+  const s=normv(v);
+  if(!s) return '';
+  if(s.indexOf('excess')>=0) return 'excess';
+  if(s.indexOf('fell')>=0||s.indexOf('behind')>=0||s.indexOf('falter')>=0) return 'behind';
+  if(s.indexOf('steady')>=0||s.indexOf('improv')>=0) return 'steady';
+  return '';
+}
+function growthTimeKey(v){
+  const s=normv(v).replace(/[–—]/g,'-').replace(/months?/g,'').replace(/\s+/g,'');
+  if(s==='0-6') return '0–6';
+  if(s==='6-12') return '6–12';
+  if(s==='12-18') return '12–18';
+  if(s==='18+'||s==='>18'||s==='>=18'||s==='18plus') return '18+';
+  return '';
+}
+function growthBinKey(v){
+  const s=normv(v).replace(/\s+/g,'');
+  if(s==='18+'||s==='>=18'||s==='>18'||s==='18plus') return '18+';
+  if(GROWTH_BINS.indexOf(s)>=0) return s;
+  const n=num(v);
+  if(n===0||n===3||n===6||n===9||n===12||n===15) return String(n);
+  if(n!=null&&n>=18) return '18+';
+  return '';
+}
+function growthBmiKey(v){
+  const s=normv(v);
+  if(!s) return '';
+  if(s.indexOf('severe')>=0) return 'Severe thinness';
+  if(s.indexOf('thin')>=0) return 'Thinness';
+  if(s.indexOf('obes')>=0) return 'Obese';
+  if(s.indexOf('over')>=0) return 'Overweight';
+  if(s.indexOf('normal')>=0) return 'Normal';
+  return '';
+}
+function growthYes(v){
+  return normv(v)==='stunted'||isYes(v);
+}
+function growthStateCode(v){
+  const u=String(v==null?'':v).trim().toUpperCase();
+  if(!u) return 'Not recorded';
+  return GROWTH_STATE[u]||u;
+}
+function growthChildRecord(row){
+  return {
+    id:String(growthVal(row,['Claude_ID','Claude ID'])).trim(),
+    state:growthStateCode(growthVal(row,['State'])),
+    district:String(growthVal(row,['District'])).trim()||'Not recorded',
+    facility:String(growthVal(row,['Facility','Facility name','Facility Name'])).trim()||'Not recorded',
+    quarter:String(growthVal(row,['Enrolment_quarter','Enrolment quarter'])).trim(),
+    seg:growthBazSeg(growthVal(row,['BAZ_bucket','BAZ bucket'])),
+    hazSeg:growthBazSeg(growthVal(row,['HAZ_bucket','HAZ bucket'])),
+    dHaz:num(growthVal(row,['dHAZ','d_HAZ'])),
+    group:growthGroupKey(growthVal(row,['Growth_group','Growth group'])),
+    time:growthTimeKey(growthVal(row,['Time_in_care_bucket','Time in care bucket','Time_in_care'])),
+    bmi:growthBmiKey(growthVal(row,['BMI_category_latest','BMI category latest'])),
+    stunted:growthYes(growthVal(row,['Stunted_latest','Stunted latest'])),
+    bmi6:growthYes(growthVal(row,['Latest_BMI_within_6m','Latest BMI within 6m'])),
+    haz6:growthYes(growthVal(row,['Latest_HAZ_within_6m','Latest HAZ within 6m'])),
+    latestHba:num(growthVal(row,['Latest_HbA1c','Latest HbA1c'])),
+    dHba:num(growthVal(row,['dHbA1c','d_HbA1c']))
+  };
+}
+function growthMileRecord(row){
+  return {
+    id:String(growthVal(row,['Claude_ID','Claude ID'])).trim(),
+    bin:growthBinKey(growthVal(row,['month bin','month_bin','Months_since_enrolment','months since enrolment','Month_bin','Bin'])),
+    baz:num(growthVal(row,['mean BAZ in the bin','mean_BAZ','Mean BAZ','Mean_BAZ','BAZ_mean'])),
+    haz:num(growthVal(row,['mean HAZ in the bin','mean_HAZ','Mean HAZ','Mean_HAZ','HAZ_mean'])),
+    quarter:String(growthVal(row,['Enrolment_quarter','enrolment quarter','Enrolment quarter'])).trim()
+  };
+}
+function growthBlankSeg(){ return {behind:0,steady:0,improved:0,excess:0}; }
+function growthPackBar(label, bag){
+  const counts=GROWTH_SEG.map(s=>bag.counts[s.key]);
+  const suppressed=bag.n<GROWTH_MIN_N;
+  const dMean=bag.dHaz.length>=GROWTH_MIN_N?growthMean(bag.dHaz):null;
+  return {
+    label, n:bag.n, suppressed,
+    counts, shares:suppressed?null:pctTenths(counts),
+    meanDHaz:dMean, dHazN:bag.dHaz.length,
+    hazBehindPct:bag.hazN>=GROWTH_MIN_N?growthPct(bag.hazBehind, bag.hazN):null,
+    hazN:bag.hazN
+  };
+}
+function growthGeoLevel(f){
+  f=f||{};
+  if(f.facility&&f.facility!=='all') return 'facility';
+  if(f.district&&f.district!=='all') return 'facility';
+  if(f.state&&f.state!=='all') return 'district';
+  return 'state';
+}
+function growthQuarterRank(q){
+  const m=/^(\d{4})\s*-?\s*q([1-4])$/i.exec(String(q||'').trim());
+  return m?(+m[1])*10+(+m[2]):99999;
+}
+function growthFoot(measured, cohort, phrase){
+  return (Number(measured)||0).toLocaleString()+' of '+(Number(cohort)||0).toLocaleString()+' children aged 2–18 '+phrase+'; QC-flagged readings excluded; adults not applicable. Period filter does not apply.';
+}
+function growthView(f, data){
+  if(f&&f.age==='adu') return {mode:'adults', message:'Not applicable for adults'};
+  if(!data||data.status!=='ok') return {mode:'missing', message:'Growth data not yet available'};
+  return {mode:'ready'};
+}
+function computeGrowth(idSet, childRows, milestoneRows, f){
+  idSet=idSet||{};
+  if(!childRows||!childRows.length) return {status:'missing', cohort:0, baz:null, trend:{status:'missing'}, bmi:null, hba:null};
+  const seen={}, kids=[];
+  childRows.forEach(row=>{
+    const rec=growthChildRecord(row);
+    const id=normv(rec.id);
+    if(!id||!idSet[id]||seen[id]) return;
+    seen[id]=rec;
+    kids.push(rec);
+  });
+  const byTime={};
+  GROWTH_TIME.forEach(t=>{ byTime[t]={counts:growthBlankSeg(), dHaz:[], hazBehind:0, hazN:0, n:0}; });
+  const all={counts:growthBlankSeg(), dHaz:[], hazBehind:0, hazN:0, n:0};
+  kids.forEach(k=>{
+    if(!k.seg) return;
+    const bags=[all];
+    if(byTime[k.time]) bags.push(byTime[k.time]);
+    bags.forEach(b=>{
+      b.n++; b.counts[k.seg]++;
+      if(k.dHaz!=null) b.dHaz.push(k.dHaz);
+      if(k.hazSeg){ b.hazN++; if(k.hazSeg==='behind') b.hazBehind++; }
+    });
+  });
+  const baz={
+    bars:[growthPackBar('All', all)].concat(GROWTH_TIME.map(t=>growthPackBar(t+' months', byTime[t]))),
+    classified:all.n
+  };
+  const level=growthGeoLevel(f);
+  const geo=new Map();
+  const touch=key=>{
+    if(!geo.has(key)) geo.set(key,{key, n:0, counts:[0,0,0,0,0], stunt:0, stuntN:0});
+    return geo.get(key);
+  };
+  kids.forEach(k=>{
+    const key=level==='state'?k.state:level==='district'?k.district:k.facility;
+    if(k.bmi6&&k.bmi){
+      const g=touch(key); g.n++;
+      const bi=GROWTH_BMI.findIndex(c=>c.key===k.bmi);
+      if(bi>=0) g.counts[bi]++;
+    }
+    if(k.haz6){ const g=touch(key); g.stuntN++; if(k.stunted) g.stunt++; }
+  });
+  const geoKeys=Array.from(geo.keys());
+  if(level==='state'){
+    geoKeys.sort((a,b)=>{
+      const ia=STATE_ORDER.indexOf(a), ib=STATE_ORDER.indexOf(b);
+      return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);
+    });
+  }else geoKeys.sort((a,b)=>a.localeCompare(b));
+  const bmiMeasured=kids.filter(k=>k.bmi6&&k.bmi).length;
+  const bmi={
+    level,
+    measured:bmiMeasured,
+    bars:geoKeys.map(key=>{
+      const g=geo.get(key);
+      const suppressed=g.n<GROWTH_MIN_N;
+      return {
+        key, label:level==='state'?sln(key):key,
+        n:g.n, suppressed, counts:g.counts,
+        shares:suppressed?null:pctTenths(g.counts),
+        stuntN:g.stuntN,
+        stuntPct:g.stuntN>=GROWTH_MIN_N?growthPct(g.stunt, g.stuntN):null
+      };
+    })
+  };
+  const hbaAcc={behind:[],steady:[],excess:[]}, hbaD={behind:[],steady:[],excess:[]};
+  kids.forEach(k=>{
+    if(!k.group||k.latestHba==null) return;
+    hbaAcc[k.group].push(k.latestHba);
+    if(k.dHba!=null) hbaD[k.group].push(k.dHba);
+  });
+  const hba={
+    measured:GROWTH_GROUP.reduce((s,g)=>s+hbaAcc[g.key].length,0),
+    groups:GROWTH_GROUP.map(g=>{
+      const n=hbaAcc[g.key].length, dN=hbaD[g.key].length;
+      return {
+        key:g.key, label:g.label, color:g.color, n, dN,
+        suppressed:n<GROWTH_MIN_N,
+        mean:n>=GROWTH_MIN_N?growthMean(hbaAcc[g.key]):null,
+        meanD:dN>=GROWTH_MIN_N?growthMean(hbaD[g.key]):null
+      };
+    })
+  };
+  let trend;
+  if(milestoneRows==null) trend={status:'missing'};
+  else{
+    const per=new Map();
+    milestoneRows.forEach(row=>{
+      const m=growthMileRecord(row);
+      const id=normv(m.id);
+      const kid=seen[id];
+      if(!kid||!m.bin) return;
+      const slot=id+'|'+m.bin;
+      if(!per.has(slot)) per.set(slot,{id, bin:m.bin, quarter:kid.quarter||m.quarter||'Not recorded', baz:[], haz:[]});
+      const cell=per.get(slot);
+      if(m.baz!=null) cell.baz.push(m.baz);
+      if(m.haz!=null) cell.haz.push(m.haz);
+    });
+    const bins=GROWTH_BINS.map(bin=>({bin, baz:[], haz:[]}));
+    const at=Object.create(null);
+    GROWTH_BINS.forEach((bin,i)=>{at[bin]=i;});
+    const cohorts=new Map();
+    const withMilestone={};
+    per.forEach(cell=>{
+      withMilestone[cell.id]=true;
+      const bz=growthAvg(cell.baz), hz=growthAvg(cell.haz);
+      const i=at[cell.bin];
+      if(bz!=null) bins[i].baz.push(bz);
+      if(hz!=null) bins[i].haz.push(hz);
+      if(!cohorts.has(cell.quarter)) cohorts.set(cell.quarter,{quarter:cell.quarter, ids:{}, baz:GROWTH_BINS.map(()=>[])});
+      const c=cohorts.get(cell.quarter);
+      if(bz!=null){ c.ids[cell.id]=true; c.baz[i].push(bz); }
+    });
+    trend={
+      status:'ok',
+      measured:Object.keys(withMilestone).length,
+      bins:bins.map(b=>({
+        bin:b.bin, bazN:b.baz.length, hazN:b.haz.length,
+        bazMean:b.baz.length>=GROWTH_MIN_N?Math.round(growthAvg(b.baz)*100)/100:null,
+        hazMean:b.haz.length>=GROWTH_MIN_N?Math.round(growthAvg(b.haz)*100)/100:null
+      })),
+      cohorts:Array.from(cohorts.values()).map(c=>{
+        const n=Object.keys(c.ids).length;
+        return {
+          quarter:c.quarter, n, hidden:n<GROWTH_MIN_N,
+          baz:c.baz.map(vals=>vals.length>=GROWTH_MIN_N?Math.round(growthAvg(vals)*100)/100:null),
+          bazN:c.baz.map(vals=>vals.length)
+        };
+      }).sort((a,b)=>growthQuarterRank(a.quarter)-growthQuarterRank(b.quarter)||a.quarter.localeCompare(b.quarter))
+    };
+  }
+  return {status:'ok', cohort:kids.length, baz, trend, bmi, hba};
+}
+function growthLegend(id, items){
+  const el=document.getElementById(id); if(!el) return;
+  el.innerHTML=items.map(it=>'<span><span class="ld" style="background:'+it.color+'"></span>'+it.label+'</span>').join('');
+}
+function growthHold(canvas, message){
+  if(!canvas||!canvas.parentElement) return;
+  canvas.style.display='none';
+  let note=canvas.parentElement.querySelector&&canvas.parentElement.querySelector('.growth-hold');
+  if(!note&&document.createElement){
+    note=document.createElement('div');
+    note.className='growth-hold data-pending';
+    canvas.parentElement.appendChild(note);
+  }
+  if(note){ note.hidden=false; note.textContent=message; }
+}
+function growthRelease(canvas){
+  if(!canvas) return;
+  canvas.style.display='';
+  const note=canvas.parentElement&&canvas.parentElement.querySelector&&canvas.parentElement.querySelector('.growth-hold');
+  if(note&&note.remove) note.remove();
+}
+function growthSuppressPlugin(pluginId, flags, tops){
+  return {
+    id:pluginId,
+    afterDatasetsDraw(chart){
+      const ctx=chart.ctx; if(!ctx) return;
+      (flags||[]).forEach((sup,i)=>{
+        const bar=chart.getDatasetMeta(0).data[i]; if(!bar) return;
+        ctx.save();
+        ctx.textAlign='center';
+        if(sup){
+          ctx.fillStyle='#475569';
+          ctx.font='600 11px Trebuchet MS,sans-serif';
+          ctx.textBaseline='bottom';
+          ctx.fillText('n<20', bar.x, chart.chartArea.bottom-6);
+        }
+        if(tops&&tops[i]){
+          paintChartLabel(ctx, tops[i], bar.x, chart.chartArea.top+2, '#9f1239', 'top', true);
+        }
+        ctx.restore();
+      });
+    }
+  };
+}
+function growthValuePlugin(pluginId){
+  return {
+    id:pluginId,
+    afterDatasetsDraw(chart){
+      const ctx=chart.ctx; if(!ctx) return;
+      const meta=chart.getDatasetMeta(0); if(!meta||meta.hidden) return;
+      meta.data.forEach((bar,i)=>{
+        const v=chart.data.datasets[0].data[i];
+        ctx.save();
+        ctx.textAlign='center';
+        ctx.font='bold 12px Trebuchet MS,sans-serif';
+        if(v==null){
+          ctx.fillStyle='#475569';
+          ctx.textBaseline='bottom';
+          ctx.fillText('n<20', bar.x, chart.chartArea.bottom-6);
+        }else{
+          ctx.fillStyle='#334155';
+          ctx.textBaseline='bottom';
+          ctx.fillText(Number(v).toFixed(2), bar.x, bar.y-3);
+        }
+        ctx.restore();
+      });
+    }
+  };
+}
+function renderGrowth(){
+  const box=document.getElementById('growth-status');
+  const body=document.getElementById('growth-body');
+  if(!box||!body) return;
+  const view=growthView(getF(), GROWTH);
+  if(view.mode!=='ready'){
+    if(_gBaz){_gBaz.destroy();_gBaz=null;}
+    if(_gTrend){_gTrend.destroy();_gTrend=null;}
+    if(_gBmi){_gBmi.destroy();_gBmi=null;}
+    if(_gHba){_gHba.destroy();_gHba=null;}
+    body.hidden=true;
+    box.hidden=false;
+    box.textContent=view.message;
+    return;
+  }
+  box.hidden=true;
+  body.hidden=false;
+  renderGrowthBaz();
+  renderGrowthTrend();
+  renderGrowthBmi();
+  renderGrowthHba();
+}
+function renderGrowthBaz(){
+  const canvas=document.getElementById('c-growth-baz');
+  const foot=document.getElementById('growth-baz-foot');
+  if(_gBaz){_gBaz.destroy();_gBaz=null;}
+  const baz=GROWTH&&GROWTH.baz;
+  if(!canvas||!baz) return;
+  growthRelease(canvas);
+  growthLegend('growth-baz-lg', GROWTH_SEG);
+  const bars=baz.bars;
+  const tip=shareTooltip();
+  tip.callbacks.afterBody=items=>{
+    const bar=bars[items[0].dataIndex]; if(!bar||bar.suppressed) return [];
+    const d=bar.meanDHaz==null?'n<20':((bar.meanDHaz>0?'+':'')+bar.meanDHaz.toFixed(2));
+    const haz=bar.hazBehindPct==null?'n<20':bar.hazBehindPct.toFixed(1)+'%';
+    return ['Mean ΔHAZ: '+d, 'HAZ fell behind: '+haz];
+  };
+  _gBaz=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:bars.map(b=>[b.label, b.suppressed?'n<20':'(n='+b.n.toLocaleString()+')']),
+      datasets:GROWTH_SEG.map((s,si)=>({
+        label:s.label,
+        data:bars.map(b=>b.suppressed||!b.shares?null:b.shares[si]),
+        _counts:bars.map(b=>b.counts[si]),
+        backgroundColor:s.color, stack:'s', _lc:inkOn(s.color), _minVal:8, _minH:16
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:8}},
+      interaction:{mode:'index', intersect:false},
+      plugins:{legend:{display:false}, tooltip:tip},
+      scales:{
+        x:{stacked:true, grid:{display:false}, border:{display:false},
+           ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{stacked:true, display:false, min:0, max:100}
+      }
+    },
+    plugins:[growthSuppressPlugin('growthBazMin', bars.map(b=>b.suppressed))]
+  });
+  if(foot) foot.textContent=growthFoot(baz.classified, GROWTH.cohort, 'with a classified BMI-for-age change');
+}
+function renderGrowthTrend(){
+  if(!GROWTH||growthView(getF(), GROWTH).mode!=='ready') return;
+  const canvas=document.getElementById('c-growth-trend');
+  const foot=document.getElementById('growth-trend-foot');
+  const cohortLg=document.getElementById('growth-cohort-lg');
+  if(_gTrend){_gTrend.destroy();_gTrend=null;}
+  const trend=GROWTH.trend;
+  if(!canvas) return;
+  if(!trend||trend.status!=='ok'){
+    growthHold(canvas, 'Growth data not yet available');
+    if(foot) foot.textContent='';
+    if(cohortLg) cohortLg.innerHTML='';
+    return;
+  }
+  growthRelease(canvas);
+  growthLegend('growth-trend-lg', [{label:'Mean BAZ', color:'#0f3460'},{label:'Mean HAZ', color:'#0f766e'}]);
+  const on=!!(document.getElementById('growth-cohort')&&document.getElementById('growth-cohort').checked);
+  const shown=(trend.cohorts||[]).filter(c=>!c.hidden&&c.baz.some(v=>v!=null));
+  const cols=['#7c3aed','#db2777','#b45309','#0369a1','#65a30d','#9333ea','#0e7490','#be123c'];
+  if(cohortLg){
+    cohortLg.innerHTML=!on?'':(shown.length
+      ? shown.map((c,i)=>'<span><span class="ldc" style="background:'+cols[i%cols.length]+'"></span>'+c.quarter+' (n='+c.n.toLocaleString()+')</span>').join('')
+      : '<span>No enrolment cohort has 20 children in a month bin.</span>');
+  }
+  const datasets=[
+    {label:'Mean BAZ', data:trend.bins.map(b=>b.bazMean), _n:trend.bins.map(b=>b.bazN), borderColor:'#0f3460', backgroundColor:'#0f3460', borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:3.5, pointBackgroundColor:'#0f3460', _noLabel:true},
+    {label:'Mean HAZ', data:trend.bins.map(b=>b.hazMean), _n:trend.bins.map(b=>b.hazN), borderColor:'#0f766e', backgroundColor:'#0f766e', borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:3.5, pointBackgroundColor:'#0f766e', _noLabel:true}
+  ];
+  if(on) shown.forEach((c,i)=>{
+    datasets.push({label:c.quarter+' BAZ', data:c.baz, _n:c.bazN, borderColor:cols[i%cols.length], backgroundColor:cols[i%cols.length], borderWidth:1.5, borderDash:[4,3], tension:.25, spanGaps:false, pointRadius:2.5, pointBackgroundColor:cols[i%cols.length], _noLabel:true});
+  });
+  _gTrend=createDashboardChart(canvas,{
+    type:'line',
+    data:{
+      labels:trend.bins.map(b=>[b.bin+' mo', (b.bazN<GROWTH_MIN_N&&b.hazN<GROWTH_MIN_N)?'n<20':'']),
+      datasets
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        title(items){ const lb=items[0]&&items[0].label; return Array.isArray(lb)?lb.filter(Boolean).join(' '):lb; },
+        label(ctx){
+          const n=ctx.dataset._n?ctx.dataset._n[ctx.dataIndex]:null;
+          if(ctx.parsed.y==null) return ' '+ctx.dataset.label+': n<20';
+          return ' '+ctx.dataset.label+': '+Number(ctx.parsed.y).toFixed(2)+(n==null?'':' (n='+Number(n).toLocaleString()+')');
+        },
+        afterBody(items){
+          const b=trend.bins[items[0].dataIndex]; if(!b) return [];
+          const bits=[];
+          if(b.bazN<GROWTH_MIN_N) bits.push('BAZ n<20');
+          if(b.hazN<GROWTH_MIN_N) bits.push('HAZ n<20');
+          return bits;
+        }
+      }}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{grace:'12%', grid:{display:false}, border:{display:false}, title:{display:true, text:'Mean z-score', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}}
+      }
+    }
+  });
+  if(foot) foot.textContent=growthFoot(trend.measured, GROWTH.cohort, 'with a milestone mean');
+}
+function renderGrowthBmi(){
+  const canvas=document.getElementById('c-growth-bmi');
+  const foot=document.getElementById('growth-bmi-foot');
+  const title=document.getElementById('growth-bmi-title');
+  if(_gBmi){_gBmi.destroy();_gBmi=null;}
+  const bmi=GROWTH&&GROWTH.bmi;
+  if(!canvas||!bmi) return;
+  growthRelease(canvas);
+  const where=bmi.level==='district'?'by district':bmi.level==='facility'?'by facility':'by state';
+  if(title) title.textContent='Current growth status '+where;
+  growthLegend('growth-bmi-lg', GROWTH_BMI.map(c=>({label:c.key, color:c.color})));
+  const bars=bmi.bars;
+  const stuntLine=b=>b.stuntPct==null?'stunting n<20':('stunted '+b.stuntPct.toFixed(1)+'%');
+  const tip=shareTooltip();
+  tip.callbacks.afterBody=items=>{
+    const bar=bars[items[0].dataIndex]; if(!bar) return [];
+    return [bar.stuntPct==null?'Stunting: n<20':'Stunting: '+bar.stuntPct.toFixed(1)+'% (n='+bar.stuntN.toLocaleString()+')'];
+  };
+  if(!bars.length){
+    growthHold(canvas, 'No children aged 2–18 with a recent BMI in this view.');
+  }else{
+    _gBmi=createDashboardChart(canvas,{
+      type:'bar',
+      data:{
+        labels:bars.map(b=>[b.label, b.suppressed?'n<20':'(n='+b.n.toLocaleString()+')', stuntLine(b)]),
+        datasets:GROWTH_BMI.map((c,i)=>({
+          label:c.key,
+          data:bars.map(b=>b.suppressed?null:(b.shares?b.shares[i]:null)),
+          _counts:bars.map(b=>b.counts[i]),
+          backgroundColor:c.color, stack:'s', _lc:inkOn(c.color), _minVal:8, _minH:16
+        }))
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        layout:{padding:{top:8}},
+        interaction:{mode:'index', intersect:false},
+        plugins:{legend:{display:false}, tooltip:tip},
+        scales:{
+          x:{stacked:true, grid:{display:false}, border:{display:false},
+             ticks:{font:{size:10}, color:'#334155', maxRotation:bmi.level==='state'?0:40, autoSkip:false}},
+          y:{stacked:true, display:false, min:0, max:100}
+        }
+      },
+      plugins:[growthSuppressPlugin('growthBmiMin', bars.map(b=>b.suppressed))]
+    });
+  }
+  if(foot) foot.textContent=growthFoot(bmi.measured, GROWTH.cohort, 'measured in the last 6 months');
+}
+function renderGrowthHba(){
+  const canvas=document.getElementById('c-growth-hba');
+  const foot=document.getElementById('growth-hba-foot');
+  const delta=document.getElementById('growth-hba-delta');
+  if(_gHba){_gHba.destroy();_gHba=null;}
+  const hba=GROWTH&&GROWTH.hba;
+  if(!canvas||!hba) return;
+  growthRelease(canvas);
+  growthLegend('growth-hba-lg', [{label:'Mean latest HbA1c', color:'#0f3460'}]);
+  const groups=hba.groups;
+  const signed=n=>n==null?'n<20':((n>0?'+':'')+Number(n).toFixed(2));
+  _gHba=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:groups.map(g=>[g.label, g.suppressed?'n<20':'(n='+g.n.toLocaleString()+')']),
+      datasets:[{label:'Mean latest HbA1c', data:groups.map(g=>g.suppressed?null:g.mean), backgroundColor:'#0f3460', borderRadius:3, _noLabel:true, _pct:false}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:18}},
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        title(items){ const lb=items[0]&&items[0].label; return Array.isArray(lb)?lb.filter(Boolean).join(' '):lb; },
+        label(ctx){
+          const g=groups[ctx.dataIndex];
+          if(!g||g.suppressed||ctx.parsed.y==null) return ' Mean latest HbA1c: n<20';
+          return ' Mean latest HbA1c: '+Number(ctx.parsed.y).toFixed(2)+' (n='+g.n.toLocaleString()+')';
+        },
+        afterBody(items){
+          const g=groups[items[0].dataIndex]; if(!g) return [];
+          if(g.dN<GROWTH_MIN_N||g.meanD==null) return ['Mean ΔHbA1c: n<20'];
+          return ['Mean ΔHbA1c: '+signed(g.meanD)+' (n='+g.dN.toLocaleString()+')'];
+        }
+      }}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{display:false, beginAtZero:true, suggestedMax:Math.max(12, ...groups.map(g=>g.mean||0))*1.25}
+      }
+    },
+    plugins:[growthValuePlugin('growthHbaValues')]
+  });
+  if(delta) delta.textContent=groups.map(g=>{
+    const latest=g.suppressed||g.mean==null?'n<20':g.mean.toFixed(2)+' (n='+g.n.toLocaleString()+')';
+    const change=g.dN<GROWTH_MIN_N||g.meanD==null?'Δ n<20':'Δ '+signed(g.meanD)+' (n='+g.dN.toLocaleString()+')';
+    return g.label+': '+latest+', '+change;
+  }).join(' · ');
+  if(foot) foot.textContent=growthFoot(hba.measured, GROWTH.cohort, 'with a growth group and a latest HbA1c');
+}
+
+
 function showError(err){
   const ov=document.getElementById('overlay');
   if(ov){
@@ -5133,13 +5801,28 @@ async function boot({forceFresh=false}={}){
   try{
     const C=window.DASHBOARD_CONFIG;
     let loaded=0, oldestFetch=Infinity, cachedSheets=0;
-    const load=async(id,name)=>{
-      const grid=await fetchTab(id,name,{forceFresh,onSource:(savedAt,cached)=>{oldestFetch=Math.min(oldestFetch,savedAt);if(cached)cachedSheets++;}});
-      loaded++;
-      if(dashboardLoading&&loadVersion===dashboardLoadVersion)document.getElementById('ov-msg').textContent='Loaded '+loaded+' of 12 sheets'+(loaded===12?' · building charts…':' · waiting for remaining sheets…');
-      return grid;
+    const sheetTotal=14;
+    const reportLoad=()=>{
+      if(dashboardLoading&&loadVersion===dashboardLoadVersion){
+        const el=document.getElementById('ov-msg');
+        if(el) el.textContent='Loaded '+loaded+' of '+sheetTotal+' sheets'+(loaded===sheetTotal?' · building charts…':' · waiting for remaining sheets…');
+      }
     };
-    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid]=await Promise.all([
+    const load=async(id,name,{soft=false}={})=>{
+      try{
+        const grid=await fetchTab(id,name,{forceFresh,onSource:(savedAt,cached)=>{oldestFetch=Math.min(oldestFetch,savedAt);if(cached)cachedSheets++;}});
+        loaded++;
+        reportLoad();
+        return grid;
+      }catch(err){
+        if(!soft) throw err;
+        loaded++;
+        reportLoad();
+        console.warn('[Dashboard] Optional sheet "'+name+'" is not available yet');
+        return null;
+      }
+    };
+    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid,growthChildGrid,growthMileGrid]=await Promise.all([
       load(C.wb1,'Enrolled List'),
       load(C.wb1,'CompleteSupport_Facilities'),
       load(C.wb1,'Light_touch_facilities'),
@@ -5151,7 +5834,9 @@ async function boot({forceFresh=false}={}){
       load(C.wb1,'SMBG_Monthly'),
       load(C.wb1,'SMBG_Hyper/Hypo'),
       load(C.wb1,'Hba1c_Baseline/Latest'),
-      load(C.wb1,'Targets')
+      load(C.wb1,'Targets'),
+      load(C.wb1,'Growth_child',{soft:true}),
+      load(C.wb1,'Growth_milestones',{soft:true})
     ]);
     // Always replace previous targets, including when a refresh returns missing values.
     TARGETS=parseTargets(tgtGrid);
@@ -5177,6 +5862,8 @@ async function boot({forceFresh=false}={}){
       opsGrid: opsGrid, offsGrid: offsGrid,       // transposed sheets
       smbgGrid: smbgGrid, hhGrid: hhGrid,         // kept as grids
       hba:     toObjects(hbaGrid, ['Claude_ID','State','Latest hba1c time bucket']),
+      growthChild: growthObjects(growthChildGrid),
+      growthMilestones: growthObjects(growthMileGrid),
       stock:   null // Fetch only when the Stock Levels tab (or PDF export) needs it.
     };
     if(RAW.enrolled.length<50) throw new Error(enrRows.length<50

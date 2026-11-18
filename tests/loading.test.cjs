@@ -76,7 +76,7 @@ test('charts render only for the selected tab and become dirty after filters cha
   const names=['renderKPIs','renderLtExclusionNote','populateFilters','recompute',
     'buildC1','buildC2','renderGender','buildAge','renderPTF','renderTrainedStaff','renderPeerSupport',
     'buildFupChart','renderSmbg','renderHyperHypo','computeClinicOps','buildClinOps','buildOffDays',
-    'renderTDD','renderBasal','buildHbaChange','buildHbaAvg','buildHbaAll','buildHbaDist','buildHbaLatest',
+    'renderTDD','renderBasal','buildHbaChange','buildHbaAvg','buildHbaAll','buildHbaDist','buildHbaLatest','renderGrowth',
     'buildStaticCharts','renderStockKPIs','renderStockTrend','renderStockHeatmap',
     'renderDonorKPIs','renderLogframe','renderDonorStates','buildDonorGrowth','renderDonorRegimen',
     'renderDonorHbaDumbbell','renderDonorCapacityTargets','buildDonorCadre'];
