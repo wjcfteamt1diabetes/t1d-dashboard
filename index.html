@@ -1076,6 +1076,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div class="sl">Growth (ages 2–18)</div>
 <p class="growth-lead" id="growth-lead">BMI-for-age and height-for-age for children aged 2–18 in complete support. The period filter does not apply.</p>
+<p class="growth-lead" id="growth-score-note">BAZ (BMI-for-age) compares a child’s weight for their height with healthy children of the same age and sex. HAZ (height-for-age) compares their height. 0 = healthy average; below −2 = thin (BAZ) or stunted (HAZ).</p>
 <div id="growth-status" class="data-pending-chart" role="status" hidden></div>
 <div id="growth-body">
 <div class="g2">
@@ -1089,12 +1090,12 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
   <div class="card">
     <div class="ct">Month-on-month growth trend</div>
-    <div class="cs">Mean of each child’s bin mean. Bins and cohorts with n&lt;20 are omitted. Click a point to list the children.</div>
+    <div class="cs">Average score at each point in care (0, 3, 6 … months since enrolment). Points and enrolment cohorts with fewer than 20 children are hidden. Click a point to list the children.</div>
     <div class="growth-takeaway" id="growth-trend-take"></div>
     <div class="lg" id="growth-trend-lg"></div>
     <label class="growth-toggle" for="growth-cohort"><input type="checkbox" id="growth-cohort" onchange="renderGrowthTrend()"> By enrolment cohort</label>
     <div class="lg" id="growth-cohort-lg"></div>
-    <div style="height:280px;position:relative"><canvas id="c-growth-trend" role="img" aria-label="Mean BAZ and HAZ by months since enrolment"></canvas></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-trend" role="img" aria-label="Weight-for-height and height-for-age scores by months since enrolment"></canvas></div>
     <div class="growth-foot" id="growth-trend-foot"></div>
   </div>
 </div>
@@ -1431,7 +1432,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <!-- ══════════ TAB 5 — INDICATOR DEFINITIONS ══════════ -->
 <div class="tc" id="tab-5">
 <div class="tc-wrap">
-<div class="sl">Indicator definitions</div><details class="card" style="padding:10px"><summary>Abbreviations</summary><p class="cs">PLT1D: people living with type 1 diabetes · SMBG: self-monitoring of blood glucose · DKA: diabetic ketoacidosis · TDD: total daily insulin dose · FLW: frontline worker · pp: percentage points.</p></details>
+<div class="sl">Indicator definitions</div><details class="card" style="padding:10px"><summary>Abbreviations</summary><p class="cs">PLT1D: people living with type 1 diabetes · SMBG: self-monitoring of blood glucose · DKA: diabetic ketoacidosis · TDD: total daily insulin dose · FLW: frontline worker · pp: percentage points · BAZ: BMI-for-age score, comparing a child’s weight for their height with healthy children of the same age and sex (0 = healthy average; below −2 = thin) · HAZ: height-for-age score (0 = healthy average; below −2 = stunted).</p></details>
 <div class="card" style="padding:0;overflow:hidden">
 <table class="info-table">
 <thead>
@@ -2965,9 +2966,9 @@ function buildInfoTable(){
     {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1D enrolled >3m with both values. Target: <8.5',sheet:'Hba1c_Baseline/Latest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
     {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1D by TDD/kg range: below/in/above · Pediatric 0–17: 0.7-1.0 u/kg · Adults ≥18: 1.0-1.5 u/kg',den:'PLT1D with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
     {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1D by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1D with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
-    {n:'22a',ind:'BMI-for-age change by time in care',tab:'T2',type:'%',num:'Children 2–18 by BAZ change: Fell behind (Faltering+Watch) / Steady (Stable) / Improved (Healthy shift) / Excess gain, plus an All bar',den:'Joined complete-support children with a classified BAZ bucket. Bars and percentages with n<20 are withheld. Period filter does not apply.',sheet:'Growth_child',cols:'Claude_ID, BAZ_bucket, HAZ_bucket, dHAZ, Time_in_care_bucket'},
-    {n:'22b',ind:'Growth trend by months since enrolment',tab:'T2',type:'Average',num:'Mean of per-child mean BAZ and mean HAZ in each month bin (0, 3, 6, 9, 12, 15, 18+). Optional BAZ line per enrolment quarter with n≥20',den:'Joined children with a milestone mean. Points and cohort lines with n<20 are omitted.',sheet:'Growth_milestones',cols:'Claude_ID, month bin, mean BAZ, mean HAZ, Enrolment_quarter'},
-    {n:'22c',ind:'Current BMI category and stunting',tab:'T2',type:'%',num:'Latest BMI category (Severe thinness / Thinness / Normal / Overweight / Obese) by state, or by district or facility when that geography is selected',den:'Children with Latest_BMI_within_6m. Stunting % uses Stunted_latest among Latest_HAZ_within_6m. n<20 withheld.',sheet:'Growth_child',cols:'State, District, Facility, BMI_category_latest, Stunted_latest, Latest_BMI_within_6m, Latest_HAZ_within_6m'},
+    {n:'22a',ind:'BMI-for-age change by time in care',tab:'T2',type:'%',num:'Children aged 2–18 by BMI-for-age score (BAZ): Fell behind (Faltering or Watch) / Steady (Stable) / Improved (Healthy shift) / Excess gain, plus an All bar. Time in care is 0–6, 6–12, 12–18 and 18+ months since enrolment.',den:'Joined complete-support children with a classified BMI-for-age group. Bars and percentages with n<20 are withheld. Period filter does not apply.',sheet:'Growth_child',cols:'Claude_ID, BAZ_bucket, HAZ_bucket, dHAZ, Time_in_care_bucket'},
+    {n:'22b',ind:'Growth trend by months since enrolment',tab:'T2',type:'Average',num:'Average of each child’s score at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. BAZ is the BMI-for-age (weight-for-height) score; HAZ is the height-for-age score. 0 = healthy average. Optional weight-for-height line per enrolment quarter when n≥20.',den:'Joined children with a recorded score. Points and enrolment-cohort lines with fewer than 20 children are hidden.',sheet:'Growth_milestones',cols:'Claude_ID, Month_bin (months since enrolment), Mean_BAZ, Mean_HAZ, Enrolment_quarter'},
+    {n:'22c',ind:'Current BMI category and stunting',tab:'T2',type:'%',num:'Latest BMI category (Severe thinness / Thinness / Normal / Overweight / Obese) by state, or by district or facility when that geography is selected. Stunting is a height-for-age score (HAZ) below −2.',den:'Children with a BMI in the last 6 months. Stunting % uses Stunted_latest among children with a height-for-age reading in the last 6 months. n<20 withheld.',sheet:'Growth_child',cols:'State, District, Facility, BMI_category_latest, Stunted_latest, Latest_BMI_within_6m, Latest_HAZ_within_6m'},
     {n:'22d',ind:'Growth group vs HbA1c',tab:'T2',type:'Average',num:'Mean latest HbA1c by growth group (fell behind / steady or improved / excess gain), with mean dHbA1c where the sheet recorded a change',den:'Joined children with a growth group and a latest HbA1c. Groups with n<20 are withheld.',sheet:'Growth_child',cols:'Growth_group, Latest_HbA1c, dHbA1c'},
     {sec:'TAB 3 — Capacity Building'},
     {n:'23',ind:'Batches held — doctors / nurses',tab:'T3',type:'Absolute #',num:'Count of distinct training batches by date and state',den:'—',sheet:'Capacity_Building',cols:'Training Batch, Type of Service Provider'},
@@ -5625,35 +5626,35 @@ function growthDrillColumns(chart){
   const extra={
     baz:[
       {key:'time', label:'Time in care'},
-      {key:'bazBucket', label:'BAZ bucket'},
+      {key:'bazBucket', label:'BMI-for-age group (BAZ)'},
       {key:'baseBmi', label:'Baseline BMI', num:1},
       {key:'latestBmi', label:'Latest BMI', num:1},
-      {key:'baseBaz', label:'Baseline BAZ', num:2},
-      {key:'latestBaz', label:'Latest BAZ', num:2},
-      {key:'dBaz', label:'ΔBAZ', num:2},
-      {key:'baseHaz', label:'Baseline HAZ', num:2},
-      {key:'latestHaz', label:'Latest HAZ', num:2},
-      {key:'dHaz', label:'ΔHAZ', num:2}
+      {key:'baseBaz', label:'Baseline weight-for-height (BAZ)', num:2},
+      {key:'latestBaz', label:'Latest weight-for-height (BAZ)', num:2},
+      {key:'dBaz', label:'Change in weight-for-height (BAZ)', num:2},
+      {key:'baseHaz', label:'Baseline height-for-age (HAZ)', num:2},
+      {key:'latestHaz', label:'Latest height-for-age (HAZ)', num:2},
+      {key:'dHaz', label:'Change in height-for-age (HAZ)', num:2}
     ],
     trend:[
       {key:'quarter', label:'Enrolment quarter'},
-      {key:'bin', label:'Month bin'},
-      {key:'binBaz', label:'Mean BAZ', num:2},
-      {key:'binHaz', label:'Mean HAZ', num:2},
-      {key:'baseBaz', label:'Baseline BAZ', num:2},
-      {key:'latestBaz', label:'Latest BAZ', num:2},
-      {key:'dBaz', label:'ΔBAZ', num:2},
-      {key:'baseHaz', label:'Baseline HAZ', num:2},
-      {key:'latestHaz', label:'Latest HAZ', num:2},
-      {key:'dHaz', label:'ΔHAZ', num:2}
+      {key:'bin', label:'Months since enrolment'},
+      {key:'binBaz', label:'Weight-for-height score (BAZ)', num:2},
+      {key:'binHaz', label:'Height-for-age score (HAZ)', num:2},
+      {key:'baseBaz', label:'Baseline weight-for-height (BAZ)', num:2},
+      {key:'latestBaz', label:'Latest weight-for-height (BAZ)', num:2},
+      {key:'dBaz', label:'Change in weight-for-height (BAZ)', num:2},
+      {key:'baseHaz', label:'Baseline height-for-age (HAZ)', num:2},
+      {key:'latestHaz', label:'Latest height-for-age (HAZ)', num:2},
+      {key:'dHaz', label:'Change in height-for-age (HAZ)', num:2}
     ],
     bmi:[
       {key:'bmi', label:'BMI category'},
       {key:'latestBmi', label:'Latest BMI', num:1},
-      {key:'latestBaz', label:'Latest BAZ', num:2},
-      {key:'latestHaz', label:'Latest HAZ', num:2},
-      {key:'dBaz', label:'ΔBAZ', num:2},
-      {key:'dHaz', label:'ΔHAZ', num:2},
+      {key:'latestBaz', label:'Latest weight-for-height (BAZ)', num:2},
+      {key:'latestHaz', label:'Latest height-for-age (HAZ)', num:2},
+      {key:'dBaz', label:'Change in weight-for-height (BAZ)', num:2},
+      {key:'dHaz', label:'Change in height-for-age (HAZ)', num:2},
       {key:'stunted', label:'Stunted'}
     ],
     hba:[
@@ -5840,7 +5841,9 @@ function growthDrillTitle(spec, n){
     const seg=GROWTH_SEG.find(s=>s.key===spec.seg);
     bits.push(seg?seg.label:'BMI-for-age', spec.time==='all'||!spec.time?'All':spec.time+' months');
   }else if(spec.chart==='trend'){
-    bits.push(spec.series==='cohort'?(spec.quarter+' BAZ'):spec.series==='haz'?'Mean HAZ':'Mean BAZ', (spec.bin||'')+' mo');
+    const since=spec.bin==='18+'?'18+ months since enrolment':(spec.bin||'')+' months since enrolment';
+    const score=spec.series==='haz'?'Height-for-age score (HAZ)':spec.series==='cohort'?spec.quarter+' weight-for-height (BAZ)':'Weight-for-height score (BAZ)';
+    bits.push(score, since);
   }else if(spec.chart==='bmi'){
     const bar=(GROWTH&&GROWTH.bmi&&GROWTH.bmi.bars||[]).find(b=>b.key===spec.place);
     bits.push(spec.category||'BMI category', bar?bar.label:(spec.place||''));
@@ -6000,7 +6003,7 @@ function renderGrowthBaz(){
           if(!bar||bar.suppressed) return [];
           const d=bar.meanDHaz==null?'n<20':((bar.meanDHaz>0?'+':'')+Number(bar.meanDHaz).toFixed(2));
           const haz=bar.hazBehindPct==null?'n<20':bar.hazBehindPct.toFixed(1)+'% · n = '+bar.hazN.toLocaleString()+' of '+bar.n.toLocaleString();
-          return ['Mean ΔHAZ: '+d, 'HAZ fell behind: '+haz];
+          return ['Mean change in height-for-age (HAZ): '+d, 'Height-for-age fell behind: '+haz];
         }
       }}},
       scales:{
@@ -6028,7 +6031,7 @@ function renderGrowthTrend(){
     return;
   }
   growthRelease(canvas);
-  growthLegend('growth-trend-lg', [{label:'Mean BAZ', color:GROWTH_LINE.baz},{label:'Mean HAZ', color:GROWTH_LINE.haz}]);
+  growthLegend('growth-trend-lg', [{label:'Weight-for-height score (BAZ)', color:GROWTH_LINE.baz},{label:'Height-for-age score (HAZ)', color:GROWTH_LINE.haz}]);
   growthShowTakeaway('growth-trend-take', growthTrendTakeaway(trend.bins));
   const on=!!(document.getElementById('growth-cohort')&&document.getElementById('growth-cohort').checked);
   const shown=(trend.cohorts||[]).filter(c=>!c.hidden&&c.baz.some(v=>v!=null));
@@ -6036,15 +6039,15 @@ function renderGrowthTrend(){
   if(cohortLg){
     cohortLg.innerHTML=!on?'':(shown.length
       ? shown.map((c,i)=>'<span><span class="ldc" style="background:'+cols[i%cols.length]+'"></span>'+c.quarter+' (n='+c.n.toLocaleString()+')</span>').join('')
-      : '<span>No enrolment cohort has 20 children in a month bin.</span>');
+      : '<span>No enrolment cohort has 20 children at a point in care.</span>');
   }
   const datasets=[
-    {label:'Mean BAZ', data:trend.bins.map(b=>b.bazMean), _n:trend.bins.map(b=>b.bazN), _total:GROWTH.cohort, _drill:{series:'baz'}, borderColor:GROWTH_LINE.baz, backgroundColor:GROWTH_LINE.baz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.baz, _noLabel:true},
-    {label:'Mean HAZ', data:trend.bins.map(b=>b.hazMean), _n:trend.bins.map(b=>b.hazN), _total:GROWTH.cohort, _drill:{series:'haz'}, borderColor:GROWTH_LINE.haz, backgroundColor:GROWTH_LINE.haz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.haz, _noLabel:true}
+    {label:'Weight-for-height score (BAZ)', data:trend.bins.map(b=>b.bazMean), _n:trend.bins.map(b=>b.bazN), _total:GROWTH.cohort, _drill:{series:'baz'}, borderColor:GROWTH_LINE.baz, backgroundColor:GROWTH_LINE.baz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.baz, _noLabel:true},
+    {label:'Height-for-age score (HAZ)', data:trend.bins.map(b=>b.hazMean), _n:trend.bins.map(b=>b.hazN), _total:GROWTH.cohort, _drill:{series:'haz'}, borderColor:GROWTH_LINE.haz, backgroundColor:GROWTH_LINE.haz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.haz, _noLabel:true}
   ];
   if(on) shown.forEach((c,i)=>{
     const color=cols[i%cols.length];
-    datasets.push({label:c.quarter+' BAZ', data:c.baz, _n:c.bazN, _total:c.n, _drill:{series:'cohort', quarter:c.quarter}, borderColor:color, backgroundColor:color, borderWidth:1.5, borderDash:[4,3], tension:.25, spanGaps:false, pointRadius:3.5, pointHitRadius:10, pointBackgroundColor:color, _noLabel:true});
+    datasets.push({label:c.quarter+' weight-for-height (BAZ)', data:c.baz, _n:c.bazN, _total:c.n, _drill:{series:'cohort', quarter:c.quarter}, borderColor:color, backgroundColor:color, borderWidth:1.5, borderDash:[4,3], tension:.25, spanGaps:false, pointRadius:3.5, pointHitRadius:10, pointBackgroundColor:color, _noLabel:true});
   });
   _gTrend=createDashboardChart(canvas,{
     type:'line',
@@ -6073,14 +6076,14 @@ function renderGrowthTrend(){
         afterBody(items){
           const b=trend.bins[items[0].dataIndex]; if(!b) return [];
           const bits=[];
-          if(b.bazN<GROWTH_MIN_N) bits.push('BAZ n<20');
-          if(b.hazN<GROWTH_MIN_N) bits.push('HAZ n<20');
+          if(b.bazN<GROWTH_MIN_N) bits.push('Weight-for-height (BAZ) n<20');
+          if(b.hazN<GROWTH_MIN_N) bits.push('Height-for-age (HAZ) n<20');
           return bits;
         }
       }}},
       scales:{
         x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
-        y:{grace:'12%', grid:{display:false}, border:{display:false}, title:{display:true, text:'Mean z-score', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}}
+        y:{grace:'12%', grid:{display:false}, border:{display:false}, title:{display:true, text:'Score (0 = healthy average)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}}
       }
     }
   });

@@ -48,6 +48,15 @@ test('growth section sits on the clinical tab and loads both sheets by name', ()
   assert.ok(tab.indexOf('tc-wrap cs-only') >= 0);
   assert.ok(tab.indexOf('Growth (ages 2–18)') > tab.indexOf('tc-wrap cs-only'));
   assert.match(tab, /The period filter does not apply/);
+  assert.match(tab, /BAZ \(BMI-for-age\) compares a child’s weight for their height/);
+  assert.match(tab, /HAZ \(height-for-age\) compares their height/);
+  assert.match(tab, /Average score at each point in care \(0, 3, 6 … months since enrolment\)/);
+  assert.match(html, /Weight-for-height score \(BAZ\)/);
+  assert.match(html, /Height-for-age score \(HAZ\)/);
+  assert.match(html, /Score \(0 = healthy average\)/);
+  assert.equal(html.includes('bin mean'), false);
+  assert.equal(html.includes('Month bin'), false);
+  assert.equal(html.includes('Mean z-score'), false);
   assert.match(html, /load\(C\.wb1,'Growth_child',\{soft:true\}\)/);
   assert.match(html, /load\(C\.wb1,'Growth_milestones',\{soft:true\}\)/);
   assert.equal(html.includes('Growth_child:'), false);
