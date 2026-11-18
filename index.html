@@ -44,8 +44,8 @@ SOFTWARE.
   --t1:#0f172a;--t2:#475569;--tm:#94a3b8;
   --fn:'Trebuchet MS','Segoe UI',Tahoma,Arial,sans-serif;
   /* HbA1c colors */
-  --hI4:#064e3b;--hI2:#059669;--hIL:#6ee7b7;--hNC:#334155;
-  --hWL:#fdba74;--hW2:#ea580c;--hW4:#9f1239;
+  --hI4:#3f6b58;--hI2:#8faf9c;--hIL:#d7ebdf;--hNC:#e6e8ec;
+  --hWL:#f3d5c4;--hW2:#e7b09a;--hW4:#8d5c68;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:13px}
@@ -897,11 +897,11 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="cs">Share of visits with SMBG data, by reading band</div>
     <div style="font-size:9px;font-weight:600;color:var(--t2);margin-bottom:4px">% Hyper readings</div>
     <div class="lg" id="hyper-lg" style="margin-bottom:4px">
-      <span><span class="ld" style="background:#0c4a6e"></span>0–20%</span>
-      <span><span class="ld" style="background:#0284c7"></span>20–40%</span>
-      <span><span class="ld" style="background:#38bdf8"></span>40–60%</span>
-      <span><span class="ld" style="background:#d97706"></span>60–80%</span>
-      <span><span class="ld" style="background:#9f1239"></span>80–100%</span>
+      <span><span class="ld" style="background:#d4e3f1"></span>0–20%</span>
+      <span><span class="ld" style="background:#a9c4dc"></span>20–40%</span>
+      <span><span class="ld" style="background:#7ea0c0"></span>40–60%</span>
+      <span><span class="ld" style="background:#e4c6a4"></span>60–80%</span>
+      <span><span class="ld" style="background:#c98b96"></span>80–100%</span>
     </div>
     <div id="hyper-rows"></div>
     <hr class="row-div">
@@ -1610,17 +1610,17 @@ function clearShareNotes(anchorId){
 }
 const SMBG_COLS=['#475569','#93c5fd','#1d4ed8','#1e1b4b'];
 const SMBG_NAMES=['Not monitoring','<3 per day','3–4 per day','>4 per day'];
-const HH_COLS=['#0c4a6e','#0284c7','#38bdf8','#d97706','#9f1239'];
+const HH_COLS=['#d4e3f1','#a9c4dc','#7ea0c0','#e4c6a4','#c98b96'];
 const HH_NAMES=['0–20%','20–40%','40–60%','60–80%','80–100%'];
 const HBA_BAND_COLS=['#0c3c6e','#1d6cb5','#7eb6e0','#64748b','#9a3412'];
 const HBA_CHG_COLS=[
-  {l:'Improved ≥4 pp', c:'#064e3b'},
-  {l:'Improved 2–4 pp', c:'#059669'},
-  {l:'Improved <2 pp', c:'#6ee7b7'},
-  {l:'No change', c:'#334155'},
-  {l:'Worsened <2 pp', c:'#fdba74'},
-  {l:'Worsened 2–4 pp', c:'#ea580c'},
-  {l:'Worsened ≥4 pp', c:'#9f1239'}
+  {l:'Improved ≥4 pp', c:'#3f6b58'},
+  {l:'Improved 2–4 pp', c:'#8faf9c'},
+  {l:'Improved <2 pp', c:'#d7ebdf'},
+  {l:'No change', c:'#e6e8ec'},
+  {l:'Worsened <2 pp', c:'#f3d5c4'},
+  {l:'Worsened 2–4 pp', c:'#e7b09a'},
+  {l:'Worsened ≥4 pp', c:'#8d5c68'}
 ];
 
 // Draw the final, exact data immediately, then reveal only the plotted marks.
