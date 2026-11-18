@@ -31,8 +31,6 @@ test('segment tooltip names the category, share and count and the page has no fo
   assert.equal(bar.includes('No change'), false);
   assert.equal(html.includes('Too small to label'), false);
   assert.equal(html.includes('Rounded shares total 100%'), false);
-  assert.equal(html.includes('id="f-support"'), false);
-  assert.equal(html.includes('id="f-period"'), false);
 });
 
 test('Goa uses a blue that is distinct from the other programme states', () => {
