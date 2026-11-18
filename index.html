@@ -67,6 +67,7 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh
 .fnote{font-size:10px;color:var(--tm);background:#fffbeb;border:1px solid #fde68a;border-radius:4px;padding:4px 9px;margin-top:6px;width:100%;line-height:1.45}
 .flbl{font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
 .fsel{font-size:11px;font-family:var(--fn);padding:3px 20px 3px 6px;border:1px solid var(--bdr);border-radius:4px;background:#f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394a3b8'/%3E%3C/svg%3E") no-repeat right 5px center;-webkit-appearance:none;appearance:none;cursor:pointer;color:var(--t1)}
+.fsel.is-reset{box-shadow:0 0 0 2px #f59e0b}
 #f-support,#f-period{max-width:158px}
 input.fsel{padding:2px 6px;min-height:22px;background-image:none}
 .cs-only-note{display:none}
@@ -626,37 +627,37 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="fbar">
   <div class="fbar-inner">
     <span class="fgrp"><span class="flbl">State</span>
-    <select class="fsel" id="f-state" onchange="applyFilters()">
+    <select class="fsel" id="f-state" onchange="applyFilters('f-state')">
       <option value="all">All states</option><option value="RJ">Rajasthan</option>
       <option value="MP">Madhya Pradesh</option><option value="UK">Uttarakhand</option><option value="CG">Chhattisgarh</option><option value="GA">Goa</option>
     </select></span>
-    <span class="fgrp"><span class="flbl">Division</span><select class="fsel" id="f-division" onchange="applyFilters()"><option value="all">All divisions</option></select></span>
-    <span class="fgrp"><span class="flbl">District</span><select class="fsel" id="f-district" onchange="applyFilters()"><option value="all">All districts</option></select></span>
-    <span class="fgrp"><span class="flbl">Facility</span><select class="fsel fsel-w" id="f-facility" onchange="applyFilters()"><option value="all">All facilities</option></select></span>
-    <span class="fgrp"><span class="flbl">DPC</span><select class="fsel fsel-w" id="f-dpc" onchange="applyFilters()"><option value="all">All DPCs</option></select></span>
+    <span class="fgrp"><span class="flbl">Division</span><select class="fsel" id="f-division" onchange="applyFilters('f-division')"><option value="all">All divisions</option></select></span>
+    <span class="fgrp"><span class="flbl">District</span><select class="fsel" id="f-district" onchange="applyFilters('f-district')"><option value="all">All districts</option></select></span>
+    <span class="fgrp"><span class="flbl">Facility</span><select class="fsel fsel-w" id="f-facility" onchange="applyFilters('f-facility')"><option value="all">All facilities</option></select></span>
+    <span class="fgrp"><span class="flbl">DPC</span><select class="fsel fsel-w" id="f-dpc" onchange="applyFilters('f-dpc')"><option value="all">All DPCs</option></select></span>
     <div class="fdiv"></div>
     <span class="fgrp"><span class="flbl">Status</span>
-    <select class="fsel" id="f-status" onchange="applyFilters()">
+    <select class="fsel" id="f-status" onchange="applyFilters('f-status')">
       <option value="all">All cases</option><option value="active">Active only</option><option value="inactive">Inactive only</option>
     </select></span>
     <span class="fgrp"><span class="flbl">Sex</span>
-    <select class="fsel" id="f-sex" onchange="applyFilters()">
+    <select class="fsel" id="f-sex" onchange="applyFilters('f-sex')">
       <option value="all">All</option><option value="M">Male</option><option value="F">Female</option>
     </select></span>
     <span class="fgrp"><span class="flbl">Age group</span>
-    <select class="fsel" id="f-age" onchange="applyFilters()">
+    <select class="fsel" id="f-age" onchange="applyFilters('f-age')">
       <option value="all">All</option><option value="ped">Pediatric (0–17)</option>
       <option value="adu">Adults (≥18)</option>
     </select></span>
     <div class="fdiv"></div>
     <span class="fgrp"><span class="flbl">Support</span>
-    <select class="fsel" id="f-support" onchange="applyFilters()">
+    <select class="fsel" id="f-support" onchange="applyFilters('f-support')">
       <option value="all">All</option>
       <option value="cs">Complete support</option>
       <option value="lt">Light support</option>
     </select></span>
     <span class="fgrp"><span class="flbl">Period</span>
-    <select class="fsel" id="f-period" onchange="applyFilters()">
+    <select class="fsel" id="f-period" onchange="applyFilters('f-period')">
       <option value="all">All time</option>
       <option value="3">Last 3 months</option>
       <option value="6">Last 6 months</option>
@@ -665,12 +666,12 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
       <option value="custom">Custom range</option>
     </select></span>
     <span class="fgrp" id="f-custom" hidden>
-      <span class="flbl">From</span><input class="fsel" id="f-from" type="month" aria-label="From month" onchange="applyFilters()">
-      <span class="flbl">To</span><input class="fsel" id="f-to" type="month" aria-label="To month" onchange="applyFilters()">
+      <span class="flbl">From</span><input class="fsel" id="f-from" type="month" aria-label="From month" onchange="applyFilters('f-from')">
+      <span class="flbl">To</span><input class="fsel" id="f-to" type="month" aria-label="To month" onchange="applyFilters('f-to')">
     </span>
     <span class="ftag" id="n-tag">n = 2,216 PLT1D</span>
   </div>
-  <div class="fbar-inner"><div class="fnote" id="scope-note" hidden></div><div class="fnote" id="lt-excl" hidden></div></div>
+  <div class="fbar-inner"><div class="fnote" id="facet-reset" hidden></div><div class="fnote" id="scope-note" hidden></div><div class="fnote" id="lt-excl" hidden></div></div>
 </div>
 
 <div class="tabs-bar">
@@ -3507,9 +3508,10 @@ function renderLtExclusionNote(){
   el.hidden=false;
 }
 
-function applyFilters(){
+function applyFilters(anchorId){
   finishChartEntrances(false);
-  safe('populateFilters', populateFilters);   // cascade dropdown options to current selection
+  const anchor=FACET_ANCHOR[anchorId]||null;
+  safe('populateFilters', ()=>populateFilters(anchor));
   recompute();
   dashboardRenderVersion++;
   safe('renderLtExclusionNote', renderLtExclusionNote);
@@ -4126,10 +4128,17 @@ function buildGeo(){
     const hr=headerRowOf(g,['Facility name','State']);
     const h=g[hr].map(c=>String(c).trim());
     const si=h.indexOf('State'),di=h.indexOf('District'),ni=h.indexOf('Facility name');
+    const monthIdx=[];
+    h.forEach((name,i)=>{
+      const hm=hdrMonth(name);
+      if(hm && name && !/enrolment|facility|state|district|category|s no|^total/i.test(name)) monthIdx.push({i,k:ymKey(hm.y,hm.m)});
+    });
     for(let r=hr+1;r<g.length;r++){
       const fn=ni>=0?String(g[r][ni]||'').trim():''; if(!fn)continue;
+      const months=[];
+      monthIdx.forEach(mc=>{const v=num(g[r][mc.i]); if(v>0) months.push(mc.k);});
       const o={state:si>=0?String(g[r][si]||'').trim().toUpperCase():'',division:'',
-               district:di>=0?String(g[r][di]||'').trim():'',dpc:'',facility:canonFac(fn),support:'lt'};
+               district:di>=0?String(g[r][di]||'').trim():'',dpc:'',facility:canonFac(fn),support:'lt',months};
       if(!facAttr[facKey(fn)])facAttr[facKey(fn)]=o; geo.push(o);
     }
   }
@@ -4149,24 +4158,195 @@ function buildGeo(){
 }
 
 function distinctSorted(arr){return Array.from(new Set(arr.map(x=>String(x||'').trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b));}
-function fillSelect(id,opts,allLabel){
-  const el=document.getElementById(id); if(!el) return;
-  const cur=el.value;
-  el.innerHTML='<option value="all">'+allLabel+'</option>'+
-    opts.map(o=>`<option value="${o.replace(/"/g,'&quot;')}">${o}</option>`).join('');
-  el.value=(cur==='all'||opts.indexOf(cur)>=0)?cur:'all';
+const FACETS=[
+  {key:'state', id:'f-state', all:'All states'},
+  {key:'division', id:'f-division', all:'All divisions'},
+  {key:'district', id:'f-district', all:'All districts'},
+  {key:'facility', id:'f-facility', all:'All facilities'},
+  {key:'dpc', id:'f-dpc', all:'All DPCs'},
+  {key:'support', id:'f-support', all:'All'},
+  {key:'status', id:'f-status', all:'All cases'},
+  {key:'sex', id:'f-sex', all:'All'},
+  {key:'age', id:'f-age', all:'All'},
+  {key:'period', id:'f-period', all:'All time'}
+];
+const FACET_ANCHOR={'f-state':'state','f-division':'division','f-district':'district','f-facility':'facility','f-dpc':'dpc','f-status':'status','f-sex':'sex','f-age':'age','f-support':'support','f-period':'period','f-from':'period','f-to':'period'};
+const FACET_LABEL={state:'State',division:'Division',district:'District',facility:'Facility',dpc:'DPC',support:'Support',status:'Status',sex:'Sex',age:'Age group',period:'Period'};
+const STATE_ORDER=['RJ','MP','UK','CG','GA'];
+const SEX_FACET=[{value:'M',label:'Male'},{value:'F',label:'Female'}];
+const AGE_FACET=[{value:'ped',label:'Pediatric (0–17)'},{value:'adu',label:'Adults (≥18)'}];
+const STATUS_FACET=[{value:'active',label:'Active only'},{value:'inactive',label:'Inactive only'}];
+const PERIOD_FACET=[
+  {value:'3',label:'Last 3 months'},
+  {value:'6',label:'Last 6 months'},
+  {value:'12',label:'Last 12 months'},
+  {value:'fy',label:'This financial year'},
+  {value:'custom',label:'Custom range'}
+];
+function escOpt(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');}
+// A roster row matches every geography filter except the one being listed,
+// so the open dropdown can still be changed.
+function geoRowOk(g, f, skip){
+  const support=normSupport(f.support);
+  if(skip!=='support'){
+    if(support==='cs' && g.support==='lt') return false;
+    if(support==='lt' && g.support!=='lt') return false;
+  }
+  if(skip!=='state' && f.state && f.state!=='all' && String(g.state||'').trim().toUpperCase()!==f.state) return false;
+  if(skip!=='division' && f.division && f.division!=='all' && normv(g.division)!==normv(f.division)) return false;
+  if(skip!=='district' && f.district && f.district!=='all' && normv(g.district)!==normv(f.district)) return false;
+  if(skip!=='facility' && f.facility && f.facility!=='all' && facKey(g.facility)!==facKey(f.facility)) return false;
+  if(skip!=='dpc' && f.dpc && f.dpc!=='all' && normv(g.dpc)!==normv(f.dpc)) return false;
+  return true;
 }
-// Cascading: Division/District/Facility narrow to the current higher-level selection
-function populateFilters(){
-  const f=getF(), G=RAW.geo||[];
-  const inSupport=g=>f.support==='all'||g.support===f.support||(!g.support&&f.support==='cs');
-  const inState=g=>f.state==='all'||String(g.state).toUpperCase()===f.state;
-  const inDiv  =g=>f.division==='all'||normv(g.division)===normv(f.division);
-  const inDist =g=>f.district==='all'||normv(g.district)===normv(f.district);
-  fillSelect('f-division', distinctSorted(G.filter(g=>inSupport(g)&&inState(g)).map(g=>g.division)), 'All divisions');
-  fillSelect('f-district', distinctSorted(G.filter(g=>inSupport(g)&&inState(g)&&inDiv(g)).map(g=>g.district)), 'All districts');
-  fillSelect('f-facility', distinctSorted(G.filter(g=>inSupport(g)&&inState(g)&&inDiv(g)&&inDist(g)).map(g=>g.facility)), 'All facilities');
-  fillSelect('f-dpc',      distinctSorted(G.filter(g=>inSupport(g)&&inState(g)).map(g=>g.dpc)), 'All DPCs');
+function patientPlace(p){
+  const attr=(RAW&&RAW.facAttr)||{};
+  const a=attr[facKey(p['Facility Name'])]||{};
+  return {
+    state:String(a.state||p.State||'').trim().toUpperCase(),
+    division:a.division||'',
+    district:a.district||'',
+    dpc:a.dpc||'',
+    facility:canonFac(a.facility||p['Facility Name']||''),
+    support:a.support||(a.facility?'cs':'cs')
+  };
+}
+function patientAttrOk(p, f, skip){
+  if(skip!=='sex' && f.sex && f.sex!=='all' && sexTok(p)!==f.sex) return false;
+  if(skip!=='age' && f.age && f.age!=='all' && ageTok(p)!==f.age) return false;
+  if(skip!=='status' && f.status && f.status!=='all' && statusTok(p)!==f.status) return false;
+  return true;
+}
+function periodRangeOf(f, now){
+  const period=normPeriod(f.period);
+  if(period==='all') return null;
+  return resolvePeriod(period, f.from, f.to, now);
+}
+function dateInRange(p, range, now){
+  if(!range) return true;
+  const e=parseDate(p['Date of enrolment']);
+  if(!e) return false;
+  const k=ymKey(e.getFullYear(), e.getMonth());
+  return k>=range.from && k<=range.to && k<=openMonthKey(now);
+}
+function choiceHas(options, key, current){
+  if(!current || current==='all') return true;
+  if(key==='division'||key==='district'||key==='facility'||key==='dpc') return options.some(o=>normv(o.value)===normv(current));
+  return options.some(o=>o.value===current);
+}
+function presentOrCatalog(present, catalog){
+  if(!present.size) return catalog.slice();
+  return catalog.filter(o=>present.has(o.value));
+}
+// Options for every dropdown, each ignoring its own current value.
+// Geography and support come from the facility roster, so a site with no
+// patients (Goa) still appears under its state and district.
+function facetChoices(geo, patients, f, now){
+  geo=geo||[]; patients=patients||[]; f=f||{}; now=now||new Date();
+  const collect=dim=>{
+    const seen=new Map();
+    geo.forEach(g=>{
+      if(!geoRowOk(g, f, dim)) return;
+      if(dim==='state'){
+        const s=String(g.state||'').trim().toUpperCase();
+        if(STATE_ORDER.includes(s)) seen.set(s, sln(s));
+      }else if(dim==='support'){
+        if(g.support==='cs'||g.support==='lt') seen.set(g.support, g.support==='cs'?'Complete support':'Light support');
+      }else{
+        const raw=String(g[dim]||'').trim();
+        const key=normv(raw);
+        if(key && !seen.has(key)) seen.set(key, raw);
+      }
+    });
+    if(dim==='state') return STATE_ORDER.filter(s=>seen.has(s)).map(s=>({value:s, label:seen.get(s)}));
+    if(dim==='support') return ['cs','lt'].filter(s=>seen.has(s)).map(s=>({value:s, label:seen.get(s)}));
+    return [...seen.values()].sort((a,b)=>a.localeCompare(b)).map(v=>({value:v, label:v}));
+  };
+  const range=periodRangeOf(f, now);
+  const matchesPlace=p=>geoRowOk(patientPlace(p), f, null);
+  const base=patients.filter(p=>normv(p['Survival Status'])!=='no' && matchesPlace(p));
+  const sex=new Set(), age=new Set(), status=new Set(), enrolledKeys=[];
+  base.forEach(p=>{
+    if(patientAttrOk(p, f, 'sex') && dateInRange(p, range, now)){ const s=sexTok(p); if(s==='M'||s==='F') sex.add(s); }
+    if(patientAttrOk(p, f, 'age') && dateInRange(p, range, now)){ const a=ageTok(p); if(a==='ped'||a==='adu') age.add(a); }
+    if(patientAttrOk(p, f, 'status') && dateInRange(p, range, now)) status.add(statusTok(p));
+    if(patientAttrOk(p, f, 'period')){
+      const e=parseDate(p['Date of enrolment']);
+      if(e) enrolledKeys.push(ymKey(e.getFullYear(), e.getMonth()));
+    }
+  });
+  geo.forEach(g=>{
+    if(g.support!=='lt' || !geoRowOk(g, f, null) || !g.months) return;
+    g.months.forEach(k=>enrolledKeys.push(k));
+  });
+  const period=enrolledKeys.length
+    ? PERIOD_FACET.filter(o=>o.value==='custom' || enrolledKeys.some(k=>{
+        const win=resolvePeriod(o.value, '', '', now);
+        return win && k>=win.from && k<=win.to && k<=openMonthKey(now);
+      }))
+    : PERIOD_FACET.slice();
+  return {
+    state:collect('state'), division:collect('division'), district:collect('district'),
+    facility:collect('facility'), dpc:collect('dpc'), support:collect('support'),
+    sex:presentOrCatalog(sex, SEX_FACET),
+    age:presentOrCatalog(age, AGE_FACET),
+    status:presentOrCatalog(status, STATUS_FACET),
+    period
+  };
+}
+function writeFacet(spec, options, flashed, anchor){
+  const el=document.getElementById(spec.id); if(!el) return;
+  const cur=el.value;
+  let opts=options;
+  const catalog=spec.key==='period'?PERIOD_FACET:spec.key==='sex'?SEX_FACET:spec.key==='age'?AGE_FACET:spec.key==='status'?STATUS_FACET:[];
+  if(spec.key===anchor && cur && cur!=='all' && !choiceHas(options, spec.key, cur)){
+    const extra=catalog.find(o=>o.value===cur);
+    if(extra) opts=options.concat([extra]);
+  }
+  const keep=choiceHas(opts, spec.key, cur)?(cur||'all'):(spec.key===anchor && cur && cur!=='all'?cur:'all');
+  el.innerHTML='<option value="all">'+spec.all+'</option>'+
+    opts.map(o=>'<option value="'+escOpt(o.value)+'">'+escOpt(o.label)+'</option>').join('');
+  el.value=keep;
+  if(el.classList) el.classList.toggle('is-reset', !!flashed);
+  if(flashed) el.title='Reset to All — it no longer matches the other filters';
+  else if(el.title && String(el.title).indexOf('Reset to All')===0) el.title='';
+}
+// The control the user just changed is kept. Any other selection that is no
+// longer in its own list returns to All, then the lists are built again.
+function populateFilters(anchor){
+  if(!RAW) return;
+  const flashed=[];
+  for(let pass=0; pass<8; pass++){
+    const f=getF();
+    const choices=facetChoices(RAW.geo, RAW.enrolled, f, new Date());
+    const before=JSON.stringify(f);
+    let reset=null;
+    for(const spec of FACETS){
+      if(spec.key===anchor) continue;
+      if(!choiceHas(choices[spec.key], spec.key, f[spec.key])){ reset=spec.key; break; }
+    }
+    if(!reset){
+      FACETS.forEach(spec=>writeFacet(spec, choices[spec.key], flashed.indexOf(spec.key)>=0, anchor));
+      break;
+    }
+    const el=document.getElementById(FACETS.find(s=>s.key===reset).id);
+    if(el) el.value='all';
+    flashed.push(reset);
+    if(JSON.stringify(getF())===before){
+      FACETS.forEach(spec=>writeFacet(spec, choices[spec.key], flashed.indexOf(spec.key)>=0, anchor));
+      break;
+    }
+  }
+  const note=document.getElementById('facet-reset');
+  if(note){
+    if(!flashed.length){ note.hidden=true; note.textContent=''; }
+    else{
+      const names=flashed.map(k=>FACET_LABEL[k]);
+      const list=names.length===1?names[0]:names.slice(0,-1).join(', ')+' and '+names[names.length-1];
+      note.textContent=list+' reset to All — '+(names.length===1?'it no longer matches':'they no longer match')+' the other filters.';
+      note.hidden=false;
+    }
+  }
 }
 
 // ── Recompute everything for the current filter ──
@@ -4274,7 +4454,8 @@ function recompute(){
     ? new Set(ltRows(f).map(r=>r.state).filter(s=>STATE_ORDER.includes(s)))
     : new Set(csF.map(r=>stUp(r)).filter(s=>STATE_ORDER.includes(s)));
   const statesCount=support==='lt'?stateCodes.size:distinct(csF,'State');
-  const stateList=support==='all'?null:STATE_ORDER.filter(s=>stateCodes.has(s)).join(' · ');
+  const geoOpen=support==='all' && ['state','division','district','facility','dpc'].every(k=>!f[k]||f[k]==='all');
+  const stateList=geoOpen?null:STATE_ORDER.filter(s=>stateCodes.has(s)).join(' · ');
   const prePost=rows=>{const pr=[],po=[];rows.forEach(r=>{const a=num(r['Pre-test Score']),b=num(r['Post-test Score']),m=num(r['Maximum Score']);if(a!=null&&b!=null&&m>0){pr.push(a/m*100);po.push(b/m*100);}});const mean=x=>x.length?Math.round(x.reduce((s,y)=>s+y,0)/x.length):0;return{pre:mean(pr),post:mean(po),n:pr.length};};
   const drSc=prePost(drs),nrSc=prePost(nrs);
   const flwHr=oriF.reduce((s,r)=>s+(num(r['# of Service Providers'])||0),0);
