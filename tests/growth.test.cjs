@@ -43,6 +43,19 @@ function idSet(ids){
   return set;
 }
 
+test('growth monitoring is hidden behind SHOW_GROWTH and the section stays in the page', () => {
+  const {run, elements} = setup();
+  assert.match(html, /let SHOW_GROWTH = false/);
+  assert.match(html, /id="growth-section"/);
+  assert.equal(run('SHOW_GROWTH'), false);
+  assert.equal(elements['growth-section'].hidden, true);
+  run(`GROWTH={status:'ok', cohort:4}; renderGrowth();`);
+  assert.equal(elements['growth-section'].hidden, true);
+  assert.equal(elements['growth-status'], undefined);
+  run('SHOW_GROWTH=true; applyGrowthVisibility();');
+  assert.equal(elements['growth-section'].hidden, false);
+});
+
 test('growth section sits on the clinical tab and loads both sheets by name', () => {
   const tab = html.slice(html.indexOf('id="tab-1"'), html.indexOf('id="tab-2"'));
   assert.ok(tab.indexOf('tc-wrap cs-only') >= 0);
@@ -305,7 +318,7 @@ test('milestone means average one value per child and hide cohorts under 20', ()
 
 test('missing growth tabs and the adult filter show a friendly state', async () => {
   const {run, elements, context} = setup();
-  run(`GROWTH={status:'missing'}; renderGrowth();`);
+  run(`SHOW_GROWTH=true; GROWTH={status:'missing'}; renderGrowth();`);
   assert.equal(elements['growth-status'].textContent, 'Growth data not yet available');
   assert.equal(elements['growth-body'].hidden, true);
   run(`getF=()=>({age:'adu', state:'all'}); GROWTH={status:'ok', cohort:4}; renderGrowth();`);
