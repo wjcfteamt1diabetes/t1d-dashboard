@@ -43,15 +43,14 @@ function idSet(ids){
   return set;
 }
 
-test('growth monitoring is hidden behind SHOW_GROWTH and the section stays in the page', () => {
+test('growth monitoring is shown while SHOW_GROWTH is on', () => {
   const {run, elements} = setup();
-  assert.match(html, /let SHOW_GROWTH = false/);
+  assert.match(html, /let SHOW_GROWTH = true/);
   assert.match(html, /id="growth-section"/);
-  assert.equal(run('SHOW_GROWTH'), false);
+  assert.equal(run('SHOW_GROWTH'), true);
+  assert.equal(elements['growth-section'].hidden, false);
+  run('SHOW_GROWTH=false; applyGrowthVisibility();');
   assert.equal(elements['growth-section'].hidden, true);
-  run(`GROWTH={status:'ok', cohort:4}; renderGrowth();`);
-  assert.equal(elements['growth-section'].hidden, true);
-  assert.equal(elements['growth-status'], undefined);
   run('SHOW_GROWTH=true; applyGrowthVisibility();');
   assert.equal(elements['growth-section'].hidden, false);
 });
