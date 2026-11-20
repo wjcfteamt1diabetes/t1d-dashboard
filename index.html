@@ -1080,7 +1080,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
 </div>
 
-<div id="growth-section" hidden>
+<div id="growth-section">
 <div class="sl">Growth (ages 2–18)</div>
 <p class="growth-lead" id="growth-lead">BMI-for-age and height-for-age for children aged 2–18 in complete support. The period filter does not apply.</p>
 <p class="growth-lead" id="growth-score-note">BAZ (BMI-for-age) compares a child’s weight for their height with healthy children of the same age and sex. HAZ (height-for-age) compares their height. 0 = healthy average; below −2 = thin (BAZ) or stunted (HAZ).</p>
@@ -1473,8 +1473,8 @@ Chart.defaults.font.size = 11;
 // Render every chart at high resolution (crisp on all displays, incl. the fixed-size donuts)
 Chart.defaults.devicePixelRatio = Math.max(2.5, window.devicePixelRatio || 1);
 
-// Growth (ages 2–18) on Clinical Outcomes. Set true to show the section again.
-let SHOW_GROWTH = false;
+// Growth (ages 2–18) on Clinical Outcomes. Set false to hide the section.
+let SHOW_GROWTH = true;
 function applyGrowthVisibility(){
   const section=document.getElementById('growth-section');
   if(section) section.hidden=!SHOW_GROWTH;
