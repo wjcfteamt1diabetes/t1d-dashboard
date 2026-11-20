@@ -60,12 +60,12 @@ test('growth section sits on the clinical tab and loads both sheets by name', ()
   assert.ok(tab.indexOf('tc-wrap cs-only') >= 0);
   assert.ok(tab.indexOf('Growth (ages 2–18)') > tab.indexOf('tc-wrap cs-only'));
   assert.match(tab, /The period filter does not apply/);
-  assert.match(tab, /BAZ \(BMI-for-age\) compares a child’s weight for their height/);
-  assert.match(tab, /HAZ \(height-for-age\) compares their height/);
-  assert.match(tab, /Average score at each point in care \(0, 3, 6 … months since enrolment\)/);
-  assert.match(html, /Weight-for-height score \(BAZ\)/);
+  assert.match(tab, /BMI is weight and height together, compared with children of the same age and sex/);
+  assert.match(tab, /0 is the reference median, the healthy average on that score/);
+  assert.match(tab, /The healthy average is 0, the reference median for children of the same age and sex/);
+  assert.match(html, /BMI-for-age score \(BAZ\)/);
   assert.match(html, /Height-for-age score \(HAZ\)/);
-  assert.match(html, /Score \(0 = healthy average\)/);
+  assert.match(html, /Score \(0 = reference median for the same age and sex\)/);
   assert.equal(html.includes('bin mean'), false);
   assert.equal(html.includes('Month bin'), false);
   assert.equal(html.includes('Mean z-score'), false);
@@ -379,9 +379,76 @@ test('takeaways describe the filtered trend and skip groups under 20', () => {
   assert.equal(text.rising, 'Falling behind rises from 8% at 0–6 months to 16% at 12–18 months');
   assert.equal(text.onlyOne, 'Not enough data for a takeaway');
   assert.equal(text.trend, 'BMI-for-age improves +0.19 SD by 12 months; height-for-age stays flat');
-  assert.equal(text.thin, 'Madhya Pradesh has the highest thinness, 30% against 23.3% overall');
-  assert.equal(text.hba, 'Children who fell behind have 0.46 points higher mean HbA1c');
+  assert.equal(text.thin, 'Madhya Pradesh has the highest BMI-for-age thinness, 30% against 23.3% overall');
+  assert.equal(text.hba, 'Children whose BMI-for-age fell behind have 0.46 points higher mean HbA1c');
   assert.equal(text.hbaSmall, 'Not enough data for a takeaway');
+});
+
+test('BMI category and kilogram weight charts keep the filtered cohort and show n', () => {
+  const {run, context} = setup();
+  const rows = [];
+  for(let i = 0; i < 20; i++){
+    rows.push(child('a'+i, {
+      BMI_category_latest: i < 15 ? 'Normal' : 'Thinness',
+      Time_in_care_bucket: '0-6 months',
+      Baseline_weight_kg: '20', Latest_weight_kg: '22',
+      Baseline_height_cm: '110', Latest_height_cm: '112',
+      Baseline_age_y: '8', Latest_age_y: '9'
+    }));
+  }
+  for(let i = 0; i < 5; i++){
+    rows.push(child('b'+i, {
+      BMI_category_latest: 'Obese',
+      Time_in_care_bucket: '18+ months',
+      Baseline_weight_kg: '40', Latest_weight_kg: '36',
+      Baseline_height_cm: '140', Latest_height_cm: '145',
+      Baseline_age_y: '12', Latest_age_y: '14'
+    }));
+  }
+  rows.push(child('light', {BMI_category_latest: 'Normal', Time_in_care_bucket: '6-12 months', Latest_weight_kg: '18'}));
+  rows.push(child('nobody', {BMI_category_latest: 'Normal', Time_in_care_bucket: '0-6 months'}));
+  context.rows = rows;
+  context.ids = idSet(rows.map(r => r.Claude_ID).filter(id => id !== 'b0'));
+  const out = run(`(() => {
+    const data = computeGrowth(ids, rows, null, {state:'all', age:'all', period:'12'});
+    const again = computeGrowth(ids, rows, null, {state:'all', age:'all', period:'all'});
+    const all = data.bmiDuration.bars[0];
+    const early = data.bmiDuration.bars[1];
+    const late = data.bmiDuration.bars[4];
+    const pos = data.weightPos.bars[0];
+    const chg = data.weightChg.bars[1];
+    return {
+      same: JSON.stringify(data.bmiDuration) === JSON.stringify(again.bmiDuration),
+      bmiN: all.n,
+      early: early.shares && early.shares[2],
+      earlyN: early.n,
+      lateSuppressed: late.suppressed,
+      now: data.bmiNow.bars[0].n,
+      weightN: pos.n,
+      base: pos.meanBase,
+      latest: pos.meanLatest,
+      delta: pos.meanDelta,
+      earlyDelta: chg.meanDelta,
+      over10: data.weightPos.over10,
+      current: data.weightNow.bars[0].n,
+      currentCounts: data.weightNow.bars[0].counts
+    };
+  })()`);
+  assert.equal(out.same, true);
+  assert.equal(out.bmiN, 24);
+  assert.equal(out.earlyN, 20);
+  assert.equal(out.early, 75);
+  assert.equal(out.lateSuppressed, true);
+  assert.equal(out.now, 24);
+  assert.equal(out.weightN, 24);
+  assert.equal(out.base, 23.33);
+  assert.equal(out.latest, 24.33);
+  assert.equal(out.delta, 1);
+  assert.equal(out.earlyDelta, 2);
+  assert.equal(out.over10, 4);
+  assert.equal(out.current, 25);
+  assert.equal(out.currentCounts[1], 21);
+  assert.equal(out.currentCounts[3], 4);
 });
 
 test('drill-down lists only the children in the clicked slice', () => {

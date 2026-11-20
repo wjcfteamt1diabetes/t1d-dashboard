@@ -1082,14 +1082,14 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div id="growth-section">
 <div class="sl">Growth (ages 2–18)</div>
-<p class="growth-lead" id="growth-lead">BMI-for-age and height-for-age for children aged 2–18 in complete support. The period filter does not apply.</p>
-<p class="growth-lead" id="growth-score-note">BAZ (BMI-for-age) compares a child’s weight for their height with healthy children of the same age and sex. HAZ (height-for-age) compares their height. 0 = healthy average; below −2 = thin (BAZ) or stunted (HAZ).</p>
+<p class="growth-lead" id="growth-lead">Stored BMI-for-age and height-for-age scores, plus weight in kilograms, for children aged 2–18 in complete support. The period filter does not apply. This page does not recalculate the scores.</p>
+<p class="growth-lead" id="growth-score-note">BMI-for-age (BAZ) is the score already stored for each child. BMI is weight and height together, compared with children of the same age and sex. 0 is the reference median, the healthy average on that score. The thinness, normal, overweight and obese bands are a separate stored category, not something this page calculates. Height-for-age (HAZ) is the stored height score; below −2 is the sheet’s stunted flag.</p>
 <div id="growth-status" class="data-pending-chart" role="status" hidden></div>
 <div id="growth-body">
 <div class="g2">
   <div class="card">
     <div class="ct">Baseline vs latest BMI-for-age by time in care</div>
-    <div class="cs">Fell behind = Faltering or Watch · Steady = Stable · Improved = Healthy shift · Excess gain stays its own segment. Click a segment to list the children.</div>
+    <div class="cs">Change in the stored BMI-for-age score, by time in care. Fell behind = Faltering or Watch. Steady = Stable. Improved = Healthy shift. Excess gain stays its own group. These are change groups, not the thinness, normal, overweight or obese bands. Click a segment to list the children.</div>
     <div class="growth-takeaway" id="growth-baz-take"></div>
     <div class="lg" id="growth-baz-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-baz" role="img" aria-label="BMI-for-age change by time in care"></canvas></div>
@@ -1097,7 +1097,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
   <div class="card">
     <div class="ct">Month-on-month growth trend</div>
-    <div class="cs">Average score at each point in care (0, 3, 6 … months since enrolment). Points and enrolment cohorts with fewer than 20 children are hidden. Click a point to list the children.</div>
+    <div class="cs">Average of the stored BMI-for-age (BAZ) and height-for-age (HAZ) scores at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The healthy average is 0, the reference median for children of the same age and sex. Points and enrolment cohorts with fewer than 20 children are hidden. Click a point to list the children.</div>
     <div class="growth-takeaway" id="growth-trend-take"></div>
     <div class="lg" id="growth-trend-lg"></div>
     <label class="growth-toggle" for="growth-cohort"><input type="checkbox" id="growth-cohort" onchange="renderGrowthTrend()"> By enrolment cohort</label>
@@ -1108,22 +1108,61 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 </div>
 <div class="g2">
   <div class="card">
-    <div class="ct" id="growth-bmi-title">Current growth status</div>
-    <div class="cs" id="growth-bmi-sub">Latest BMI category for children measured in the last 6 months. Stunting is labelled on each bar. Click a segment to list the children.</div>
+    <div class="ct" id="growth-bmi-title">Current BMI-for-age</div>
+    <div class="cs" id="growth-bmi-sub">Bars are the latest BMI-for-age category (severe thinness, thinness, normal, overweight, obese) for children with a BMI in the last 6 months. The line under each name is height-for-age: the share stunted (stored score below −2) among children with a height reading in the last 6 months. Click a segment to list the children.</div>
     <div class="growth-takeaway" id="growth-bmi-take"></div>
     <div class="lg" id="growth-bmi-lg"></div>
     <div style="height:300px;position:relative"><canvas id="c-growth-bmi" role="img" aria-label="Current BMI category by place"></canvas></div>
     <div class="growth-foot" id="growth-bmi-foot"></div>
   </div>
   <div class="card">
-    <div class="ct">Growth vs HbA1c</div>
-    <div class="cs">Mean latest HbA1c by growth group. Mean change since enrolment is included when the sheet recorded it. Click a bar to list the children.</div>
+    <div class="ct">BMI-for-age group vs HbA1c</div>
+    <div class="cs">Mean latest HbA1c (%) by the sheet’s BMI-for-age change group. Fell behind = faltering or watch. Steady or improved = stable or healthy shift. Excess gain is its own group. The number under the chart is the change in HbA1c since enrolment, in percentage points, when the sheet recorded it. Click a bar to list the children.</div>
     <div class="growth-takeaway" id="growth-hba-take"></div>
     <div class="lg" id="growth-hba-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-hba" role="img" aria-label="Mean latest HbA1c by growth group"></canvas></div>
     <div class="growth-delta" id="growth-hba-delta"></div>
     <div class="growth-foot" id="growth-hba-foot"></div>
   </div>
+</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct">BMI-for-age category by time in care</div>
+    <div class="cs">Latest stored BMI-for-age category for children with at least one weight and height, by the same time-in-care bands. Severe thinness, thinness, normal, overweight and obese are the sheet’s labels. This page does not apply cut-offs itself. Groups under 20 are hidden.</div>
+    <div class="lg" id="growth-bmi-time-lg"></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-bmi-time" role="img" aria-label="BMI-for-age category by time in care"></canvas></div>
+    <div class="growth-foot" id="growth-bmi-time-foot"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Current BMI-for-age levels</div>
+    <div class="cs">Latest stored BMI-for-age category for every child in this view with at least one weight and one height. Not limited to the last 6 months. The n on the bar is the number of children.</div>
+    <div class="lg" id="growth-bmi-now-lg"></div>
+    <div style="height:220px;position:relative"><canvas id="c-growth-bmi-now" role="img" aria-label="Current BMI-for-age category for children with a weight and height"></canvas></div>
+    <div class="growth-foot" id="growth-bmi-now-foot"></div>
+  </div>
+</div>
+<div class="g2">
+  <div class="card">
+    <div class="ct">Baseline and latest weight by time in care</div>
+    <div class="cs">Mean weight in kilograms at baseline and at the latest visit, for children with both weights. This is not a weight-for-age z-score. The sheet has no WHO weight-for-age score, and that reference stops at age 10, so it is not applied. Children older than 10 stay in the chart. Groups under 20 are hidden.</div>
+    <div class="lg" id="growth-wt-pos-lg"></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-wt-pos" role="img" aria-label="Baseline and latest weight in kilograms by time in care"></canvas></div>
+    <div class="growth-foot" id="growth-wt-pos-foot"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Change in weight by time in care</div>
+    <div class="cs">Mean change in kilograms from baseline weight to latest weight, for the same children as the chart beside this one. A positive number means the latest weight is higher. Not a weight-for-age z-score, and not limited to age 10.</div>
+    <div class="lg" id="growth-wt-chg-lg"></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-wt-chg" role="img" aria-label="Change in weight in kilograms by time in care"></canvas></div>
+    <div class="growth-foot" id="growth-wt-chg-foot"></div>
+  </div>
+</div>
+<div class="card" style="max-width:680px">
+  <div class="ct">Current weight</div>
+  <div class="cs">Latest weight in kilograms, or the baseline weight when that is the only one, for every child with at least one weight. The bands are kilogram groups for display, not WHO weight-for-age categories. WHO’s weight-for-age reference stops at age 10 and is not used.</div>
+  <div class="lg" id="growth-wt-now-lg"></div>
+  <div style="height:220px;position:relative"><canvas id="c-growth-wt-now" role="img" aria-label="Current weight in kilogram bands"></canvas></div>
+  <div class="growth-foot" id="growth-wt-now-foot"></div>
 </div>
 </div>
 </div>
@@ -1440,7 +1479,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <!-- ══════════ TAB 5 — INDICATOR DEFINITIONS ══════════ -->
 <div class="tc" id="tab-5">
 <div class="tc-wrap">
-<div class="sl">Indicator definitions</div><details class="card" style="padding:10px"><summary>Abbreviations</summary><p class="cs">PLT1D: people living with type 1 diabetes · SMBG: self-monitoring of blood glucose · DKA: diabetic ketoacidosis · TDD: total daily insulin dose · FLW: frontline worker · pp: percentage points · BAZ: BMI-for-age score, comparing a child’s weight for their height with healthy children of the same age and sex (0 = healthy average; below −2 = thin) · HAZ: height-for-age score (0 = healthy average; below −2 = stunted).</p></details>
+<div class="sl">Indicator definitions</div><details class="card" style="padding:10px"><summary>Abbreviations</summary><p class="cs">PLT1D: people living with type 1 diabetes · SMBG: self-monitoring of blood glucose · DKA: diabetic ketoacidosis · TDD: total daily insulin dose · FLW: frontline worker · pp: percentage points · BAZ: stored BMI-for-age score, from BMI (weight and height) compared with children of the same age and sex (0 = reference median; the page does not recalculate it) · HAZ: stored height-for-age score (0 = reference median; below −2 is the sheet’s stunted flag).</p></details>
 <div class="card" style="padding:0;overflow:hidden">
 <table class="info-table">
 <thead>
@@ -1983,7 +2022,7 @@ let HBA_N,HBA_LBLS,HBA_I4,HBA_I2,HBA_IL,HBA_NC,HBA_WL,HBA_W2,HBA_W4;
 let HBA_I4N,HBA_I2N,HBA_ILN,HBA_NCN,HBA_WLN,HBA_W2N,HBA_W4N,HBA_DIST_N,HBA_ALL_N;
 let HBA_AVG_BASE,HBA_AVG_LAST,HBA_DIST_LBLS,HBA_D_LT7,HBA_D_7_10,HBA_D_10_13,HBA_D_13_16,HBA_D_GT16,HBA_LATEST;
 let HBA_ALL_LBLS,HBA_ALL_LT7,HBA_ALL_710,HBA_ALL_1013,HBA_ALL_1316,HBA_ALL_GT16;
-let GROWTH=null,_gBaz=null,_gTrend=null,_gBmi=null,_gHba=null;
+let GROWTH=null,_gBaz=null,_gTrend=null,_gBmi=null,_gHba=null,_gBmiTime=null,_gBmiNow=null,_gWtPos=null,_gWtChg=null,_gWtNow=null;
 
 const WIN=6;
 let MAX=0, off=[null,null];   // null = not yet positioned → defaults to latest window
@@ -3099,9 +3138,9 @@ function buildInfoTable(){
     {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1D by TDD/kg range: below/in/above · Pediatric 0–17: 0.7-1.0 u/kg · Adults ≥18: 1.0-1.5 u/kg',den:'PLT1D with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
     {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1D by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1D with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
     {n:'22a',ind:'BMI-for-age change by time in care',tab:'T2',type:'%',num:'Children aged 2–18 by BMI-for-age score (BAZ): Fell behind (Faltering or Watch) / Steady (Stable) / Improved (Healthy shift) / Excess gain, plus an All bar. Time in care is 0–6, 6–12, 12–18 and 18+ months since enrolment.',den:'Joined complete-support children with a classified BMI-for-age group. Bars and percentages with n<20 are withheld. Period filter does not apply.',sheet:'Growth_child',cols:'Claude_ID, BAZ_bucket, HAZ_bucket, dHAZ, Time_in_care_bucket'},
-    {n:'22b',ind:'Growth trend by months since enrolment',tab:'T2',type:'Average',num:'Average of each child’s score at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. BAZ is the BMI-for-age (weight-for-height) score; HAZ is the height-for-age score. 0 = healthy average. Optional weight-for-height line per enrolment quarter when n≥20.',den:'Joined children with a recorded score. Points and enrolment-cohort lines with fewer than 20 children are hidden.',sheet:'Growth_milestones',cols:'Claude_ID, Month_bin (months since enrolment), Mean_BAZ, Mean_HAZ, Enrolment_quarter'},
-    {n:'22c',ind:'Current BMI category and stunting',tab:'T2',type:'%',num:'Latest BMI category (Severe thinness / Thinness / Normal / Overweight / Obese) by state, or by district or facility when that geography is selected. Stunting is a height-for-age score (HAZ) below −2.',den:'Children with a BMI in the last 6 months. Stunting % uses Stunted_latest among children with a height-for-age reading in the last 6 months. n<20 withheld.',sheet:'Growth_child',cols:'State, District, Facility, BMI_category_latest, Stunted_latest, Latest_BMI_within_6m, Latest_HAZ_within_6m'},
-    {n:'22d',ind:'Growth group vs HbA1c',tab:'T2',type:'Average',num:'Mean latest HbA1c by growth group (fell behind / steady or improved / excess gain), with mean dHbA1c where the sheet recorded a change',den:'Joined children with a growth group and a latest HbA1c. Groups with n<20 are withheld.',sheet:'Growth_child',cols:'Growth_group, Latest_HbA1c, dHbA1c'},
+    {n:'22b',ind:'Growth trend by months since enrolment',tab:'T2',type:'Average',num:'Average of each child’s stored BMI-for-age (BAZ) and height-for-age (HAZ) score at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. 0 is the reference median for the same age and sex (the healthy average). Optional BMI-for-age line per enrolment quarter when n≥20.',den:'Joined children with a recorded score. Points and enrolment-cohort lines with fewer than 20 children are hidden.',sheet:'Growth_milestones',cols:'Claude_ID, Month_bin (months since enrolment), Mean_BAZ, Mean_HAZ, Enrolment_quarter'},
+    {n:'22c',ind:'Current BMI-for-age category and height-for-age stunting',tab:'T2',type:'%',num:'Bars: latest BMI-for-age category (Severe thinness / Thinness / Normal / Overweight / Obese) by state, or by district or facility when that geography is selected. The label under each bar is height-for-age stunting (HAZ below −2), a separate metric.',den:'BMI bars: children with a BMI in the last 6 months. Height-for-age % uses Stunted_latest among children with a height-for-age reading in the last 6 months. n<20 withheld.',sheet:'Growth_child',cols:'State, District, Facility, BMI_category_latest, Stunted_latest, Latest_BMI_within_6m, Latest_HAZ_within_6m'},
+    {n:'22d',ind:'BMI-for-age group vs HbA1c',tab:'T2',type:'Average',num:'Mean latest HbA1c (%) by the sheet’s BMI-for-age change group (fell behind / steady or improved / excess gain), with mean change in HbA1c since enrolment where the sheet recorded it',den:'Joined children with a BMI-for-age group and a latest HbA1c. Groups with n<20 are withheld.',sheet:'Growth_child',cols:'Growth_group, Latest_HbA1c, dHbA1c'},
     {sec:'TAB 3 — Capacity Building'},
     {n:'23',ind:'Batches held — doctors / nurses',tab:'T3',type:'Absolute #',num:'Count of distinct training batches by date and state',den:'—',sheet:'Capacity_Building',cols:'Training Batch, Type of Service Provider'},
     {n:'24',ind:'Doctors / nurses trained',tab:'T3',type:'Absolute #',num:'Distinct participant names within each state; ≥1 session',den:'—',sheet:'Capacity_Building',cols:'Name of Service Provider, Type of Service Provider'},
@@ -5314,6 +5353,13 @@ const GROWTH_BMI=[
   {key:'Overweight', color:'#8ec0e4'},
   {key:'Obese', color:'#d4e8f6'}
 ];
+const GROWTH_KG=[
+  {key:'<15 kg', min:-Infinity, max:15, color:'#071e33'},
+  {key:'15–25 kg', min:15, max:25, color:'#0e446e'},
+  {key:'25–35 kg', min:25, max:35, color:'#2a7ab8'},
+  {key:'35–45 kg', min:35, max:45, color:'#8ec0e4'},
+  {key:'≥45 kg', min:45, max:Infinity, color:'#d4e8f6'}
+];
 const GROWTH_GROUP=[
   {key:'behind', label:'Fell behind', color:'#0a3158'},
   {key:'steady', label:'Steady or improved', color:'#1a6aaf'},
@@ -5442,6 +5488,12 @@ function growthChildRecord(row){
     dHaz:num(growthVal(row,['dHAZ','d_HAZ'])),
     baseBmi:num(growthVal(row,['Baseline_BMI','Baseline BMI'])),
     latestBmi:num(growthVal(row,['Latest_BMI','Latest BMI'])),
+    baseWeight:num(growthVal(row,['Baseline_weight_kg','Baseline weight kg'])),
+    latestWeight:num(growthVal(row,['Latest_weight_kg','Latest weight kg'])),
+    baseHeight:num(growthVal(row,['Baseline_height_cm','Baseline height cm'])),
+    latestHeight:num(growthVal(row,['Latest_height_cm','Latest height cm'])),
+    baseAge:num(growthVal(row,['Baseline_age_y','Baseline age y'])),
+    latestAge:num(growthVal(row,['Latest_age_y','Latest age y'])),
     baseBaz:num(growthVal(row,['Baseline_BAZ','Baseline BAZ'])),
     latestBaz:num(growthVal(row,['Latest_BAZ','Latest BAZ'])),
     baseHaz:num(growthVal(row,['Baseline_HAZ','Baseline HAZ'])),
@@ -5639,7 +5691,85 @@ function computeGrowth(idSet, childRows, milestoneRows, f){
       }).sort((a,b)=>growthQuarterRank(a.quarter)-growthQuarterRank(b.quarter)||a.quarter.localeCompare(b.quarter))
     };
   }
-  return {status:'ok', cohort:kids.length, kids, baz, trend, bmi, hba};
+  return Object.assign({status:'ok', cohort:kids.length, kids, baz, trend, bmi, hba}, growthMoreCharts(kids));
+}
+function growthHasSize(k){
+  return (k.baseWeight!=null&&k.baseHeight!=null)||(k.latestWeight!=null&&k.latestHeight!=null);
+}
+function growthPackShare(label, time, n, counts){
+  const suppressed=n<GROWTH_MIN_N;
+  return {label, time, n, suppressed, counts:counts.slice(), shares:suppressed||!n?null:pctTenths(counts)};
+}
+function growthKgBand(w){
+  for(let i=0;i<GROWTH_KG.length;i++){
+    const band=GROWTH_KG[i];
+    if(w>=band.min&&w<band.max) return i;
+  }
+  return GROWTH_KG.length-1;
+}
+function growthMoreCharts(kids){
+  const timeBags={};
+  GROWTH_TIME.forEach(t=>{ timeBags[t]={n:0, counts:[0,0,0,0,0]}; });
+  const all={n:0, counts:[0,0,0,0,0]};
+  kids.forEach(k=>{
+    if(!k.bmi||!growthHasSize(k)) return;
+    const i=GROWTH_BMI.findIndex(c=>c.key===k.bmi);
+    if(i<0) return;
+    all.n++; all.counts[i]++;
+    if(timeBags[k.time]){ timeBags[k.time].n++; timeBags[k.time].counts[i]++; }
+  });
+  const bmiDuration={
+    measured:all.n,
+    bars:[growthPackShare('All','all',all.n,all.counts)].concat(GROWTH_TIME.map(t=>growthPackShare(t+' months', t, timeBags[t].n, timeBags[t].counts)))
+  };
+  const bmiNow={measured:all.n, bars:[growthPackShare('All children','all',all.n,all.counts)]};
+  const wTime={};
+  GROWTH_TIME.forEach(t=>{ wTime[t]={n:0, base:[], latest:[], delta:[], over10:0, ageKnown:0}; });
+  const wAll={n:0, base:[], latest:[], delta:[], over10:0, ageKnown:0};
+  kids.forEach(k=>{
+    if(k.baseWeight==null||k.latestWeight==null) return;
+    const ages=[k.baseAge,k.latestAge].filter(a=>a!=null);
+    const over=ages.length&&Math.max.apply(null, ages)>10;
+    const bags=[wAll];
+    if(wTime[k.time]) bags.push(wTime[k.time]);
+    bags.forEach(b=>{
+      b.n++;
+      b.base.push(k.baseWeight);
+      b.latest.push(k.latestWeight);
+      b.delta.push(k.latestWeight-k.baseWeight);
+      if(ages.length){ b.ageKnown++; if(over) b.over10++; }
+    });
+  });
+  function packMean(label, time, bag){
+    const suppressed=bag.n<GROWTH_MIN_N;
+    return {
+      label, time, n:bag.n, suppressed,
+      meanBase:suppressed?null:growthMean(bag.base),
+      meanLatest:suppressed?null:growthMean(bag.latest),
+      meanDelta:suppressed?null:growthMean(bag.delta),
+      over10:bag.over10, ageKnown:bag.ageKnown
+    };
+  }
+  const weightBars=[packMean('All','all',wAll)].concat(GROWTH_TIME.map(t=>packMean(t+' months', t, wTime[t])));
+  const kgCounts=GROWTH_KG.map(()=>0);
+  let kgN=0;
+  kids.forEach(k=>{
+    const w=k.latestWeight!=null?k.latestWeight:k.baseWeight;
+    if(w==null) return;
+    kgCounts[growthKgBand(w)]++;
+    kgN++;
+  });
+  const weight={measured:wAll.n, over10:wAll.over10, ageKnown:wAll.ageKnown, bars:weightBars};
+  return {
+    bmiDuration, bmiNow,
+    weightPos:weight,
+    weightChg:weight,
+    weightNow:{measured:kgN, bars:[growthPackShare('All children','all',kgN,kgCounts)]}
+  };
+}
+function growthWeightLimit(block){
+  if(!block||!block.ageKnown) return ' Weight is in kilograms. The sheet has no WHO weight-for-age score; that reference stops at age 10 and is not applied.';
+  return ' Weight is in kilograms, not a weight-for-age z-score. '+block.over10.toLocaleString()+' of '+block.ageKnown.toLocaleString()+' children with a recorded age are over 10. WHO’s weight-for-age reference stops at age 10 and is not applied.';
 }
 function growthOnePct(p){
   const n=Math.round(Number(p)*10)/10;
@@ -5693,13 +5823,13 @@ function growthBmiTakeaway(bmi){
   bars.forEach(b=>{
     const thin=growthPct((b.counts[0]||0)+(b.counts[1]||0), b.n);
     const gap=thin-(thinPct||0);
-    if(!best||gap>best.gap) best={kind:'thinness', label:b.label, pct:thin, gap, overall:thinPct};
+    if(!best||gap>best.gap) best={kind:'BMI-for-age thinness', label:b.label, pct:thin, gap, overall:thinPct};
     if(stuntPct!=null&&b.stuntN>=GROWTH_MIN_N&&b.stuntPct!=null){
       const g=b.stuntPct-stuntPct;
-      if(!best||g>best.gap) best={kind:'stunting', label:b.label, pct:b.stuntPct, gap:g, overall:stuntPct};
+      if(!best||g>best.gap) best={kind:'height-for-age stunting', label:b.label, pct:b.stuntPct, gap:g, overall:stuntPct};
     }
   });
-  if(!best||best.gap<=0) return 'Thinness and stunting are similar across places in this view.';
+  if(!best||best.gap<=0) return 'BMI-for-age thinness and height-for-age stunting are similar across places in this view.';
   return best.label+' has the highest '+best.kind+', '+growthOnePct(best.pct)+' against '+growthOnePct(best.overall)+' overall';
 }
 function growthHbaTakeaway(groups){
@@ -5708,8 +5838,8 @@ function growthHbaTakeaway(groups){
   if(!behind||!steady||behind.suppressed||steady.suppressed||behind.mean==null||steady.mean==null||behind.n<GROWTH_MIN_N||steady.n<GROWTH_MIN_N)
     return 'Not enough data for a takeaway';
   const d=Math.round((behind.mean-steady.mean)*100)/100;
-  if(Math.abs(d)<0.005) return 'Children who fell behind have the same mean HbA1c as those who were steady or improved';
-  return 'Children who fell behind have '+Math.abs(d).toFixed(2)+' points '+(d>0?'higher':'lower')+' mean HbA1c';
+  if(Math.abs(d)<0.005) return 'Children whose BMI-for-age fell behind have the same mean HbA1c as those who were steady or improved';
+  return 'Children whose BMI-for-age fell behind have '+Math.abs(d).toFixed(2)+' points '+(d>0?'higher':'lower')+' mean HbA1c';
 }
 function growthPlace(k, level){
   if(level==='district') return k.district;
@@ -5761,9 +5891,9 @@ function growthDrillColumns(chart){
       {key:'bazBucket', label:'BMI-for-age group (BAZ)'},
       {key:'baseBmi', label:'Baseline BMI', num:1},
       {key:'latestBmi', label:'Latest BMI', num:1},
-      {key:'baseBaz', label:'Baseline weight-for-height (BAZ)', num:2},
-      {key:'latestBaz', label:'Latest weight-for-height (BAZ)', num:2},
-      {key:'dBaz', label:'Change in weight-for-height (BAZ)', num:2},
+      {key:'baseBaz', label:'Baseline BMI-for-age (BAZ)', num:2},
+      {key:'latestBaz', label:'Latest BMI-for-age (BAZ)', num:2},
+      {key:'dBaz', label:'Change in BMI-for-age (BAZ)', num:2},
       {key:'baseHaz', label:'Baseline height-for-age (HAZ)', num:2},
       {key:'latestHaz', label:'Latest height-for-age (HAZ)', num:2},
       {key:'dHaz', label:'Change in height-for-age (HAZ)', num:2}
@@ -5771,11 +5901,11 @@ function growthDrillColumns(chart){
     trend:[
       {key:'quarter', label:'Enrolment quarter'},
       {key:'bin', label:'Months since enrolment'},
-      {key:'binBaz', label:'Weight-for-height score (BAZ)', num:2},
+      {key:'binBaz', label:'BMI-for-age score (BAZ)', num:2},
       {key:'binHaz', label:'Height-for-age score (HAZ)', num:2},
-      {key:'baseBaz', label:'Baseline weight-for-height (BAZ)', num:2},
-      {key:'latestBaz', label:'Latest weight-for-height (BAZ)', num:2},
-      {key:'dBaz', label:'Change in weight-for-height (BAZ)', num:2},
+      {key:'baseBaz', label:'Baseline BMI-for-age (BAZ)', num:2},
+      {key:'latestBaz', label:'Latest BMI-for-age (BAZ)', num:2},
+      {key:'dBaz', label:'Change in BMI-for-age (BAZ)', num:2},
       {key:'baseHaz', label:'Baseline height-for-age (HAZ)', num:2},
       {key:'latestHaz', label:'Latest height-for-age (HAZ)', num:2},
       {key:'dHaz', label:'Change in height-for-age (HAZ)', num:2}
@@ -5783,9 +5913,9 @@ function growthDrillColumns(chart){
     bmi:[
       {key:'bmi', label:'BMI category'},
       {key:'latestBmi', label:'Latest BMI', num:1},
-      {key:'latestBaz', label:'Latest weight-for-height (BAZ)', num:2},
+      {key:'latestBaz', label:'Latest BMI-for-age (BAZ)', num:2},
       {key:'latestHaz', label:'Latest height-for-age (HAZ)', num:2},
-      {key:'dBaz', label:'Change in weight-for-height (BAZ)', num:2},
+      {key:'dBaz', label:'Change in BMI-for-age (BAZ)', num:2},
       {key:'dHaz', label:'Change in height-for-age (HAZ)', num:2},
       {key:'stunted', label:'Stunted'}
     ],
@@ -5974,7 +6104,7 @@ function growthDrillTitle(spec, n){
     bits.push(seg?seg.label:'BMI-for-age', spec.time==='all'||!spec.time?'All':spec.time+' months');
   }else if(spec.chart==='trend'){
     const since=spec.bin==='18+'?'18+ months since enrolment':(spec.bin||'')+' months since enrolment';
-    const score=spec.series==='haz'?'Height-for-age score (HAZ)':spec.series==='cohort'?spec.quarter+' weight-for-height (BAZ)':'Weight-for-height score (BAZ)';
+    const score=spec.series==='haz'?'Height-for-age score (HAZ)':spec.series==='cohort'?spec.quarter+' BMI-for-age (BAZ)':'BMI-for-age score (BAZ)';
     bits.push(score, since);
   }else if(spec.chart==='bmi'){
     const bar=(GROWTH&&GROWTH.bmi&&GROWTH.bmi.bars||[]).find(b=>b.key===spec.place);
@@ -6081,6 +6211,11 @@ function renderGrowth(){
     if(_gTrend){_gTrend.destroy();_gTrend=null;}
     if(_gBmi){_gBmi.destroy();_gBmi=null;}
     if(_gHba){_gHba.destroy();_gHba=null;}
+    if(_gBmiTime){_gBmiTime.destroy();_gBmiTime=null;}
+    if(_gBmiNow){_gBmiNow.destroy();_gBmiNow=null;}
+    if(_gWtPos){_gWtPos.destroy();_gWtPos=null;}
+    if(_gWtChg){_gWtChg.destroy();_gWtChg=null;}
+    if(_gWtNow){_gWtNow.destroy();_gWtNow=null;}
     body.hidden=true;
     box.hidden=false;
     box.textContent=view.message;
@@ -6092,6 +6227,11 @@ function renderGrowth(){
   renderGrowthTrend();
   renderGrowthBmi();
   renderGrowthHba();
+  renderGrowthBmiTime();
+  renderGrowthBmiNow();
+  renderGrowthWeightPos();
+  renderGrowthWeightChg();
+  renderGrowthWeightNow();
 }
 function renderGrowthBaz(){
   const canvas=document.getElementById('c-growth-baz');
@@ -6165,7 +6305,7 @@ function renderGrowthTrend(){
     return;
   }
   growthRelease(canvas);
-  growthLegend('growth-trend-lg', [{label:'Weight-for-height score (BAZ)', color:GROWTH_LINE.baz},{label:'Height-for-age score (HAZ)', color:GROWTH_LINE.haz}]);
+  growthLegend('growth-trend-lg', [{label:'BMI-for-age score (BAZ)', color:GROWTH_LINE.baz},{label:'Height-for-age score (HAZ)', color:GROWTH_LINE.haz}]);
   growthShowTakeaway('growth-trend-take', growthTrendTakeaway(trend.bins));
   const on=!!(document.getElementById('growth-cohort')&&document.getElementById('growth-cohort').checked);
   const shown=(trend.cohorts||[]).filter(c=>!c.hidden&&c.baz.some(v=>v!=null));
@@ -6176,12 +6316,12 @@ function renderGrowthTrend(){
       : '<span>No enrolment cohort has 20 children at a point in care.</span>');
   }
   const datasets=[
-    {label:'Weight-for-height score (BAZ)', data:trend.bins.map(b=>b.bazMean), _n:trend.bins.map(b=>b.bazN), _total:GROWTH.cohort, _drill:{series:'baz'}, borderColor:GROWTH_LINE.baz, backgroundColor:GROWTH_LINE.baz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.baz, _noLabel:true},
+    {label:'BMI-for-age score (BAZ)', data:trend.bins.map(b=>b.bazMean), _n:trend.bins.map(b=>b.bazN), _total:GROWTH.cohort, _drill:{series:'baz'}, borderColor:GROWTH_LINE.baz, backgroundColor:GROWTH_LINE.baz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.baz, _noLabel:true},
     {label:'Height-for-age score (HAZ)', data:trend.bins.map(b=>b.hazMean), _n:trend.bins.map(b=>b.hazN), _total:GROWTH.cohort, _drill:{series:'haz'}, borderColor:GROWTH_LINE.haz, backgroundColor:GROWTH_LINE.haz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.haz, _noLabel:true}
   ];
   if(on) shown.forEach((c,i)=>{
     const color=cols[i%cols.length];
-    datasets.push({label:c.quarter+' weight-for-height (BAZ)', data:c.baz, _n:c.bazN, _total:c.n, _drill:{series:'cohort', quarter:c.quarter}, borderColor:color, backgroundColor:color, borderWidth:1.5, borderDash:[4,3], tension:.25, spanGaps:false, pointRadius:3.5, pointHitRadius:10, pointBackgroundColor:color, _noLabel:true});
+    datasets.push({label:c.quarter+' BMI-for-age (BAZ)', data:c.baz, _n:c.bazN, _total:c.n, _drill:{series:'cohort', quarter:c.quarter}, borderColor:color, backgroundColor:color, borderWidth:1.5, borderDash:[4,3], tension:.25, spanGaps:false, pointRadius:3.5, pointHitRadius:10, pointBackgroundColor:color, _noLabel:true});
   });
   _gTrend=createDashboardChart(canvas,{
     type:'line',
@@ -6217,7 +6357,7 @@ function renderGrowthTrend(){
       }}},
       scales:{
         x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
-        y:{grace:'12%', grid:{display:false}, border:{display:false}, title:{display:true, text:'Score (0 = healthy average)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}}
+        y:{grace:'12%', grid:{display:false}, border:{display:false}, title:{display:true, text:'Score (0 = reference median for the same age and sex)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}}
       }
     }
   });
@@ -6232,11 +6372,11 @@ function renderGrowthBmi(){
   if(!canvas||!bmi) return;
   growthRelease(canvas);
   const where=bmi.level==='district'?'by district':bmi.level==='facility'?'by facility':'by state';
-  if(title) title.textContent='Current growth status '+where;
+  if(title) title.textContent='Current BMI-for-age '+where;
   growthLegend('growth-bmi-lg', GROWTH_BMI.map(c=>({label:c.key, color:c.color})));
   growthShowTakeaway('growth-bmi-take', growthBmiTakeaway(bmi));
   const bars=bmi.bars;
-  const stuntLine=b=>b.stuntPct==null?'stunting n<20':('stunted '+b.stuntPct.toFixed(1)+'%');
+  const stuntLine=b=>b.stuntPct==null?'height-for-age n<20':('height-for-age stunted '+b.stuntPct.toFixed(1)+'%');
   if(!bars.length){
     growthHold(canvas, 'No children aged 2–18 with a recent BMI in this view.');
   }else{
@@ -6271,8 +6411,8 @@ function renderGrowthBmi(){
           },
           afterBody(items){
             const bar=bars[items[0].dataIndex]; if(!bar) return [];
-            if(bar.stuntPct==null) return ['Stunting: n<20'];
-            return ['Stunting: '+bar.stuntPct.toFixed(1)+'% · n = '+Number(bar.stunt||0).toLocaleString()+' of '+bar.stuntN.toLocaleString()];
+            if(bar.stuntPct==null) return ['Height-for-age stunted: n<20'];
+            return ['Height-for-age stunted: '+bar.stuntPct.toFixed(1)+'% · n = '+Number(bar.stunt||0).toLocaleString()+' of '+bar.stuntN.toLocaleString()];
           }
         }}},
         scales:{
@@ -6329,17 +6469,147 @@ function renderGrowthHba(){
       }}},
       scales:{
         x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
-        y:{display:false, beginAtZero:true, suggestedMax:Math.max(12, ...groups.map(g=>g.mean||0))*1.25}
+        y:{display:true, beginAtZero:true, title:{display:true, text:'Mean latest HbA1c (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}, suggestedMax:Math.max(12, ...groups.map(g=>g.mean||0))*1.25}
       }
     },
     plugins:[growthValuePlugin('growthHbaValues')]
   });
   if(delta) delta.textContent=groups.map(g=>{
-    const latest=g.suppressed||g.mean==null?'n<20':g.mean.toFixed(2)+' (n='+g.n.toLocaleString()+')';
-    const change=g.dN<GROWTH_MIN_N||g.meanD==null?'Δ n<20':'Δ '+signed(g.meanD)+' (n='+g.dN.toLocaleString()+')';
-    return g.label+': '+latest+', '+change;
+    const latest=g.suppressed||g.mean==null?'n<20':g.mean.toFixed(2)+'% (n='+g.n.toLocaleString()+')';
+    const change=g.dN<GROWTH_MIN_N||g.meanD==null?'change n<20':'change since enrolment '+signed(g.meanD)+' percentage points (n='+g.dN.toLocaleString()+')';
+    return g.label+' BMI-for-age: mean latest HbA1c '+latest+', '+change;
   }).join(' · ');
-  if(foot) foot.textContent=growthFoot(hba.measured, GROWTH.cohort, 'with a growth group and a latest HbA1c');
+  if(foot) foot.textContent=growthFoot(hba.measured, GROWTH.cohort, 'with a BMI-for-age group and a latest HbA1c');
+}
+function renderGrowthShare(slot, canvasId, footId, bars, series, phrase, pluginId){
+  if(slot.chart){slot.chart.destroy();slot.chart=null;}
+  const canvas=document.getElementById(canvasId);
+  const foot=document.getElementById(footId);
+  if(!canvas||!GROWTH) return null;
+  growthRelease(canvas);
+  if(!bars||!bars.length){
+    growthHold(canvas, 'No children in this view.');
+    if(foot) foot.textContent='';
+    return null;
+  }
+  const chart=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:bars.map(b=>[b.label, b.suppressed?'n<20':'(n='+b.n.toLocaleString()+')']),
+      datasets:series.map((s,si)=>({
+        label:s.label||s.key,
+        data:bars.map(b=>b.suppressed||!b.shares?null:b.shares[si]),
+        _counts:bars.map(b=>b.counts[si]),
+        backgroundColor:s.color, stack:'s', _lc:inkOn(s.color), _minVal:8, _minH:16
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      layout:{padding:{top:8}},
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        title(items){ const label=items[0]&&items[0].label; return Array.isArray(label)?label.filter(Boolean).join(' '):label; },
+        label(ctx){
+          const bar=bars[ctx.dataIndex];
+          const pct=bar&&!bar.suppressed&&bar.shares?bar.shares[ctx.datasetIndex]:null;
+          return growthTipCount(ctx.dataset.label, pct, bar?bar.counts[ctx.datasetIndex]:0, bar?bar.n:0);
+        }
+      }}},
+      scales:{
+        x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{stacked:true, display:false, min:0, max:100}
+      }
+    },
+    plugins:[growthSuppressPlugin(pluginId, bars.map(b=>b.suppressed))]
+  });
+  if(foot) foot.textContent=growthFoot(bars[0]&&bars[0].time==='all'?bars[0].n:bars.reduce((s,b)=>s+(b.time==='all'?0:b.n),0), GROWTH.cohort, phrase);
+  return chart;
+}
+function renderGrowthBmiTime(){
+  const block=GROWTH&&GROWTH.bmiDuration;
+  growthLegend('growth-bmi-time-lg', GROWTH_BMI.map(c=>({label:c.key, color:c.color})));
+  const slot={get chart(){return _gBmiTime;}, set chart(v){_gBmiTime=v;}};
+  if(!block){ if(_gBmiTime){_gBmiTime.destroy();_gBmiTime=null;} return; }
+  _gBmiTime=renderGrowthShare(slot, 'c-growth-bmi-time', 'growth-bmi-time-foot', block.bars, GROWTH_BMI, 'with a weight, a height and a BMI-for-age category', 'growthBmiTimeMin');
+}
+function renderGrowthBmiNow(){
+  const block=GROWTH&&GROWTH.bmiNow;
+  growthLegend('growth-bmi-now-lg', GROWTH_BMI.map(c=>({label:c.key, color:c.color})));
+  const slot={get chart(){return _gBmiNow;}, set chart(v){_gBmiNow=v;}};
+  if(!block){ if(_gBmiNow){_gBmiNow.destroy();_gBmiNow=null;} return; }
+  _gBmiNow=renderGrowthShare(slot, 'c-growth-bmi-now', 'growth-bmi-now-foot', block.bars, GROWTH_BMI, 'with a weight, a height and a BMI-for-age category', 'growthBmiNowMin');
+}
+function growthKgTooltip(bars, unit){
+  return {callbacks:{
+    title(items){ const label=items[0]&&items[0].label; return Array.isArray(label)?label.filter(Boolean).join(' '):label; },
+    label(ctx){
+      const bar=bars[ctx.dataIndex];
+      const v=ctx.parsed&&ctx.parsed.y!=null?ctx.parsed.y:null;
+      return ' '+ctx.dataset.label+': '+(v==null?'n<20':Number(v).toFixed(2)+' '+unit)+' · n = '+(bar?bar.n.toLocaleString():'0');
+    }
+  }};
+}
+function renderGrowthWeightPos(){
+  if(_gWtPos){_gWtPos.destroy();_gWtPos=null;}
+  const canvas=document.getElementById('c-growth-wt-pos');
+  const foot=document.getElementById('growth-wt-pos-foot');
+  const block=GROWTH&&GROWTH.weightPos;
+  if(!canvas||!block) return;
+  growthRelease(canvas);
+  growthLegend('growth-wt-pos-lg', [{label:'Baseline weight (kg)', color:'#8ec0e4'},{label:'Latest weight (kg)', color:'#0e446e'}]);
+  const bars=block.bars;
+  _gWtPos=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:bars.map(b=>[b.label, b.suppressed?'n<20':'(n='+b.n.toLocaleString()+')']),
+      datasets:[
+        {label:'Baseline weight (kg)', data:bars.map(b=>b.suppressed?null:b.meanBase), backgroundColor:'#8ec0e4', _noLabel:true},
+        {label:'Latest weight (kg)', data:bars.map(b=>b.suppressed?null:b.meanLatest), backgroundColor:'#0e446e', _noLabel:true}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:growthKgTooltip(bars, 'kg')},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{beginAtZero:true, title:{display:true, text:'Weight (kg)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
+      }
+    }
+  });
+  if(foot) foot.textContent=growthFoot(block.measured, GROWTH.cohort, 'with a baseline weight and a later weight')+growthWeightLimit(block);
+}
+function renderGrowthWeightChg(){
+  if(_gWtChg){_gWtChg.destroy();_gWtChg=null;}
+  const canvas=document.getElementById('c-growth-wt-chg');
+  const foot=document.getElementById('growth-wt-chg-foot');
+  const block=GROWTH&&GROWTH.weightChg;
+  if(!canvas||!block) return;
+  growthRelease(canvas);
+  growthLegend('growth-wt-chg-lg', [{label:'Change in weight (kg)', color:'#1a6aaf'}]);
+  const bars=block.bars;
+  _gWtChg=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:bars.map(b=>[b.label, b.suppressed?'n<20':'(n='+b.n.toLocaleString()+')']),
+      datasets:[{label:'Change in weight (kg)', data:bars.map(b=>b.suppressed?null:b.meanDelta), backgroundColor:'#1a6aaf', _noLabel:true, _pct:false}]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}, tooltip:growthKgTooltip(bars, 'kg')},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{title:{display:true, text:'Change in weight (kg)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
+      }
+    },
+    plugins:[growthValuePlugin('growthWtChgValues')]
+  });
+  if(foot) foot.textContent=growthFoot(block.measured, GROWTH.cohort, 'with a baseline weight and a later weight')+growthWeightLimit(block);
+}
+function renderGrowthWeightNow(){
+  const block=GROWTH&&GROWTH.weightNow;
+  growthLegend('growth-wt-now-lg', GROWTH_KG.map(c=>({label:c.key, color:c.color})));
+  const slot={get chart(){return _gWtNow;}, set chart(v){_gWtNow=v;}};
+  if(!block){ if(_gWtNow){_gWtNow.destroy();_gWtNow=null;} return; }
+  _gWtNow=renderGrowthShare(slot, 'c-growth-wt-now', 'growth-wt-now-foot', block.bars, GROWTH_KG, 'with at least one weight', 'growthWtNowMin');
 }
 
 
