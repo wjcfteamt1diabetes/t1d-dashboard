@@ -60,9 +60,9 @@ test('growth section sits on the clinical tab and loads both sheets by name', ()
   assert.ok(tab.indexOf('tc-wrap cs-only') >= 0);
   assert.ok(tab.indexOf('Growth (ages 2–18)') > tab.indexOf('tc-wrap cs-only'));
   assert.match(tab, /The period filter does not apply/);
-  assert.match(tab, /BMI is weight and height together, compared with children of the same age and sex/);
-  assert.match(tab, /0 is the reference median, the healthy average on that score/);
-  assert.match(tab, /The healthy average is 0, the reference median for children of the same age and sex/);
+  assert.match(tab, /BMI-for-age \(BAZ\) is BMI, weight divided by height squared, scored against the WHO reference/);
+  assert.match(tab, /0 is the WHO median/);
+  assert.match(tab, /The benchmark is the WHO median, z = 0, for the same age and sex/);
   assert.match(html, /BMI-for-age score \(BAZ\)/);
   assert.match(html, /Height-for-age score \(HAZ\)/);
   assert.match(html, /Score \(0 = reference median for the same age and sex\)/);

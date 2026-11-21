@@ -1082,14 +1082,14 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div id="growth-section">
 <div class="sl">Growth (ages 2–18)</div>
-<p class="growth-lead" id="growth-lead">Stored BMI-for-age and height-for-age scores, plus weight in kilograms, for children aged 2–18 in complete support. The period filter does not apply. This page does not recalculate the scores.</p>
-<p class="growth-lead" id="growth-score-note">BMI-for-age (BAZ) is the score already stored for each child. BMI is weight and height together, compared with children of the same age and sex. 0 is the reference median, the healthy average on that score. The thinness, normal, overweight and obese bands are a separate stored category, not something this page calculates. Height-for-age (HAZ) is the stored height score; below −2 is the sheet’s stunted flag.</p>
+<p class="growth-lead" id="growth-lead">BMI-for-age, height-for-age and weight-for-age for children aged 2–18 in complete support. Z-scores are calculated on this page from weight, height, age and sex with the WHO tables. The period filter does not apply. The month-on-month lines are the exception: that file has no visit-level measurements.</p>
+<p class="growth-lead" id="growth-score-note">BMI-for-age (BAZ) is BMI, weight divided by height squared, scored against the WHO reference for the same age and sex. 0 is the WHO median. From age 5 the categories are severe thinness, thinness, normal, overweight and obese. Under 5 the WHO 2006 labels are used and are kept separate. Height-for-age (HAZ) below −2 is stunted. Weight-for-age (WAZ) is only calculated under 10 years.</p>
 <div id="growth-status" class="data-pending-chart" role="status" hidden></div>
 <div id="growth-body">
 <div class="g2">
   <div class="card">
     <div class="ct">Baseline vs latest BMI-for-age by time in care</div>
-    <div class="cs">Change in the stored BMI-for-age score, by time in care. Fell behind = Faltering or Watch. Steady = Stable. Improved = Healthy shift. Excess gain stays its own group. These are change groups, not the thinness, normal, overweight or obese bands. Click a segment to list the children.</div>
+    <div class="cs">Mean WHO BMI-for-age z at the baseline visit and at the latest visit. BMI is weight divided by height squared, scored with the WHO age- and sex-specific reference. 0 is the WHO median. A child is included once, only when both visits are valid and at least 3 months apart. Time in care is the months between those two visits: 0–6, 6–12, 12–18 or 18+, and the bands do not overlap.</div>
     <div class="growth-takeaway" id="growth-baz-take"></div>
     <div class="lg" id="growth-baz-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-baz" role="img" aria-label="BMI-for-age change by time in care"></canvas></div>
@@ -1097,7 +1097,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
   <div class="card">
     <div class="ct">Month-on-month growth trend</div>
-    <div class="cs">Average of the stored BMI-for-age (BAZ) and height-for-age (HAZ) scores at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The healthy average is 0, the reference median for children of the same age and sex. Points and enrolment cohorts with fewer than 20 children are hidden. Click a point to list the children.</div>
+    <div class="cs">Mean stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The benchmark is the WHO median, z = 0, for the same age and sex. Growth_milestones does not include weight, height and age at each month, so these points cannot be recomputed from the WHO tables here. A point is hidden below 20 children.</div>
     <div class="growth-takeaway" id="growth-trend-take"></div>
     <div class="lg" id="growth-trend-lg"></div>
     <label class="growth-toggle" for="growth-cohort"><input type="checkbox" id="growth-cohort" onchange="renderGrowthTrend()"> By enrolment cohort</label>
@@ -1117,7 +1117,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
   <div class="card">
     <div class="ct">BMI-for-age group vs HbA1c</div>
-    <div class="cs">Mean latest HbA1c (%) by the sheet’s BMI-for-age change group. Fell behind = faltering or watch. Steady or improved = stable or healthy shift. Excess gain is its own group. The number under the chart is the change in HbA1c since enrolment, in percentage points, when the sheet recorded it. Click a bar to list the children.</div>
+    <div class="cs">Mean latest HbA1c (%) by the child’s latest WHO BMI-for-age category, ages 5–19. The HbA1c is the latest value on the sheet and may not be from the same day as the weight and height. Groups under 20 are hidden.</div>
     <div class="growth-takeaway" id="growth-hba-take"></div>
     <div class="lg" id="growth-hba-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-hba" role="img" aria-label="Mean latest HbA1c by growth group"></canvas></div>
@@ -1128,14 +1128,14 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="g2">
   <div class="card">
     <div class="ct">BMI-for-age category by time in care</div>
-    <div class="cs">Latest stored BMI-for-age category for children with at least one weight and height, by the same time-in-care bands. Severe thinness, thinness, normal, overweight and obese are the sheet’s labels. This page does not apply cut-offs itself. Groups under 20 are hidden.</div>
+    <div class="cs">WHO 2007 BMI-for-age category at the latest visit, ages 5–19, by months between baseline and latest. Bands do not overlap. Both visits must be valid and at least 3 months apart. Under 5 years use different labels and are not mixed in. Groups under 20 are hidden.</div>
     <div class="lg" id="growth-bmi-time-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-bmi-time" role="img" aria-label="BMI-for-age category by time in care"></canvas></div>
     <div class="growth-foot" id="growth-bmi-time-foot"></div>
   </div>
   <div class="card">
     <div class="ct">Current BMI-for-age levels</div>
-    <div class="cs">Latest stored BMI-for-age category for every child in this view with at least one weight and one height. Not limited to the last 6 months. The n on the bar is the number of children.</div>
+    <div class="cs">Latest valid weight and height for every child aged 5–19. Categories use the WHO 2007 cut-offs. The footer counts children with no usable pair, an implausible z, or age under 5.</div>
     <div class="lg" id="growth-bmi-now-lg"></div>
     <div style="height:220px;position:relative"><canvas id="c-growth-bmi-now" role="img" aria-label="Current BMI-for-age category for children with a weight and height"></canvas></div>
     <div class="growth-foot" id="growth-bmi-now-foot"></div>
@@ -1143,23 +1143,23 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 </div>
 <div class="g2">
   <div class="card">
-    <div class="ct">Baseline and latest weight by time in care</div>
-    <div class="cs">Mean weight in kilograms at baseline and at the latest visit, for children with both weights. This is not a weight-for-age z-score. The sheet has no WHO weight-for-age score, and that reference stops at age 10, so it is not applied. Children older than 10 stay in the chart. Groups under 20 are hidden.</div>
+    <div class="ct">Weight-for-age at baseline and latest</div>
+    <div class="cs">WHO weight-for-age category at the baseline visit and at the latest visit. Both ages must be under 10 years, and the visits at least 3 months apart. Children over 10 years are counted as not applicable and are not given a z-score.</div>
     <div class="lg" id="growth-wt-pos-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-wt-pos" role="img" aria-label="Baseline and latest weight in kilograms by time in care"></canvas></div>
     <div class="growth-foot" id="growth-wt-pos-foot"></div>
   </div>
   <div class="card">
     <div class="ct">Change in weight by time in care</div>
-    <div class="cs">Mean change in kilograms from baseline weight to latest weight, for the same children as the chart beside this one. A positive number means the latest weight is higher. Not a weight-for-age z-score, and not limited to age 10.</div>
+    <div class="cs">Mean change in kilograms from baseline to latest, for children with both weights at least 3 months apart. The footnote gives kilograms per year and, only when both measurements are under 10 years, the change in WHO weight-for-age z.</div>
     <div class="lg" id="growth-wt-chg-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-wt-chg" role="img" aria-label="Change in weight in kilograms by time in care"></canvas></div>
     <div class="growth-foot" id="growth-wt-chg-foot"></div>
   </div>
 </div>
 <div class="card" style="max-width:680px">
-  <div class="ct">Current weight</div>
-  <div class="cs">Latest weight in kilograms, or the baseline weight when that is the only one, for every child with at least one weight. The bands are kilogram groups for display, not WHO weight-for-age categories. WHO’s weight-for-age reference stops at age 10 and is not used.</div>
+    <div class="ct">Current weight-for-age</div>
+    <div class="cs">WHO weight-for-age category at the latest weight, only while age is under 10 years. Children over 10 years are counted in the footnote and are not given a z-score.</div>
   <div class="lg" id="growth-wt-now-lg"></div>
   <div style="height:220px;position:relative"><canvas id="c-growth-wt-now" role="img" aria-label="Current weight in kilogram bands"></canvas></div>
   <div class="growth-foot" id="growth-wt-now-foot"></div>
@@ -1500,6 +1500,8 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 </div></div><!-- /tab-5 -->
 
 
+<script src="who/who-lms.js"></script>
+<script src="who/who-z.js"></script>
 <script>
 // Single-file previews may not serve config.js. Keep the public workbook defaults
 // available inline while preserving any configuration loaded by the hosted site.
@@ -5691,7 +5693,200 @@ function computeGrowth(idSet, childRows, milestoneRows, f){
       }).sort((a,b)=>growthQuarterRank(a.quarter)-growthQuarterRank(b.quarter)||a.quarter.localeCompare(b.quarter))
     };
   }
-  return Object.assign({status:'ok', cohort:kids.length, kids, baz, trend, bmi, hba}, growthMoreCharts(kids));
+  const more=growthMoreCharts(kids);
+  const displayed=typeof whoZ==='undefined'?null:growthDisplayed(kids, f);
+  return Object.assign({status:'ok', cohort:kids.length, kids, baz, trend, bmi, hba, displayed}, more);
+}
+function growthWhoPoint(k, which){
+  if(typeof whoZ==='undefined'||!whoZ.measure) return null;
+  const ageYears=which==='base'?k.baseAge:k.latestAge;
+  const weightKg=which==='base'?k.baseWeight:k.latestWeight;
+  const heightCm=which==='base'?k.baseHeight:k.latestHeight;
+  if(!k.sex||ageYears==null||weightKg==null||heightCm==null) return {missing:true};
+  return whoZ.measure({sex:k.sex, ageYears, weightKg, heightCm});
+}
+function growthGapMonths(k){
+  if(k.baseAge==null||k.latestAge==null) return null;
+  const months=(k.latestAge-k.baseAge)*12;
+  return months>=0?months:null;
+}
+function growthGapBand(months){
+  if(months==null) return '';
+  if(months<6) return '0–6';
+  if(months<12) return '6–12';
+  if(months<18) return '12–18';
+  return '18+';
+}
+function growthDisplayed(kids, f){
+  const ex={cohort:kids.length, noSexOrPair:0, shortGap:0, bazImplausible:0, hazImplausible:0, wazImplausible:0, under5:0, from5:0, wazLatest:0, wazNotApplicable:0, noLaterPair:0};
+  let bazClose=0, bazCmp=0, hazClose=0, hazCmp=0;
+  kids.forEach(k=>{
+    k.gapMonths=growthGapMonths(k);
+    k.gapBand=growthGapBand(k.gapMonths);
+    k.whoBase=growthWhoPoint(k,'base');
+    k.whoLatest=growthWhoPoint(k,'latest');
+    const base=k.whoBase&&!k.whoBase.missing?k.whoBase:null;
+    const latest=k.whoLatest&&!k.whoLatest.missing?k.whoLatest:null;
+    if(!base) ex.noSexOrPair++;
+    if(base&&!latest) ex.noLaterPair++;
+    if(base&&base.bazImplausible) ex.bazImplausible++;
+    if((base&&base.hazImplausible)||(latest&&latest.hazImplausible)) ex.hazImplausible++;
+    if((base&&base.wazImplausible)||(latest&&latest.wazImplausible)) ex.wazImplausible++;
+    if(latest&&latest.ageMonths!=null){ if(latest.ageMonths<60) ex.under5++; else ex.from5++; }
+    if(latest&&latest.wazNotApplicable) ex.wazNotApplicable++;
+    if(latest&&latest.waz!=null) ex.wazLatest++;
+    if(k.gapMonths!=null&&k.gapMonths<3) ex.shortGap++;
+    [['baseBaz', base, k.baseBaz], ['latest', latest, k.latestBaz]].forEach(([, point, stored])=>{
+      if(point&&point.baz!=null&&stored!=null){ bazCmp++; if(Math.abs(point.baz-stored)<=0.15) bazClose++; }
+    });
+    if(base&&base.haz!=null&&k.baseHaz!=null){ hazCmp++; if(Math.abs(base.haz-k.baseHaz)<=0.15) hazClose++; }
+    if(latest&&latest.haz!=null&&k.latestHaz!=null){ hazCmp++; if(Math.abs(latest.haz-k.latestHaz)<=0.15) hazClose++; }
+  });
+  function longitudinal(k){
+    const base=k.whoBase&&!k.whoBase.missing?k.whoBase:null;
+    const latest=k.whoLatest&&!k.whoLatest.missing?k.whoLatest:null;
+    if(!base||!latest||base.baz==null||latest.baz==null) return false;
+    if(k.gapMonths==null||k.gapMonths<3) return false;
+    return true;
+  }
+  function meanPack(label, time, rows){
+    const n=rows.length;
+    const suppressed=n<GROWTH_MIN_N;
+    return {
+      label, time, n, suppressed,
+      meanBase:suppressed?null:growthMean(rows.map(r=>r.base)),
+      meanLatest:suppressed?null:growthMean(rows.map(r=>r.latest)),
+      meanDelta:suppressed?null:growthMean(rows.map(r=>r.delta)),
+      meanPerYear:suppressed?null:growthMean(rows.map(r=>r.perYear)),
+      meanDWaz:suppressed?null:growthMean(rows.map(r=>r.dwaz).filter(v=>v!=null))
+    };
+  }
+  const bands={};
+  GROWTH_TIME.forEach(t=>{ bands[t]=[]; });
+  const allRows=[];
+  const wazRows=[];
+  kids.forEach(k=>{
+    if(!longitudinal(k)) return;
+    const row={base:k.whoBase.baz, latest:k.whoLatest.baz, delta:k.whoLatest.baz-k.whoBase.baz, perYear:null, dwaz:null, kg:null, kgYear:null};
+    if(k.baseWeight!=null&&k.latestWeight!=null&&k.gapMonths>0){
+      row.kg=k.latestWeight-k.baseWeight;
+      row.perYear=row.kg/(k.gapMonths/12);
+      row.kgYear=row.perYear;
+    }
+    if(k.whoBase.waz!=null&&k.whoLatest.waz!=null) row.dwaz=k.whoLatest.waz-k.whoBase.waz;
+    allRows.push(row);
+    if(bands[k.gapBand]) bands[k.gapBand].push(row);
+    if(k.whoBase.waz!=null&&k.whoLatest.waz!=null) wazRows.push(k);
+  });
+  const bazMeans={
+    measured:allRows.length,
+    bars:[meanPack('All','all',allRows)].concat(GROWTH_TIME.map(t=>meanPack(t+' months', t, bands[t])))
+  };
+  function catBars(list, categoryOf){
+    const names=[];
+    const index={};
+    list.forEach(k=>{
+      const name=categoryOf(k);
+      if(!name) return;
+      if(index[name]==null){ index[name]=names.length; names.push(name); }
+    });
+    const counts=names.map(()=>0);
+    list.forEach(k=>{
+      const name=categoryOf(k);
+      if(name) counts[index[name]]++;
+    });
+    return {n:list.length, names, counts, shares:list.length>=GROWTH_MIN_N?pctTenths(counts):null, suppressed:list.length<GROWTH_MIN_N};
+  }
+  const latestValid=kids.filter(k=>k.whoLatest&&!k.whoLatest.missing&&k.whoLatest.baz!=null);
+  const under5=latestValid.filter(k=>k.whoLatest.ageMonths<60);
+  const from5=latestValid.filter(k=>k.whoLatest.ageMonths>=60);
+  const hazValid=kids.filter(k=>k.whoLatest&&!k.whoLatest.missing&&k.whoLatest.haz!=null);
+  function geoCat(list, categoryOf){
+    const level=growthGeoLevel;
+    return list;
+  }
+  const bmiNow5=catBars(from5, k=>k.whoLatest.bmiCategory);
+  const bmiNowUnder=catBars(under5, k=>k.whoLatest.bmiCategory);
+  const age5Cats=['Severe thinness','Thinness','Normal','Overweight','Obese'];
+  const byBand=GROWTH_TIME.map(t=>{
+    const list=kids.filter(k=>longitudinal(k)&&k.gapBand===t&&k.whoLatest.ageMonths>=60);
+    const counts=age5Cats.map(name=>list.filter(k=>k.whoLatest.bmiCategory===name).length);
+    const n=counts.reduce((s,v)=>s+v,0);
+    return {label:t+' months', time:t, n, counts, suppressed:n<GROWTH_MIN_N, shares:n>=GROWTH_MIN_N?pctTenths(counts):null};
+  });
+  const weightLong=kids.filter(k=>longitudinal(k)&&k.baseWeight!=null&&k.latestWeight!=null);
+  const wBands={};
+  GROWTH_TIME.forEach(t=>{ wBands[t]=[]; });
+  weightLong.forEach(k=>{ if(wBands[k.gapBand]) wBands[k.gapBand].push(k); });
+  function wPack(label, time, list){
+    const n=list.length, suppressed=n<GROWTH_MIN_N;
+    const kg=list.map(k=>k.latestWeight-k.baseWeight);
+    const per=list.map(k=>k.gapMonths>0?(k.latestWeight-k.baseWeight)/(k.gapMonths/12):null).filter(v=>v!=null);
+    const dw=list.map(k=>k.whoBase.waz!=null&&k.whoLatest.waz!=null?k.whoLatest.waz-k.whoBase.waz:null).filter(v=>v!=null);
+    return {
+      label, time, n, suppressed,
+      meanKg:suppressed?null:growthMean(kg),
+      meanPerYear:suppressed||per.length<GROWTH_MIN_N?null:growthMean(per),
+      meanDWaz:dw.length>=GROWTH_MIN_N?growthMean(dw):null,
+      dwazN:dw.length
+    };
+  }
+  const wazBoth=kids.filter(k=>longitudinal(k)&&k.whoBase.waz!=null&&k.whoLatest.waz!=null);
+  const wazLatest=kids.filter(k=>k.whoLatest&&k.whoLatest.waz!=null);
+  return {
+    exclusions:ex,
+    agreement:{bazCmp, bazClose, hazCmp, hazClose},
+    bazMeans,
+    bmiNow5, bmiNowUnder,
+    bmiByTime:byBand,
+    haz:{n:hazValid.length, stunted:hazValid.filter(k=>k.whoLatest.stunted).length},
+    weightChange:{
+      measured:weightLong.length,
+      bars:[wPack('All','all',weightLong)].concat(GROWTH_TIME.map(t=>wPack(t+' months', t, wBands[t])))
+    },
+    wazBoth:wazBoth.length,
+    wazLatest:catBars(wazLatest, k=>k.whoLatest.wazCategory),
+    wazNotApplicable:kids.filter(k=>k.whoLatest&&k.whoLatest.wazNotApplicable&&k.latestWeight!=null).length,
+    bmiByPlace:(()=>{
+      const level=growthGeoLevel(f);
+      const cats=['Severe thinness','Thinness','Normal','Overweight','Obese'];
+      const map=new Map();
+      from5.forEach(k=>{
+        const key=level==='district'?k.district:level==='facility'?k.facility:k.state;
+        if(!map.has(key)) map.set(key,{key, n:0, counts:[0,0,0,0,0], stunt:0, stuntN:0});
+        const g=map.get(key);
+        const i=cats.indexOf(k.whoLatest.bmiCategory);
+        if(i>=0){ g.n++; g.counts[i]++; }
+      });
+      hazValid.forEach(k=>{
+        if(k.whoLatest.ageMonths<60) return;
+        const key=level==='district'?k.district:level==='facility'?k.facility:k.state;
+        if(!map.has(key)) map.set(key,{key, n:0, counts:[0,0,0,0,0], stunt:0, stuntN:0});
+        const g=map.get(key);
+        g.stuntN++; if(k.whoLatest.stunted) g.stunt++;
+      });
+      const bars=Array.from(map.values()).map(g=>({
+        key:g.key, label:level==='state'?sln(g.key):g.key, n:g.n, stunt:g.stunt, stuntN:g.stuntN,
+        suppressed:g.n<GROWTH_MIN_N, counts:g.counts, shares:g.n>=GROWTH_MIN_N?pctTenths(g.counts):null,
+        stuntPct:g.stuntN>=GROWTH_MIN_N?growthPct(g.stunt, g.stuntN):null
+      }));
+      return {level, cats, bars, measured:from5.length, hazN:hazValid.filter(k=>k.whoLatest.ageMonths>=60).length};
+    })(),
+    hbaByCat:(()=>{
+      const names=[];
+      const acc={};
+      from5.forEach(k=>{
+        if(k.latestHba==null||!k.whoLatest.bmiCategory) return;
+        const name=k.whoLatest.bmiCategory;
+        if(!acc[name]){ acc[name]={hba:[], name}; names.push(name); }
+        acc[name].hba.push(k.latestHba);
+      });
+      return names.map(name=>{
+        const n=acc[name].hba.length;
+        return {label:name, n, suppressed:n<GROWTH_MIN_N, mean:n>=GROWTH_MIN_N?growthMean(acc[name].hba):null};
+      });
+    })()
+  };
 }
 function growthHasSize(k){
   return (k.baseWeight!=null&&k.baseHeight!=null)||(k.latestWeight!=null&&k.latestHeight!=null);
@@ -6233,7 +6428,42 @@ function renderGrowth(){
   renderGrowthWeightChg();
   renderGrowthWeightNow();
 }
+function growthAgreeText(block){
+  const a=block&&block.agreement;
+  if(!a||!a.bazCmp) return '';
+  const pct=Math.round(a.bazClose/a.bazCmp*1000)/10;
+  return ' Recomputed WHO BMI-for-age z matches the stored score within 0.15 for '+pct+'% of '+a.bazCmp.toLocaleString()+' baseline and latest measurements.';
+}
+function renderDisplayedBaz(block){
+  if(_gBaz){_gBaz.destroy();_gBaz=null;}
+  const canvas=document.getElementById('c-growth-baz');
+  const foot=document.getElementById('growth-baz-foot');
+  if(!canvas) return;
+  growthRelease(canvas);
+  const bars=block.bars;
+  growthLegend('growth-baz-lg', [{label:'Baseline BMI-for-age z', color:'#8ec0e4'},{label:'Latest BMI-for-age z', color:'#0e446e'}]);
+  _gBaz=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:bars.map(b=>[b.label, b.suppressed?'n<20':'(n='+b.n.toLocaleString()+')']),
+      datasets:[
+        {label:'Baseline BMI-for-age z', data:bars.map(b=>b.suppressed?null:b.meanBase), backgroundColor:'#8ec0e4', _noLabel:true},
+        {label:'Latest BMI-for-age z', data:bars.map(b=>b.suppressed?null:b.meanLatest), backgroundColor:'#0e446e', _noLabel:true}
+      ]
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:growthKgTooltip(bars, 'z')},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{title:{display:true, text:'WHO BMI-for-age z (0 = WHO median)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
+      }}
+  });
+  if(foot) foot.textContent=growthFoot(block.measured, GROWTH.cohort, 'with a valid baseline and latest BMI-for-age z at least 3 months apart')+growthAgreeText(GROWTH.displayed);
+}
 function renderGrowthBaz(){
+  if(GROWTH&&GROWTH.displayed&&GROWTH.displayed.bazMeans){
+    renderDisplayedBaz(GROWTH.displayed.bazMeans);
+    return;
+  }
   const canvas=document.getElementById('c-growth-baz');
   const foot=document.getElementById('growth-baz-foot');
   if(_gBaz){_gBaz.destroy();_gBaz=null;}
@@ -6361,9 +6591,78 @@ function renderGrowthTrend(){
       }
     }
   });
-  if(foot) foot.textContent=growthFoot(trend.measured, GROWTH.cohort, 'with a milestone mean');
+  if(foot) foot.textContent=growthFoot(trend.measured, GROWTH.cohort, 'with a milestone mean')+(GROWTH.displayed?growthAgreeText(GROWTH.displayed):'')+' These points are the sheet’s stored visit means. Weight, height and age at each month are not in Growth_milestones, so they are not recomputed from the WHO tables.';
+}
+function renderDisplayedBmi(displayed){
+  if(_gBmi){_gBmi.destroy();_gBmi=null;}
+  const canvas=document.getElementById('c-growth-bmi');
+  const foot=document.getElementById('growth-bmi-foot');
+  const title=document.getElementById('growth-bmi-title');
+  const place=displayed.bmiByPlace;
+  if(!canvas||!place) return;
+  growthRelease(canvas);
+  const where=place.level==='district'?'by district':place.level==='facility'?'by facility':'by state';
+  if(title) title.textContent='Current WHO BMI-for-age '+where+' (ages 5–19)';
+  const cats=place.cats.map((name,i)=>({label:name, color:GROWTH_BMI[i].color}));
+  growthLegend('growth-bmi-lg', cats);
+  const bars=place.bars;
+  const stuntLine=b=>b.stuntPct==null?'height-for-age n<20':('height-for-age stunted '+b.stuntPct.toFixed(1)+'%');
+  _gBmi=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:bars.map(b=>[b.label, b.suppressed?'BMI n<20':'(BMI n='+b.n.toLocaleString()+')', stuntLine(b)]),
+      datasets:cats.map((c,i)=>({
+        label:c.label, data:bars.map(b=>b.suppressed||!b.shares?null:b.shares[i]),
+        _counts:bars.map(b=>b.counts[i]), backgroundColor:c.color, stack:'s', _lc:inkOn(c.color), _minVal:8, _minH:16
+      }))
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{
+      title(items){ const label=items[0]&&items[0].label; return Array.isArray(label)?label.filter(Boolean).join(' '):label; },
+      label(ctx){
+        const bar=bars[ctx.dataIndex];
+        const pct=bar&&bar.shares?bar.shares[ctx.datasetIndex]:null;
+        return growthTipCount(ctx.dataset.label, pct, bar?bar.counts[ctx.datasetIndex]:0, bar?bar.n:0);
+      },
+      afterBody(items){
+        const bar=bars[items[0].dataIndex]; if(!bar) return [];
+        if(bar.stuntPct==null) return ['Height-for-age stunted: n<20 (separate denominator)'];
+        return ['Height-for-age stunted: '+bar.stuntPct.toFixed(1)+'% of '+bar.stuntN.toLocaleString()+' (separate from the BMI bars)'];
+      }
+    }}},
+      scales:{x:{stacked:true, grid:{display:false}, border:{display:false}, ticks:{font:{size:10}, color:'#334155', maxRotation:0, autoSkip:false}}, y:{stacked:true, display:false, min:0, max:100}}}
+  });
+  if(foot) foot.textContent='BMI bars: '+place.measured.toLocaleString()+' children aged 5–19 with a valid latest BMI-for-age z. Height-for-age line: '+place.hazN.toLocaleString()+' children aged 5–19 with a valid height-for-age z. Under 5 years at the latest measurement: '+displayed.exclusions.under5.toLocaleString()+' (WHO 2006 labels, not mixed into these bars). Implausible BMI-for-age z excluded: '+displayed.exclusions.bazImplausible.toLocaleString()+'.';
+}
+function renderDisplayedHba(rows){
+  if(_gHba){_gHba.destroy();_gHba=null;}
+  const canvas=document.getElementById('c-growth-hba');
+  const foot=document.getElementById('growth-hba-foot');
+  const delta=document.getElementById('growth-hba-delta');
+  if(!canvas) return;
+  growthRelease(canvas);
+  const cols=['#071e33','#0e446e','#2a7ab8','#8ec0e4','#d4e8f6'];
+  _gHba=createDashboardChart(canvas,{
+    type:'bar',
+    data:{
+      labels:rows.map(g=>[g.label, g.suppressed?'n<20':'(n='+g.n.toLocaleString()+')']),
+      datasets:[{label:'Mean latest HbA1c (%)', data:rows.map(g=>g.suppressed?null:g.mean), backgroundColor:rows.map((g,i)=>cols[i%cols.length]), _noLabel:true, _pct:false}]
+    },
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{callbacks:{
+      label(ctx){ const g=rows[ctx.dataIndex]; return g&&g.mean!=null?' Mean latest HbA1c: '+g.mean.toFixed(2)+'% · n = '+g.n.toLocaleString():' n<20'; }
+    }}},
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:10}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{beginAtZero:true, title:{display:true, text:'Mean latest HbA1c (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
+      }}
+  });
+  if(delta) delta.textContent=rows.map(g=>g.label+': '+(g.mean==null?'n<20':g.mean.toFixed(2)+'% (n='+g.n.toLocaleString()+')')).join(' · ');
+  if(foot) foot.textContent='Ages 5–19 only. HbA1c is the latest value stored for the child, which may not be the same day as the growth measurement. Groups under 20 are hidden.';
 }
 function renderGrowthBmi(){
+  if(GROWTH&&GROWTH.displayed&&GROWTH.displayed.bmiNow5){
+    renderDisplayedBmi(GROWTH.displayed);
+    return;
+  }
   const canvas=document.getElementById('c-growth-bmi');
   const foot=document.getElementById('growth-bmi-foot');
   const title=document.getElementById('growth-bmi-title');
@@ -6427,6 +6726,10 @@ function renderGrowthBmi(){
   if(foot) foot.textContent=growthFoot(bmi.measured, GROWTH.cohort, 'measured in the last 6 months');
 }
 function renderGrowthHba(){
+  if(GROWTH&&GROWTH.displayed&&GROWTH.displayed.hbaByCat){
+    renderDisplayedHba(GROWTH.displayed.hbaByCat);
+    return;
+  }
   const canvas=document.getElementById('c-growth-hba');
   const foot=document.getElementById('growth-hba-foot');
   const delta=document.getElementById('growth-hba-delta');
@@ -6525,6 +6828,15 @@ function renderGrowthShare(slot, canvasId, footId, bars, series, phrase, pluginI
   return chart;
 }
 function renderGrowthBmiTime(){
+  const who=GROWTH&&GROWTH.displayed&&GROWTH.displayed.bmiByTime;
+  if(who){
+    growthLegend('growth-bmi-time-lg', GROWTH_BMI.map(c=>({label:c.key, color:c.color})));
+    const slot={get chart(){return _gBmiTime;}, set chart(v){_gBmiTime=v;}};
+    _gBmiTime=renderGrowthShare(slot, 'c-growth-bmi-time', 'growth-bmi-time-foot', who, GROWTH_BMI, 'aged 5–19 in a time-in-care cohort', 'growthBmiTimeWho');
+    const foot=document.getElementById('growth-bmi-time-foot');
+    if(foot&&GROWTH.displayed) foot.textContent+=' Cohorts are mutually exclusive months from baseline to latest (0–6, 6–12, 12–18, 18+). Gap under 3 months excluded: '+GROWTH.displayed.exclusions.shortGap.toLocaleString()+'. Under 5 years are not mixed into these WHO 2007 categories.';
+    return;
+  }
   const block=GROWTH&&GROWTH.bmiDuration;
   growthLegend('growth-bmi-time-lg', GROWTH_BMI.map(c=>({label:c.key, color:c.color})));
   const slot={get chart(){return _gBmiTime;}, set chart(v){_gBmiTime=v;}};
@@ -6532,6 +6844,17 @@ function renderGrowthBmiTime(){
   _gBmiTime=renderGrowthShare(slot, 'c-growth-bmi-time', 'growth-bmi-time-foot', block.bars, GROWTH_BMI, 'with a weight, a height and a BMI-for-age category', 'growthBmiTimeMin');
 }
 function renderGrowthBmiNow(){
+  const who=GROWTH&&GROWTH.displayed&&GROWTH.displayed.bmiNow5;
+  if(who&&who.names){
+    const series=who.names.map((name,i)=>({key:name, label:name, color:GROWTH_BMI[Math.min(i, GROWTH_BMI.length-1)].color}));
+    const bar={label:'Ages 5–19', time:'all', n:who.n, counts:who.counts, shares:who.shares, suppressed:who.suppressed};
+    growthLegend('growth-bmi-now-lg', series);
+    const slot={get chart(){return _gBmiNow;}, set chart(v){_gBmiNow=v;}};
+    _gBmiNow=renderGrowthShare(slot, 'c-growth-bmi-now', 'growth-bmi-now-foot', [bar], series, 'aged 5–19 with a valid latest BMI-for-age z', 'growthBmiNowWho');
+    const foot=document.getElementById('growth-bmi-now-foot');
+    if(foot&&GROWTH.displayed) foot.textContent+=' Excluded: no usable weight and height '+GROWTH.displayed.exclusions.noSexOrPair.toLocaleString()+'; implausible BMI-for-age z '+GROWTH.displayed.exclusions.bazImplausible.toLocaleString()+'; under 5 years '+GROWTH.displayed.exclusions.under5.toLocaleString()+' (shown separately only when a group reaches 20).';
+    return;
+  }
   const block=GROWTH&&GROWTH.bmiNow;
   growthLegend('growth-bmi-now-lg', GROWTH_BMI.map(c=>({label:c.key, color:c.color})));
   const slot={get chart(){return _gBmiNow;}, set chart(v){_gBmiNow=v;}};
@@ -6549,6 +6872,32 @@ function growthKgTooltip(bars, unit){
   }};
 }
 function renderGrowthWeightPos(){
+  if(GROWTH&&GROWTH.displayed&&GROWTH.kids){
+    if(_gWtPos){_gWtPos.destroy();_gWtPos=null;}
+    const canvas=document.getElementById('c-growth-wt-pos');
+    const foot=document.getElementById('growth-wt-pos-foot');
+    if(!canvas) return;
+    growthRelease(canvas);
+    const cats=['Severe underweight','Underweight','Normal','Possible risk of overweight','Above +2'];
+    const base=[0,0,0,0,0], late=[0,0,0,0,0];
+    let n=0;
+    GROWTH.kids.forEach(k=>{
+      if(!k.whoBase||!k.whoLatest||k.whoBase.waz==null||k.whoLatest.waz==null) return;
+      if(k.gapMonths==null||k.gapMonths<3) return;
+      const bi=cats.indexOf(k.whoBase.wazCategory), li=cats.indexOf(k.whoLatest.wazCategory);
+      if(bi<0||li<0) return;
+      n++; base[bi]++; late[li]++;
+    });
+    const bars=[
+      {label:'Baseline', time:'base', n, counts:base, shares:n>=GROWTH_MIN_N?pctTenths(base):null, suppressed:n<GROWTH_MIN_N},
+      {label:'Latest', time:'late', n, counts:late, shares:n>=GROWTH_MIN_N?pctTenths(late):null, suppressed:n<GROWTH_MIN_N}
+    ];
+    const series=cats.map((label,i)=>({label, color:GROWTH_BMI[i].color}));
+    growthLegend('growth-wt-pos-lg', series);
+    _gWtPos=renderGrowthShare({get chart(){return _gWtPos;}, set chart(v){_gWtPos=v;}}, 'c-growth-wt-pos', 'growth-wt-pos-foot', bars, series, 'under 10 years at both visits', 'growthWazPair');
+    if(foot) foot.textContent='Same children at baseline and at the latest visit. Both ages are under 10 years and the visits are at least 3 months apart. n = '+n.toLocaleString()+'. Over 10 years, WAZ is not calculated: '+(GROWTH.displayed.wazNotApplicable||0).toLocaleString()+' children.';
+    return;
+  }
   if(_gWtPos){_gWtPos.destroy();_gWtPos=null;}
   const canvas=document.getElementById('c-growth-wt-pos');
   const foot=document.getElementById('growth-wt-pos-foot');
@@ -6581,7 +6930,7 @@ function renderGrowthWeightChg(){
   if(_gWtChg){_gWtChg.destroy();_gWtChg=null;}
   const canvas=document.getElementById('c-growth-wt-chg');
   const foot=document.getElementById('growth-wt-chg-foot');
-  const block=GROWTH&&GROWTH.weightChg;
+  const block=GROWTH&&GROWTH.displayed&&GROWTH.displayed.weightChange?GROWTH.displayed.weightChange:(GROWTH&&GROWTH.weightChg);
   if(!canvas||!block) return;
   growthRelease(canvas);
   growthLegend('growth-wt-chg-lg', [{label:'Change in weight (kg)', color:'#1a6aaf'}]);
@@ -6590,7 +6939,7 @@ function renderGrowthWeightChg(){
     type:'bar',
     data:{
       labels:bars.map(b=>[b.label, b.suppressed?'n<20':'(n='+b.n.toLocaleString()+')']),
-      datasets:[{label:'Change in weight (kg)', data:bars.map(b=>b.suppressed?null:b.meanDelta), backgroundColor:'#1a6aaf', _noLabel:true, _pct:false}]
+      datasets:[{label:'Change in weight (kg)', data:bars.map(b=>b.suppressed?null:(b.meanKg!=null?b.meanKg:b.meanDelta)), backgroundColor:'#1a6aaf', _noLabel:true, _pct:false}]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
@@ -6602,9 +6951,23 @@ function renderGrowthWeightChg(){
     },
     plugins:[growthValuePlugin('growthWtChgValues')]
   });
-  if(foot) foot.textContent=growthFoot(block.measured, GROWTH.cohort, 'with a baseline weight and a later weight')+growthWeightLimit(block);
+  if(foot){
+    const bits=bars.filter(b=>!b.suppressed&&b.meanPerYear!=null).map(b=>b.label+': '+Number(b.meanPerYear).toFixed(2)+' kg/year'+(b.meanDWaz==null?'':', ΔWAZ '+Number(b.meanDWaz).toFixed(2)+' (n='+(b.dwazN||0).toLocaleString()+')'));
+    foot.textContent=growthFoot(block.measured, GROWTH.cohort, 'with valid baseline and latest weights at least 3 months apart')+(bits.length?' Annualised change and ΔWAZ, only where both measurements are under 10 years: '+bits.join('; ')+'.':' ΔWAZ is not shown when a measurement is over 10 years.');
+  }
 }
 function renderGrowthWeightNow(){
+  const who=GROWTH&&GROWTH.displayed&&GROWTH.displayed.wazLatest;
+  if(who&&who.names){
+    const series=who.names.map((name,i)=>({label:name, color:GROWTH_BMI[Math.min(i, GROWTH_BMI.length-1)].color}));
+    const bar={label:'Under 10 years', time:'all', n:who.n, counts:who.counts, shares:who.shares, suppressed:who.suppressed};
+    growthLegend('growth-wt-now-lg', series);
+    const slot={get chart(){return _gWtNow;}, set chart(v){_gWtNow=v;}};
+    _gWtNow=renderGrowthShare(slot, 'c-growth-wt-now', 'growth-wt-now-foot', [bar], series, 'under 10 years with a valid weight-for-age z', 'growthWazNow');
+    const foot=document.getElementById('growth-wt-now-foot');
+    if(foot) foot.textContent+=' WAZ is not calculated at 10 years or older. Children with a weight but over 10 years: '+(GROWTH.displayed.wazNotApplicable||0).toLocaleString()+'.';
+    return;
+  }
   const block=GROWTH&&GROWTH.weightNow;
   growthLegend('growth-wt-now-lg', GROWTH_KG.map(c=>({label:c.key, color:c.color})));
   const slot={get chart(){return _gWtNow;}, set chart(v){_gWtNow=v;}};
