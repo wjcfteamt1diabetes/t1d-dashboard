@@ -407,6 +407,14 @@ test('same-child flows and the attrition note are computed from the children, no
   assert.equal((got.who.match(/3 months/g) || []).length, 1);
 });
 
+test('horizontal bar labels stay inside only when they fit clear of the whisker', () => {
+  const {run} = setup();
+  assert.equal(run('growthHorizontalLabelPlan(120, 36, 120, 12)'), 'inside');
+  assert.equal(run('growthHorizontalLabelPlan(80, 36, 28, 12)'), 'outside');
+  assert.equal(run('growthHorizontalLabelPlan(80, 36, 80, 3)'), 'outside');
+  assert.equal(run("contrastRatio('#0b2545','#ffffff')") >= 4.5, true);
+});
+
 test('narrow charts, contact columns and the partial-month mark stay display-only', () => {
   const {run} = setup();
   assert.match(html, /rel="icon"/);

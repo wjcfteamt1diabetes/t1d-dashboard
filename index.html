@@ -1565,6 +1565,17 @@ function inkOn(hex){
   const L=relLum(hex);
   return (1.05/(L+0.05))>=((L+0.05)/0.05)?'#ffffff':'#0f172a';
 }
+function contrastRatio(bg, ink){
+  const a=relLum(bg), b=relLum(ink);
+  const hi=Math.max(a,b), lo=Math.min(a,b);
+  return (hi+0.05)/(lo+0.05);
+}
+// Inside only when the text fits the clear part of the bar and white (or the bar's ink) is strong enough.
+function growthHorizontalLabelPlan(barWidth, textWidth, clearWidth, whiteContrast){
+  const room=clearWidth==null?barWidth:clearWidth;
+  if(room>=textWidth+12 && whiteContrast>=4.5) return 'inside';
+  return 'outside';
+}
 // Same hue, darkened until it can be read on a white card.
 function readableOnWhite(hex){
   let cur=hex;
@@ -1932,6 +1943,7 @@ window.addEventListener?.('beforeprint',()=>finishChartEntrances());
 // the stack, so the line does not cut through the total.
 Chart.register({
   id:'barLabels',
+  order:100,
   afterDatasetsDraw(chart){
     try{
       const ctx=chart.ctx;
@@ -1950,21 +1962,40 @@ Chart.register({
             const x1=Math.max(bar.x, bar.base!=null?bar.base:bar.x);
             if(ds._pct!==false && v<6 && !ds._forceLabel) return;
             const lblH=ds._staticLabel||(ds._pct===false?Number(v).toLocaleString():(ds._oneDp?Number(v).toFixed(1)+'%':v+'%'));
+            const colorH=Array.isArray(bg)?bg[j]:bg;
+            let limit=x1, anchor=x1;
+            const xScale=chart.scales&&chart.scales.x;
+            if(ds._lo&&ds._hi&&ds._lo[j]!=null&&ds._hi[j]!=null&&xScale){
+              const loX=xScale.getPixelForValue(ds._lo[j]);
+              const hiX=xScale.getPixelForValue(ds._hi[j]);
+              const whiskerLeft=Math.min(loX,hiX), whiskerRight=Math.max(loX,hiX);
+              if(whiskerLeft>x0) limit=Math.min(x1, whiskerLeft);
+              anchor=Math.max(x1, whiskerRight);
+            }
             ctx.save();
             ctx.font=`bold ${ds._fs||11}px Trebuchet MS,sans-serif`;
-            if(ctx.measureText(lblH).width>x1-x0-4){
-              if(ds._forceLabel){
-                ctx.textAlign='left'; ctx.textBaseline='middle';
+            const textW=ctx.measureText(lblH).width;
+            const whiteC=contrastRatio(colorH,'#ffffff');
+            const inside=growthHorizontalLabelPlan(x1-x0, textW, limit-x0, ds._lc?contrastRatio(colorH, ds._lc):whiteC);
+            const stacked=!!(chart.options&&chart.options.scales&&((chart.options.scales.x&&chart.options.scales.x.stacked)||(chart.options.scales.y&&chart.options.scales.y.stacked)));
+            ctx.textBaseline='middle';
+            if(inside==='inside'){
+              ctx.textAlign='center';
+              ctx.fillStyle=ds._lc||(whiteC>=4.5?'#ffffff':inkOn(colorH));
+              ctx.fillText(lblH, (x0+limit)/2, bar.y);
+            }else if(!stacked){
+              const area=chart.chartArea;
+              const left=anchor+4;
+              if(!area||left+textW<=area.right-1){
+                ctx.textAlign='left';
                 ctx.fillStyle='#1f2937';
-                ctx.fillText(lblH, x1+3, bar.y);
+                ctx.fillText(lblH, left, bar.y);
+              }else if(whiteC>=4.5||ds._lc){
+                ctx.textAlign='center';
+                ctx.fillStyle=ds._lc||'#ffffff';
+                ctx.fillText(lblH, (x0+x1)/2, bar.y);
               }
-              ctx.restore();
-              return;
             }
-            const colorH=Array.isArray(bg)?bg[j]:bg;
-            ctx.textAlign='center'; ctx.textBaseline='middle';
-            ctx.fillStyle=ds._lc||inkOn(colorH);
-            ctx.fillText(lblH, (x0+x1)/2, bar.y);
             ctx.restore();
             return;
           }
