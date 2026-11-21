@@ -5,12 +5,10 @@ const {test} = require('node:test');
 const html = fs.readFileSync(require('node:path').join(__dirname, '../index.html'), 'utf8');
 const source = html.match(/<script>([\s\S]*?)<\/script>/)[1].split('// ── Passcode gate')[0];
 
-function setup(){
+function browserStub(){
   const elements = {};
-  const context = vm.createContext({
-    console: {warn(){}, error(){}, log(){}},
-    window: {devicePixelRatio: 1, addEventListener(){}},
-    Chart: {defaults: {font: {}}, register(){}},
+  return {
+    elements,
     document: {
       getElementById(id){
         return elements[id] ??= {value: 'all', textContent: '', innerHTML: '', style: {}, hidden: false, classList: {toggle(){}, add(){}, remove(){}}};
@@ -21,10 +19,34 @@ function setup(){
       querySelectorAll(){return [];},
       body: {classList: {toggle(){}, add(){}, remove(){}}}
     }
+  };
+}
+function setup(){
+  const stub = browserStub();
+  const context = vm.createContext({
+    console: {warn(){}, error(){}, log(){}},
+    window: {devicePixelRatio: 1, addEventListener(){}},
+    Chart: {defaults: {font: {}}, register(){}},
+    document: stub.document
   });
   vm.runInContext(source, context);
   const run = code => vm.runInContext(code, context);
-  return {run, elements, context};
+  return {run, elements: stub.elements, context};
+}
+function setupWho(){
+  const stub = browserStub();
+  const context = vm.createContext({
+    console: {warn(){}, error(){}, log(){}},
+    window: {devicePixelRatio: 1, addEventListener(){}},
+    Chart: {defaults: {font: {}}, register(){}},
+    document: stub.document
+  });
+  const dir = require('node:path').join(__dirname, '../who');
+  vm.runInContext(fs.readFileSync(require('node:path').join(dir, 'who-lms.js'), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(require('node:path').join(dir, 'who-z.js'), 'utf8'), context);
+  vm.runInContext(source, context);
+  const run = code => vm.runInContext(code, context);
+  return {run, elements: stub.elements, context};
 }
 
 function child(id, extra){
@@ -59,7 +81,11 @@ test('growth section sits on the clinical tab and loads both sheets by name', ()
   const tab = html.slice(html.indexOf('id="tab-1"'), html.indexOf('id="tab-2"'));
   assert.ok(tab.indexOf('tc-wrap cs-only') >= 0);
   assert.ok(tab.indexOf('Growth (ages 2–18)') > tab.indexOf('tc-wrap cs-only'));
-  assert.match(tab, /The period filter does not apply/);
+  assert.match(tab, /including state, division, district, facility, DPC, support, sex, age group, status and enrolment period/);
+  assert.match(tab, /id="c-growth-bmi-under"/);
+  assert.match(tab, /id="growth-wt-metric"/);
+  assert.match(tab, /weight in kilograms, height in centimetres/);
+  assert.match(html, /weight_kg, height_cm/);
   assert.match(tab, /BMI-for-age \(BAZ\) is BMI, weight divided by height squared, scored against the WHO reference/);
   assert.match(tab, /0 is the WHO median/);
   assert.match(tab, /The benchmark is the WHO median, z = 0, for the same age and sex/);
@@ -170,19 +196,21 @@ test('filter join, bucket aggregation, min-N and period independence', () => {
     const geo = {state:'all', district:'all', facility:'all', age:'all'};
     const a = computeGrowth(ids, rows, null, Object.assign({period:'12'}, geo));
     const b = computeGrowth(ids, rows, null, Object.assign({period:'all'}, geo));
-    const all = a.baz.bars[0];
-    const early = a.baz.bars[1];
-    const late = a.baz.bars[4];
+    const all = b.baz.bars[0];
+    const early = b.baz.bars[1];
+    const late = b.baz.bars[4];
     return {
       same: JSON.stringify(a) === JSON.stringify(b),
-      cohort: a.cohort,
+      undatedLeftOut: a.cohort,
+      cohort: b.cohort,
       all: {n: all.n, shares: all.shares, mean: all.meanDHaz, haz: all.hazBehindPct, suppressed: all.suppressed},
       early: {n: early.n, suppressed: early.suppressed, shares: early.shares},
       late: {n: late.n, shares: late.shares, mean: late.meanDHaz, haz: late.hazBehindPct},
-      states: a.bmi.bars.map(bar => ({label: bar.label, n: bar.n, suppressed: bar.suppressed, share: bar.shares && bar.shares[2], stunt: bar.stuntPct}))
+      states: b.bmi.bars.map(bar => ({label: bar.label, n: bar.n, suppressed: bar.suppressed, share: bar.shares && bar.shares[2], stunt: bar.stuntPct}))
     };
   })()`);
-  assert.equal(pack.same, true);
+  assert.equal(pack.same, false);
+  assert.equal(pack.undatedLeftOut, 0, 'a dated period leaves out children with no enrolment date');
   assert.equal(pack.cohort, ids.length - 1, 'duplicate Claude_ID counts once and the outsider is left out');
   assert.equal(pack.all.n, 40);
   assert.equal(pack.all.suppressed, false);
@@ -213,7 +241,7 @@ test('current growth status drills from state to district to facility and keeps 
   context.rows = rows;
   context.ids = idSet(rows.map(r => r.Claude_ID));
   const got = run(`(() => {
-    const base = {age:'all', period:'6'};
+    const base = {age:'all', period:'all'};
     const states = computeGrowth(ids, rows, [], Object.assign({state:'all', district:'all', facility:'all'}, base));
     const districts = computeGrowth(ids, rows, [], Object.assign({state:'RJ', district:'all', facility:'all'}, base));
     const facilities = computeGrowth(ids, rows, [], Object.assign({state:'RJ', district:'Jaipur', facility:'all'}, base));
@@ -410,7 +438,7 @@ test('BMI category and kilogram weight charts keep the filtered cohort and show 
   context.rows = rows;
   context.ids = idSet(rows.map(r => r.Claude_ID).filter(id => id !== 'b0'));
   const out = run(`(() => {
-    const data = computeGrowth(ids, rows, null, {state:'all', age:'all', period:'12'});
+    const data = computeGrowth(ids, rows, null, {state:'all', age:'all', period:'all'});
     const again = computeGrowth(ids, rows, null, {state:'all', age:'all', period:'all'});
     const all = data.bmiDuration.bars[0];
     const early = data.bmiDuration.bars[1];
@@ -504,4 +532,124 @@ test('drill-down lists only the children in the clicked slice', () => {
   assert.match(got.cols, /Claude_ID/);
   assert.equal(/name|phone|unique/i.test(got.cols), false);
   assert.equal(got.csv, 'Facility\n"CS, Jaipur"');
+});
+
+test('a short growth insight is hidden below 20 children', () => {
+  const {run, elements} = setup();
+  run("growthInsight('growth-baz-take', 'Mean moved', 19)");
+  assert.equal(elements['growth-baz-take'].hidden, true);
+  assert.equal(elements['growth-baz-take'].textContent, '');
+  run("growthInsight('growth-baz-take', 'Mean moved', 20)");
+  assert.equal(elements['growth-baz-take'].hidden, false);
+  assert.equal(elements['growth-baz-take'].textContent, 'Mean moved');
+  run("growthShowTakeaway('growth-trend-take', 'Not enough data for a takeaway')");
+  assert.equal(elements['growth-trend-take'].hidden, true);
+});
+
+test('every growth chart follows the roster, sex, age and enrolment period', () => {
+  const {run, context} = setupWho();
+  const rows = [];
+  const miles = [];
+  const sexes = ['Male', 'Female'];
+  const states = ['RJ', 'MP'];
+  const ages = [3, 8, 12];
+  const enrolled = ['2026-06-15', '2020-01-15'];
+  sexes.forEach(sex => states.forEach(state => ages.forEach(age => enrolled.forEach(when => {
+    const id = [sex, state, age, when].join('-');
+    const young = age < 5;
+    const older = age >= 12;
+    rows.push(child(id, {
+      Sex: sex, State: state,
+      District: state === 'RJ' ? 'Jaipur' : 'Bhopal',
+      Facility: state === 'RJ' ? 'CS Jaipur' : 'CS Bhopal',
+      Enrolment_date: when,
+      Baseline_age_y: String(age - 1),
+      Latest_age_y: String(age),
+      Baseline_height_cm: young ? '90' : older ? '140' : '120',
+      Latest_height_cm: young ? '96' : older ? '149' : '127',
+      Baseline_weight_kg: young ? '12' : older ? '35' : '22',
+      Latest_weight_kg: young ? '14' : older ? '40' : '25',
+      Latest_HbA1c: '9.4'
+    }));
+    miles.push({Claude_ID: id, Month_bin: '0', Mean_BAZ: '-0.4', Mean_HAZ: '-1.1'});
+  }))));
+  for(let i = 0; i < 8; i++){
+    const id = 'pad'+i;
+    rows.push(child(id, {
+      Sex: 'Male', State: 'RJ', Enrolment_date: '2026-06-15',
+      Baseline_age_y: '7', Latest_age_y: '8',
+      Baseline_height_cm: '120', Latest_height_cm: '127',
+      Baseline_weight_kg: '22', Latest_weight_kg: '25',
+      Latest_HbA1c: '9.1'
+    }));
+    miles.push({Claude_ID: id, Month_bin: '0', Mean_BAZ: '-0.3', Mean_HAZ: '-0.8'});
+  }
+  for(let i = 0; i < 4; i++){
+    const id = 'adult'+i;
+    rows.push(child(id, {
+      Sex: 'Male', State: 'RJ', Enrolment_date: '2026-06-15',
+      Baseline_age_y: '17.5', Latest_age_y: '18.5',
+      Baseline_height_cm: '170', Latest_height_cm: '174',
+      Baseline_weight_kg: '60', Latest_weight_kg: '64',
+      Latest_HbA1c: '8.2'
+    }));
+    miles.push({Claude_ID: id, Month_bin: '0', Mean_BAZ: '0.1', Mean_HAZ: '-0.2'});
+  }
+  context.rows = rows;
+  context.miles = miles;
+  context.ids = idSet(rows.map(r => r.Claude_ID));
+  context.rj = idSet(rows.filter(r => r.State === 'RJ').map(r => r.Claude_ID));
+  const got = run(`(() => {
+    const open = {state:'all', sex:'all', age:'all', period:'all'};
+    const full = computeGrowth(ids, rows, miles, open);
+    const roster = computeGrowth(rj, rows, miles, open);
+    const male = computeGrowth(ids, rows, miles, Object.assign({}, open, {sex:'M'}));
+    const ped = computeGrowth(ids, rows, miles, Object.assign({}, open, {age:'ped'}));
+    const adults = computeGrowth(ids, rows, miles, Object.assign({}, open, {age:'adu'}));
+    const recent = computeGrowth(ids, rows, miles, Object.assign({}, open, {period:'12'}));
+    const custom = computeGrowth(ids, rows, miles, {period:'custom', from:'2020-01', to:'2020-06', sex:'all', age:'all'});
+    const none = computeGrowth({}, rows, miles, open);
+    const bar = full.displayed.weightChange.bars[0];
+    const keys = Object.keys(growthChartCensus(full));
+    const shrinks = (part) => keys.filter(k => growthChartCensus(part)[k] < growthChartCensus(full)[k]);
+    const unchanged = (part) => keys.filter(k => growthChartCensus(part)[k] === growthChartCensus(full)[k]);
+    return {
+      charts: growthFilterMap().map(row => row.chart),
+      full: growthChartCensus(full),
+      roster: shrinks(roster),
+      male: shrinks(male),
+      recent: shrinks(recent),
+      pedSmaller: shrinks(ped),
+      pedSame: unchanged(ped),
+      adults: growthChartCensus(adults),
+      adultView: growthView({age:'adu'}, full).mode,
+      custom: custom.cohort,
+      none: growthChartCensus(none),
+      perYear: bar.meanPerYear,
+      dwaz: bar.meanDWaz,
+      dwazN: bar.dwazN,
+      underNames: full.displayed.bmiNowUnder.names
+    };
+  })()`);
+  assert.equal(got.charts.length, 10);
+  Object.entries(got.full).forEach(([key, n]) => assert.ok(n > 0, key+' starts above zero'));
+  ['baz','trend','bmiPlace','hba','bmiTime','bmiNow','bmiUnder','wazPos','weightChg','wazNow'].forEach(key => {
+    assert.ok(got.roster.includes(key), 'roster filter shrinks '+key);
+    assert.ok(got.male.includes(key), 'sex filter shrinks '+key);
+    assert.ok(got.recent.includes(key), 'enrolment period shrinks '+key);
+  });
+  ['baz','trend','bmiPlace','hba','bmiTime','bmiNow','weightChg'].forEach(key => {
+    assert.ok(got.pedSmaller.includes(key), 'ages 2–18 drops an 18-year-old from '+key);
+  });
+  ['bmiUnder','wazPos','wazNow'].forEach(key => {
+    assert.ok(got.pedSame.includes(key), key+' has nobody 18 or older, so that age cut does not change its n');
+  });
+  Object.values(got.adults).forEach(n => assert.equal(n, 0));
+  assert.equal(got.adultView, 'adults');
+  assert.equal(got.custom, 12);
+  Object.values(got.none).forEach(n => assert.equal(n, 0));
+  assert.equal(typeof got.perYear, 'number');
+  assert.equal(typeof got.dwaz, 'number');
+  assert.ok(got.dwazN >= 20);
+  assert.ok(got.underNames.includes('Severely wasted') || got.underNames.includes('Normal') || got.underNames.length > 0);
 });
