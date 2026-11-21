@@ -45,13 +45,15 @@ On the weight-gain chart, on track means the weight-for-age z changed by no more
 
 A headline share uses a 95% Wilson score interval, shown as the small range under the card. The same interval is the whisker on each first-visit and latest-visit bar.
 
-For a paired change, moved out is children in the group at the first visit and not at the latest. Moved in is the opposite. The net change, in percentage points, is `(moved in − moved out) / N`. Its 95% interval is the Wald interval: standard error `sqrt((b + c) − (b − c)² / N) / N`, with 1.96. The p-value is the two-sided exact McNemar test, a binomial test on the discordant pairs. Below 0.05 the note says “a real change”. At 0.05 or above it says “within normal variation”.
+For a paired change, moved out is children in the group at the first visit and not at the latest. Moved in is the opposite. The net change, in percentage points, is `(moved in − moved out) / N`. The p-value is the two-sided exact McNemar test, a binomial test on the discordant pairs. The 95% interval is the equal-tailed Clopper–Pearson interval for the share of those discordant pairs that moved in, rescaled to the whole group. It excludes zero only when that exact p is below 0.05, so the interval and the wording follow one rule. A Wald interval is not used, because it can exclude zero when the exact p is 0.05 or higher.
+
+The wording uses that exact p only. Below 0.05 the note says “a real change”. From 0.05 up to but not including 0.10 it says “borderline, may be chance”. At 0.10 or above it says “within normal variation”. If a printed interval ever disagreed with that wording, the note would say “borderline, may be chance” rather than a verdict the interval contradicts.
 
 These comparisons are before and after, not proof the program caused the change. Children who start very thin tend to improve on their own (regression to the mean), and groups with longer time in care started at different levels. Height catch-up is slow, and stunting is often linked with long-standing poor glycaemic control.
 
 ## Who is left out of the before-after charts
 
-A child with a baseline BMI-for-age z and no place in the before-after charts is counted in the “Who is counted” note. The usual reason is a second measurement less than 3 months later. The note also compares starting thinness for those children with starting thinness for the children who are in the charts, and says the two were similar only when they differ by less than 2 percentage points.
+The “Who is counted” note states the short gap once. The count is every child whose second measurement is less than 3 months after the first. In parentheses it says how many of those also have a baseline BMI-for-age z, out of everyone with a baseline BMI-for-age z. The two numbers differ when a short-gap child has no baseline BMI-for-age z. The note then compares starting thinness for the children with a baseline BMI who are not in the before-after charts with starting thinness for the children who are in the charts, and says the two were similar only when they differ by less than 2 percentage points.
 
 ## Population benchmark
 
@@ -71,7 +73,7 @@ The row on each sheet is “Adolescents aged 10–19 years who are moderate or s
 
 ## Filters
 
-Every growth chart uses the same children. State, division, district, facility, DPC, support, sex, age group and status restrict that list before the chart is drawn. Division and DPC come from the facility lookup on the patient. Light support has no patient-level rows, so the growth section is empty. Adults hide the section. The enrolment period, including a custom from–to range, uses `Enrolment_date`. A child with no enrolment date is left out of a dated period. A short note is hidden when the chart’s n is under 20. When one state is selected, the place chart shows that state’s districts with at least 20 children.
+Every growth chart uses the same children. State, division, district, facility, DPC, support, sex, age group and status restrict that list before the chart is drawn. Division and DPC come from the facility lookup on the patient. Light support has no patient-level rows, so the growth section is empty. Adults hide the heading, the who-is-counted note and the charts, and the section says only “Not applicable for adults”. The enrolment period, including a custom from–to range, uses `Enrolment_date`. A child with no enrolment date is left out of a dated period. A short note is hidden when the chart’s n is under 20. When one state is selected, the place chart shows that state’s districts with at least 20 children. The thin bars on that chart carry a 95% Wilson range. The highest-share note uses one decimal and adds “small group, wide range” when that range is wider than 20 points.
 
 ## Change log
 
@@ -80,10 +82,13 @@ Every growth chart uses the same children. State, division, district, facility, 
 - Underweight is the same children, both visits through 120 months.
 - Weight gain is whether the weight-for-age z fell, held, or rose, not the raw kilogram change. Kilograms per year stay in the tooltip.
 - State comparison switches to districts when a state is selected.
-- Latest HbA1c is three bars (thin, in range, overweight) with a line at 8.5%.
+- Latest HbA1c is three bars (thin, healthy BMI, overweight) with a line at 8.5%.
 - Removed the month-on-month line chart and stopped loading `Growth_visits_dash` and `Growth_milestones`.
 - Headline cards show a 95% Wilson range. First-versus-latest bars show the same range as whiskers.
-- Paired charts report both flows, the net change with a 95% interval, and an exact McNemar test, worded as a real change or within normal variation.
+- Paired charts report both flows, an exact McNemar test, and a 95% interval that excludes zero only when that p is below 0.05. Below 0.05 is “a real change”, 0.05 up to 0.10 is “borderline, may be chance”, and 0.10 or above is “within normal variation”.
+- The short-gap exclusion is stated once, with the count among children who have a baseline BMI-for-age in parentheses.
+- The place chart puts a 95% Wilson range on the thin bars. The highest-share note keeps one decimal and says “small group, wide range” when that range is wider than 20 points.
+- Adults leave only “Not applicable for adults”.
 - The same-child chart can show thinness or stunting. Titles no longer ask whether BMI improved or underweight fell.
 - The who-is-counted note says how many children with a baseline BMI are missing from the before-after charts, and whether their starting thinness was similar.
 - The state chart marks CNNS 2016–18 adolescent thinness for India and the four programme states.

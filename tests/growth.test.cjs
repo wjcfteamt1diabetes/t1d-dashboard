@@ -303,12 +303,26 @@ test('Wilson intervals, McNemar and the paired net change match the checked coun
     }});
     const underText = growthUnderTakeaway({n:295, firstPct:19.3, latestPct:18, net:-1.4, lo:-4, hi:1.3, p:0.68});
     const stuntText = growthStuntTakeaway({all:{n:1195, firstPct:29.5, latestPct:32.3, out:43, inn:77, net:2.8, lo:1.1, hi:4.6, p:0.0024468567628141693}});
-    const attrition = growthAttritionSentence({baseN:1734, leftN:539, keptN:1195, shortN:539, noLaterN:0, leftThinPct:25.6, keptThinPct:25});
+    const attrition = growthAttritionSentence({baseN:1734, leftN:539, keptN:1195, shortN:539, shortGap:541, shortWithBase:539, noLaterN:0, leftThinPct:25.6, keptThinPct:25});
+    const who = growthWhoText({cohort:2015, noSexOrPair:277, shortGap:541, bazImplausible:6, hazImplausible:0, wazImplausible:0, wazNotApplicable:1264}, {baseN:1734, leftN:539, keptN:1195, shortGap:541, shortWithBase:539, noLaterN:0, leftThinPct:25.6, keptThinPct:25});
+    const edge = growthPairedDiff(47, 29, 486);
+    const checks = [[131,68,1195],[43,77,1195],[29,25,295],[47,29,486],[13,4,243]].map(row => {
+      const d = growthPairedDiff(row[0], row[1], row[2]);
+      return (d.p < 0.05) === (d.hi < 0 || d.lo > 0);
+    });
     return {
-      thin, stunt, over, under, thinFlow, stuntFlow, thinText, underText, stuntText, attrition,
+      thin, stunt, over, under, thinFlow, stuntFlow, thinText, underText, stuntText, attrition, who,
       tie: growthMcNemar(4, 4),
       real: growthVerdict(0.0024),
-      noise: growthVerdict(0.68)
+      border: growthVerdict(0.0504),
+      border2: growthVerdict(0.09),
+      noise: growthVerdict(0.68),
+      edgeP: edge.p, edgeLo: edge.lo, edgeHi: edge.hi,
+      checks,
+      contradict: growthShownVerdict(0.04, -1, 1),
+      contradictHigh: growthShownVerdict(0.2, -2, -0.2),
+      placeExact: growthPlaceTakeaway({mode:'state', rows:[{label:'Madhya Pradesh', n:100, thinPct:24, thinLo:20.1, thinHi:28.4}]}),
+      placeWide: growthPlaceTakeaway({mode:'district', rows:[{label:'Narsinghpur', n:22, thinPct:45.5, thinLo:24.5, thinHi:68},{label:'Smaller', n:10, thinPct:90, thinLo:70, thinHi:99}]})
     };
   })()`);
   assert.equal(got.thin.lo, 19.5);
@@ -320,16 +334,30 @@ test('Wilson intervals, McNemar and the paired net change match the checked coun
   assert.equal(got.under.lo, 17.5);
   assert.equal(got.under.hi, 24.8);
   assert.equal(got.thinFlow.net, -5.3);
-  assert.equal(got.thinFlow.lo, -7.6);
-  assert.equal(got.thinFlow.hi, -3);
+  assert.equal(got.thinFlow.lo, -7.5);
+  assert.equal(got.thinFlow.hi, -2.9);
   assert.ok(got.thinFlow.p < 0.05);
   assert.equal(got.stuntFlow.net, 2.8);
-  assert.equal(got.stuntFlow.lo, 1.1);
+  assert.equal(got.stuntFlow.lo, 1);
   assert.equal(got.stuntFlow.hi, 4.6);
   assert.ok(Math.abs(got.stuntFlow.p - 0.0024) < 0.0001);
   assert.equal(got.tie, 1);
   assert.equal(got.real, 'a real change');
+  assert.equal(got.border, 'borderline, may be chance');
+  assert.equal(got.border2, 'borderline, may be chance');
   assert.equal(got.noise, 'within normal variation');
+  assert.ok(got.edgeP >= 0.05 && got.edgeP < 0.10);
+  assert.ok(got.edgeLo <= 0 && got.edgeHi >= 0);
+  assert.equal(got.checks.every(Boolean), true);
+  assert.equal(got.contradict, 'borderline, may be chance');
+  assert.equal(got.contradictHigh, 'borderline, may be chance');
+  assert.match(got.placeExact, /24\.0% \(range 20\.1–28\.4, n=100\)/);
+  assert.equal(got.placeExact.includes('wide range'), false);
+  assert.match(got.placeWide, /Narsinghpur has the highest share thin/);
+  assert.match(got.placeWide, /45\.5% \(range 24\.5–68\.0, n=22\)/);
+  assert.match(got.placeWide, /Small group, wide range/);
+  assert.equal(got.who.includes('Gap under 3 months'), false);
+  assert.equal((got.who.match(/3 months/g) || []).length, 1);
   assert.match(got.thinText, /131 moved out of thin, 68 moved into thin, net -5\.3 points \(95% CI -7\.6 to -3\.0\)/);
   assert.match(got.thinText, /a real change/);
   assert.match(got.underText, /19\.3% to 18\.0%/);
@@ -340,7 +368,7 @@ test('Wilson intervals, McNemar and the paired net change match the checked coun
   assert.match(got.stuntText, /43 moved out of stunting, 77 moved into stunting, net \+2\.8 points \(95% CI \+1\.1 to \+4\.6\)/);
   assert.match(got.stuntText, /p=0\.0024/);
   assert.match(got.stuntText, /Height catch-up is slow/);
-  assert.match(got.attrition, /539 of 1,734 children with a baseline BMI are not in before-after charts \(second measurement less than 3 months later\)/);
+  assert.match(got.attrition, /541 have a second measurement less than 3 months after the first \(539 of the 1,734 with a baseline BMI-for-age\)/);
   assert.match(got.attrition, /similar \(25\.6% vs 25\.0%\)/);
 });
 
@@ -375,7 +403,8 @@ test('same-child flows and the attrition note are computed from the children, no
   assert.equal(got.underIn, 8);
   assert.equal(typeof got.lo, 'number');
   assert.ok(got.hi > got.lo);
-  assert.match(got.who, /not in before-after charts/);
+  assert.match(got.who, /second measurement less than 3 months after the first/);
+  assert.equal((got.who.match(/3 months/g) || []).length, 1);
 });
 
 test('a short growth insight is hidden below 20 children', () => {
@@ -394,6 +423,10 @@ test('missing growth tab and the adult filter show a friendly state', async () =
   assert.equal(elements['growth-body'].hidden, true);
   run(`getF=()=>({age:'adu', state:'all'}); GROWTH={status:'ok', cohort:4}; renderGrowth();`);
   assert.equal(elements['growth-status'].textContent, 'Not applicable for adults');
+  assert.equal(elements['growth-heading'].hidden, true);
+  assert.equal(elements['growth-who'].hidden, true);
+  assert.equal(elements['growth-lead'].hidden, true);
+  assert.equal(elements['growth-body'].hidden, true);
   const calls = [];
   context.fetchTab = async (id, name) => {
     calls.push(name);

@@ -1181,10 +1181,10 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div class="card" style="max-width:680px">
   <div class="ct">Latest HbA1c — by growth group</div>
-  <div class="cs">Mean latest HbA1c for thin, in-range and overweight children. The line is the 8.5% target used on the HbA1c charts. The reading may not be from the same day as the weight and height.</div>
+    <div class="cs">Mean latest HbA1c for children who are thin, a healthy BMI, or overweight. The line is the 8.5% target used on the HbA1c charts. The reading may not be from the same day as the weight and height.</div>
   <div class="growth-takeaway" id="growth-hba-take"></div>
   <div class="lg" id="growth-hba-lg"></div>
-  <div style="height:260px;position:relative"><canvas id="c-growth-hba" role="img" aria-label="Mean latest HbA1c for thin, in-range and overweight children, with a line at 8.5 percent"></canvas></div>
+  <div style="height:260px;position:relative"><canvas id="c-growth-hba" role="img" aria-label="Mean latest HbA1c for thin, healthy BMI and overweight children, with a line at 8.5 percent"></canvas></div>
   <div class="growth-foot" id="growth-hba-foot"></div>
 </div>
 
@@ -3182,7 +3182,7 @@ function buildInfoTable(){
     {n:'22a',ind:'Thinness and stunting — first visit vs latest (same children)',tab:'T2',type:'%',num:'Percent thin (BMI-for-age below −2), or percent stunted (height-for-age below −2), at the first visit and the latest visit, overall and by the gap between those visits (3–6, 6–12, 12–18, 18+ months). Whiskers are 95% Wilson intervals. The note gives the net change, its 95% interval, and an exact McNemar test. Healthy and overweight shares are in the thin note.',den:'Same child, both relevant z-scores valid, gap at least 3 months. A group under 20 is hidden. This is a before-after comparison, not proof the program caused the change.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
     {n:'22b',ind:'Growth status now',tab:'T2',type:'%',num:'Latest visit: % thin, % stunted (height-for-age below −2), % overweight, and % underweight (weight-for-age below −2, through 120 months). One bar of thin / healthy / overweight for all ages.',den:'Children with a valid latest z. Weight-for-age is not calculated at 121 months or older. Shares under 20 are hidden.',sheet:'Growth_child',cols:'Sex, Latest_age_y, Latest_weight_kg, Latest_height_cm'},
     {n:'22c',ind:'Thin, stunted and overweight by state',tab:'T2',type:'%',num:'Latest % thin, % stunted and % overweight by state, with CNNS 2016–18 adolescent (ages 10–19) thinness marks: India 24.1%, Madhya Pradesh 32.0%, Rajasthan 29.3%, Uttarakhand 15.3%, Chhattisgarh 18.4%. When one state is selected, the same shares by district for districts with at least 20 children, and a line at that state’s CNNS figure.',den:'Latest BMI-for-age z for thin and overweight. Latest height-for-age z for stunted. n<20 withheld. CNNS is the general population, not children with T1D.',sheet:'Growth_child',cols:'State, District, Sex, Latest_age_y, Latest_weight_kg, Latest_height_cm'},
-    {n:'22d',ind:'Latest HbA1c by growth group',tab:'T2',type:'Average',num:'Mean latest HbA1c for thin, in-range and overweight children. Reference line at 8.5%.',den:'Children with a latest BMI-for-age z and a latest HbA1c. Groups under 20 are hidden.',sheet:'Growth_child',cols:'Latest_HbA1c, Sex, Latest_age_y, Latest_weight_kg, Latest_height_cm'},
+    {n:'22d',ind:'Latest HbA1c by growth group',tab:'T2',type:'Average',num:'Mean latest HbA1c for thin, healthy BMI and overweight children. Reference line at 8.5%.',den:'Children with a latest BMI-for-age z and a latest HbA1c. Groups under 20 are hidden.',sheet:'Growth_child',cols:'Latest_HbA1c, Sex, Latest_age_y, Latest_weight_kg, Latest_height_cm'},
     {n:'22e',ind:'Underweight — first visit vs latest (same children)',tab:'T2',type:'%',num:'Share underweight (weight-for-age below −2) at the first visit and the latest visit, with 95% Wilson intervals, the net change and its 95% interval, and an exact McNemar test.',den:'Same child, both visits at or under 120 months, gap at least 3 months. n<20 withheld.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
     {n:'22f',ind:'Weight gain compared with normal growth',tab:'T2',type:'%',num:'Share falling behind (weight-for-age z down by more than 0.5), on track (within 0.5, the normal WHO rate for age), or catching up (z up by more than 0.5). Time-in-care groups are shown only when every group has at least 20 children. Kilograms per year are in the tooltip.',den:'Same child, both visits at or under 120 months, gap at least 3 months.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
     {sec:'TAB 3 — Capacity Building'},
@@ -5447,15 +5447,71 @@ function growthMcNemar(b, c){
   }
   return Math.min(1, 2*sum);
 }
-// Net change in percentage points, (moved in − moved out) / N, with a Wald 95% interval.
+function growthBinomCdf(p, n, k){
+  if(k<0) return 0;
+  if(p<=0) return 1;
+  if(p>=1) return k>=n?1:0;
+  let logTerm=n*Math.log(1-p), sum=Math.exp(logTerm);
+  const up=Math.min(k, n);
+  for(let i=1;i<=up;i++){
+    logTerm+=Math.log(n-i+1)-Math.log(i)+Math.log(p)-Math.log(1-p);
+    sum+=Math.exp(logTerm);
+  }
+  return Math.min(1, sum);
+}
+// Equal-tailed Clopper–Pearson interval for k events in n trials.
+function growthClopper(k, n){
+  const tail=0.025;
+  let lo=0, hi=1;
+  if(k>0){
+    let a=0, b=1;
+    for(let i=0;i<80;i++){
+      const m=(a+b)/2;
+      if(growthBinomCdf(m, n, k-1)>1-tail) a=m; else b=m;
+    }
+    lo=(a+b)/2;
+  }
+  if(k<n){
+    let a=0, b=1;
+    for(let i=0;i<80;i++){
+      const m=(a+b)/2;
+      if(growthBinomCdf(m, n, k)>tail) a=m; else b=m;
+    }
+    hi=(a+b)/2;
+  }
+  return {lo:lo, hi:hi};
+}
+// Show a paired difference in percentage points. If the exact interval includes 0, the printed ends still include 0.
+function growthClampPp(lo, hi){
+  const pct=x=>Math.round(x*1000)/10;
+  let a=pct(lo), b=pct(hi);
+  const includes=lo<=0&&hi>=0;
+  if(includes){
+    if(a>0) a=0;
+    if(b<0) b=0;
+  }else if(hi<0&&b>=0){
+    b=-0.1;
+  }else if(lo>0&&a<=0){
+    a=0.1;
+  }
+  return {lo:a, hi:b};
+}
+// Net change in percentage points, (moved in − moved out) / N.
+// The 95% interval is the exact interval on the discordant pairs, rescaled to the whole group.
+// It excludes 0 only when the exact McNemar p is below 0.05.
 function growthPairedDiff(outN, inN, N){
   if(!N) return null;
   const diff=(inN-outN)/N;
-  const disc=outN+inN-Math.pow(outN-inN, 2)/N;
-  const se=Math.sqrt(Math.max(0, disc))/N;
-  const z=1.959963984540054;
-  const pct=x=>Math.round(x*1000)/10;
-  return {net:pct(diff), lo:pct(diff-z*se), hi:pct(diff+z*se), p:growthMcNemar(outN, inN)};
+  const p=growthMcNemar(outN, inN);
+  const disc=outN+inN;
+  let rawLo=0, rawHi=0;
+  if(disc){
+    const span=growthClopper(inN, disc);
+    rawLo=(2*span.lo-1)*disc/N;
+    rawHi=(2*span.hi-1)*disc/N;
+  }
+  const shown=growthClampPp(rawLo, rawHi);
+  return {net:Math.round(diff*1000)/10, lo:shown.lo, hi:shown.hi, p:p};
 }
 function growthSigned(v){
   if(v==null||!isFinite(v)) return '';
@@ -5465,9 +5521,29 @@ function growthPText(p){
   if(p==null||!isFinite(p)) return '';
   if(p<0.0001) return 'p<0.0001';
   if(p<0.01) return 'p='+p.toFixed(4);
+  if(Math.abs(p-0.05)<0.005||Math.abs(p-0.10)<0.005) return 'p='+p.toFixed(4);
   return 'p='+p.toFixed(2);
 }
-function growthVerdict(p){ return p<0.05?'a real change':'within normal variation'; }
+function growthVerdict(p){
+  if(p<0.05) return 'a real change';
+  if(p<0.10) return 'borderline, may be chance';
+  return 'within normal variation';
+}
+function growthShownVerdict(p, lo, hi){
+  let v=growthVerdict(p);
+  if(lo==null||hi==null||!isFinite(lo)||!isFinite(hi)) return v;
+  const excludes=hi<0||lo>0;
+  const includes=lo<=0&&hi>=0;
+  if(v==='a real change'&&includes) v='borderline, may be chance';
+  if(v==='within normal variation'&&excludes) v='borderline, may be chance';
+  return v;
+}
+function growthVerdictPhrase(p, lo, hi){
+  const v=growthShownVerdict(p, lo, hi);
+  if(v==='a real change') return 'This is a real change';
+  if(v==='borderline, may be chance') return 'This is borderline, may be chance';
+  return 'This is within normal variation';
+}
 function growthRangeText(lo, hi){
   if(lo==null||hi==null) return '';
   return 'range '+Number(lo).toFixed(1)+'–'+Number(hi).toFixed(1);
@@ -5647,10 +5723,12 @@ function growthAttrition(kids){
   const kept=base.filter(k=>k.whoLatest&&k.whoLatest.baz!=null&&k.gapMonths!=null&&k.gapMonths>=3);
   const left=base.filter(k=>!(k.whoLatest&&k.whoLatest.baz!=null&&k.gapMonths!=null&&k.gapMonths>=3));
   const short=left.filter(k=>k.whoLatest&&k.whoLatest.baz!=null&&k.gapMonths!=null&&k.gapMonths<3);
+  const shortWithBase=base.filter(k=>k.gapMonths!=null&&k.gapMonths<3);
   const thinOf=rows=>rows.filter(k=>k.whoBase.baz<-2).length;
   return {
     baseN:base.length, leftN:left.length, keptN:kept.length,
     shortN:short.length, noLaterN:left.length-short.length,
+    shortWithBase:shortWithBase.length,
     leftThinPct:left.length?growthPct(thinOf(left), left.length):null,
     keptThinPct:kept.length?growthPct(thinOf(kept), kept.length):null
   };
@@ -5734,16 +5812,20 @@ function growthPlain(kids, f){
     if(latest.baz!=null){ g.baz++; if(latest.baz<-2) g.thin++; if(latest.baz>1) g.over++; }
     if(latest.haz!=null){ g.haz++; if(latest.haz<-2) g.stunt++; }
   });
-  const placeRows=Array.from(placeMap.values()).filter(g=>g.baz>=GROWTH_MIN_N).map(g=>({
-    key:g.key, label:g.label, n:g.baz,
-    thin:g.thin, thinPct:growthPct(g.thin, g.baz),
-    over:g.over, overPct:growthPct(g.over, g.baz),
-    stunt:g.stunt, stuntN:g.haz, stuntPct:g.haz>=GROWTH_MIN_N?growthPct(g.stunt, g.haz):null
-  })).sort((a,b)=>b.n-a.n||String(a.label).localeCompare(String(b.label)));
+  const placeRows=Array.from(placeMap.values()).filter(g=>g.baz>=GROWTH_MIN_N).map(g=>{
+    const ci=growthWilson(g.thin, g.baz);
+    return {
+      key:g.key, label:g.label, n:g.baz,
+      thin:g.thin, thinPct:growthPct(g.thin, g.baz), thinLo:ci?ci.lo:null, thinHi:ci?ci.hi:null,
+      over:g.over, overPct:growthPct(g.over, g.baz),
+      stunt:g.stunt, stuntN:g.haz, stuntPct:g.haz>=GROWTH_MIN_N?growthPct(g.stunt, g.haz):null
+    };
+  }).sort((a,b)=>b.n-a.n||String(a.label).localeCompare(String(b.label)));
   const attrition=growthAttrition(kids);
+  attrition.shortGap=ex.shortGap||0;
   const hbaGroups=[
     {key:'thin', label:'Thin'},
-    {key:'healthy', label:'In range'},
+    {key:'healthy', label:'Healthy BMI'},
     {key:'over', label:'Overweight'}
   ].map(spec=>{
     const rows=bazKids.filter(k=>k.latestHba!=null&&growthBmiGroup(k.whoLatest.baz)===spec.key);
@@ -5780,21 +5862,25 @@ function growthAgeHeading(kids){
   return 'Growth (latest age '+fmt(min)+'–'+fmt(max)+' years'+(older?' · '+older.toLocaleString()+' are 18 or older':'')+')';
 }
 function growthAttritionSentence(a){
-  if(!a||!a.baseN||!a.leftN) return '';
-  let why;
-  if(!a.noLaterN) why='second measurement less than 3 months later';
-  else if(!a.shortN) why='no usable second BMI-for-age';
-  else why=a.shortN.toLocaleString()+' had a second measurement less than 3 months later, and '+a.noLaterN.toLocaleString()+' had no usable second BMI-for-age';
+  if(!a) return '';
+  const withBase=a.shortWithBase!=null?a.shortWithBase:(a.leftN||0);
+  const gap=a.shortGap>0?a.shortGap:withBase;
+  if(!gap) return '';
+  let main;
+  if(a.baseN&&withBase!=null) main=' '+gap.toLocaleString()+' have a second measurement less than 3 months after the first ('+withBase.toLocaleString()+' of the '+a.baseN.toLocaleString()+' with a baseline BMI-for-age).';
+  else main=' '+gap.toLocaleString()+' have a second measurement less than 3 months after the first.';
   let start='';
   if(a.leftThinPct!=null&&a.keptThinPct!=null&&a.leftN>=GROWTH_MIN_N&&a.keptN>=GROWTH_MIN_N){
     const close=Math.abs(a.leftThinPct-a.keptThinPct)<2;
     start=' Their starting thinness was '+(close?'similar (':'')+Number(a.leftThinPct).toFixed(1)+'% vs '+Number(a.keptThinPct).toFixed(1)+'%'+(close?')':'')+'.';
   }
-  return ' '+a.leftN.toLocaleString()+' of '+a.baseN.toLocaleString()+' children with a baseline BMI are not in before-after charts ('+why+').'+start;
+  if(a.noLaterN>0) start+=' '+a.noLaterN.toLocaleString()+' more with a baseline BMI had no usable second BMI-for-age.';
+  return main+start;
 }
 function growthWhoText(ex, attrition){
   ex=ex||{};
-  return 'Who is counted. '+(ex.cohort||0).toLocaleString()+' children in this filtered view. No usable sex or weight and height: '+(ex.noSexOrPair||0).toLocaleString()+'. Gap under 3 months, left out of the before-and-after charts: '+(ex.shortGap||0).toLocaleString()+'. Implausible BMI-for-age z: '+(ex.bazImplausible||0).toLocaleString()+'. Implausible height-for-age z: '+(ex.hazImplausible||0).toLocaleString()+'. Implausible weight-for-age z: '+(ex.wazImplausible||0).toLocaleString()+'. Weight-for-age is not calculated after 120 months (age 121 months or older): '+(ex.wazNotApplicable||0).toLocaleString()+'.'+growthAttritionSentence(attrition);
+  const note=Object.assign({shortGap:ex.shortGap||0}, attrition||{});
+  return 'Who is counted. '+(ex.cohort||0).toLocaleString()+' children in this filtered view. No usable sex or weight and height: '+(ex.noSexOrPair||0).toLocaleString()+'. Implausible BMI-for-age z: '+(ex.bazImplausible||0).toLocaleString()+'. Implausible height-for-age z: '+(ex.hazImplausible||0).toLocaleString()+'. Implausible weight-for-age z: '+(ex.wazImplausible||0).toLocaleString()+'. Weight-for-age is not calculated after 120 months (age 121 months or older): '+(ex.wazNotApplicable||0).toLocaleString()+'.'+growthAttritionSentence(note);
 }
 function growthNowTakeaway(now){
   if(!now||now.thin.N<GROWTH_MIN_N) return '';
@@ -5805,8 +5891,7 @@ function growthNowTakeaway(now){
 }
 function growthFlowSentence(outWord, inWord, outN, inN, net, lo, hi, p){
   if(net==null||p==null) return '';
-  const call=p<0.05?'This is a real change':'This is within normal variation';
-  return outN.toLocaleString()+' '+outWord+', '+inN.toLocaleString()+' '+inWord+', net '+growthSigned(net)+' points (95% CI '+growthSigned(lo)+' to '+growthSigned(hi)+'). '+call+' ('+growthPText(p)+').';
+  return outN.toLocaleString()+' '+outWord+', '+inN.toLocaleString()+' '+inWord+', net '+growthSigned(net)+' points (95% CI '+growthSigned(lo)+' to '+growthSigned(hi)+'). '+growthVerdictPhrase(p, lo, hi)+' ('+growthPText(p)+').';
 }
 function growthBmiChangeTakeaway(change){
   const all=change&&change.all;
@@ -5820,8 +5905,7 @@ function growthStuntTakeaway(change){
 }
 function growthUnderTakeaway(block){
   if(!block||block.n<GROWTH_MIN_N||block.firstPct==null||block.p==null) return '';
-  const call=block.p<0.05?'This is a real change':'The change is within normal variation';
-  return 'Underweight moved from '+growthPctText(block.firstPct)+' to '+growthPctText(block.latestPct)+' (n='+block.n.toLocaleString()+'). Net '+growthSigned(block.net)+' points (95% CI '+growthSigned(block.lo)+' to '+growthSigned(block.hi)+'). '+call+' ('+growthPText(block.p)+').';
+  return 'Underweight moved from '+growthPctText(block.firstPct)+' to '+growthPctText(block.latestPct)+' (n='+block.n.toLocaleString()+'). Net '+growthSigned(block.net)+' points (95% CI '+growthSigned(block.lo)+' to '+growthSigned(block.hi)+'). '+growthVerdictPhrase(block.p, block.lo, block.hi)+' ('+growthPText(block.p)+').';
 }
 function growthPaceTakeaway(pace){
   const all=pace&&pace.all;
@@ -5829,11 +5913,13 @@ function growthPaceTakeaway(pace){
   return growthPctText(all.steadyPct)+' are on track, '+growthPctText(all.rosePct)+' are catching up, and '+growthPctText(all.fellPct)+' are falling behind.';
 }
 function growthPlaceTakeaway(place){
-  const rows=(place&&place.rows||[]).filter(r=>r.thinPct!=null);
+  const rows=(place&&place.rows||[]).filter(r=>r.thinPct!=null&&r.n>=GROWTH_MIN_N);
   if(rows.length<1) return '';
   const top=rows.slice().sort((a,b)=>b.thinPct-a.thinPct||b.n-a.n)[0];
   const where=place.mode==='district'?'district':'state';
-  return top.label+' has the highest share thin among '+where+'s with at least 20 children: '+top.thinPct+'% (n='+top.n.toLocaleString()+').';
+  const range=top.thinLo!=null?growthRangeText(top.thinLo, top.thinHi)+', ':'';
+  const wide=top.thinLo!=null&&top.thinHi-top.thinLo>20?' Small group, wide range.':'';
+  return top.label+' has the highest share thin among '+where+'s with at least 20 children: '+Number(top.thinPct).toFixed(1)+'% ('+range+'n='+top.n.toLocaleString()+').'+wide;
 }
 function growthHbaTakeaway(hba){
   const rows=(hba&&hba.groups||[]).filter(g=>g.mean!=null&&g.n>=GROWTH_MIN_N);
@@ -5881,8 +5967,9 @@ function growthAxisMax(values){
 const growthErrorBars={
   id:'growthErrorBars',
   afterDatasetsDraw(chart){
-    const yScale=chart.scales&&chart.scales.y;
-    if(!yScale||(chart.options&&chart.options.indexAxis==='y')) return;
+    const horizontal=chart.options&&chart.options.indexAxis==='y';
+    const scale=horizontal?chart.scales&&chart.scales.x:chart.scales&&chart.scales.y;
+    if(!scale) return;
     const ctx=chart.ctx;
     chart.data.datasets.forEach((ds,i)=>{
       if(!ds._lo||!ds._hi) return;
@@ -5890,15 +5977,24 @@ const growthErrorBars={
       if(!meta||meta.hidden) return;
       meta.data.forEach((bar,j)=>{
         const lo=ds._lo[j], hi=ds._hi[j];
-        if(lo==null||hi==null||bar.x==null) return;
-        const y1=yScale.getPixelForValue(lo), y2=yScale.getPixelForValue(hi), x=bar.x;
+        if(lo==null||hi==null) return;
         ctx.save();
         ctx.strokeStyle='#1f2937';
         ctx.lineWidth=1.25;
         ctx.beginPath();
-        ctx.moveTo(x, y1); ctx.lineTo(x, y2);
-        ctx.moveTo(x-4, y1); ctx.lineTo(x+4, y1);
-        ctx.moveTo(x-4, y2); ctx.lineTo(x+4, y2);
+        if(horizontal){
+          if(bar.y==null){ ctx.restore(); return; }
+          const x1=scale.getPixelForValue(lo), x2=scale.getPixelForValue(hi), y=bar.y;
+          ctx.moveTo(x1, y); ctx.lineTo(x2, y);
+          ctx.moveTo(x1, y-4); ctx.lineTo(x1, y+4);
+          ctx.moveTo(x2, y-4); ctx.lineTo(x2, y+4);
+        }else{
+          if(bar.x==null){ ctx.restore(); return; }
+          const y1=scale.getPixelForValue(lo), y2=scale.getPixelForValue(hi), x=bar.x;
+          ctx.moveTo(x, y1); ctx.lineTo(x, y2);
+          ctx.moveTo(x-4, y1); ctx.lineTo(x+4, y1);
+          ctx.moveTo(x-4, y2); ctx.lineTo(x+4, y2);
+        }
         ctx.stroke();
         ctx.restore();
       });
@@ -5963,6 +6059,12 @@ function growthDestroy(slot){
   if(slot.chart){ slot.chart.destroy(); slot.chart=null; }
 }
 let _gMix=null,_gBmiChg=null,_gUnder=null,_gPace=null,_gPlace=null,_gHbaG=null;
+function growthChrome(show){
+  ['growth-heading','growth-lead','growth-who'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.hidden=!show;
+  });
+}
 function renderGrowth(){
   applyGrowthVisibility();
   if(!SHOW_GROWTH) return;
@@ -5974,12 +6076,14 @@ function renderGrowth(){
     [_gMix,_gBmiChg,_gUnder,_gPace,_gPlace,_gHbaG].forEach(ch=>{ if(ch) ch.destroy(); });
     _gMix=_gBmiChg=_gUnder=_gPace=_gPlace=_gHbaG=null;
     body.hidden=true;
+    growthChrome(false);
     box.hidden=false;
     box.textContent=view.mode==='ready'?'Growth data not yet available':view.message;
     return;
   }
   box.hidden=true;
   body.hidden=false;
+  growthChrome(true);
   const heading=document.getElementById('growth-heading');
   if(heading) heading.textContent=growthAgeHeading(GROWTH.kids);
   const who=document.getElementById('growth-who');
@@ -6237,17 +6341,19 @@ function renderGrowthPlace(){
     {label:'Thin', color:'#0b2545'},
     {label:'Stunted', color:'#1a6aaf'},
     {label:'Overweight', color:'#8ec0e4'},
+    {label:'95% range (thin)', color:'#1f2937'},
     {label:'CNNS 2016–18 thinness, ages 10–19', color:'#0f3460'}
   ]);
   const rows=place.rows;
   const valueOf=ctx=>wide?ctx.parsed.x:ctx.parsed.y;
+  const placeMax=growthAxisMax(rows.flatMap(r=>[r.thinHi, r.thinPct, r.stuntPct, r.overPct]));
   _gPlace=createDashboardChart(canvas,{
     type:'bar',
-    plugins:[growthCnnsPlugin(wide?{line:place.cnns}:{rows:rows})],
+    plugins:[growthErrorBars, growthCnnsPlugin(wide?{line:place.cnns}:{rows:rows})],
     data:{
       labels:rows.map(r=>r.label+' (n='+r.n.toLocaleString()+')'),
       datasets:[
-        {label:'Thin', data:rows.map(r=>r.thinPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.thin), _oneDp:true, _noLabel:wide},
+        {label:'Thin', data:rows.map(r=>r.thinPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.thin), _lo:rows.map(r=>r.thinLo), _hi:rows.map(r=>r.thinHi), _oneDp:true, _noLabel:wide},
         {label:'Stunted', data:rows.map(r=>r.stuntPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.stunt), _den:rows.map(r=>r.stuntN), _oneDp:true, _noLabel:wide},
         {label:'Overweight', data:rows.map(r=>r.overPct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.over), _lc:'#1f2937', _oneDp:true, _noLabel:wide}
       ]
@@ -6260,15 +6366,18 @@ function renderGrowthPlace(){
           const den=ctx.dataset._den?ctx.dataset._den[ctx.dataIndex]:row.n;
           const value=valueOf(ctx);
           if(value==null) return ' '+ctx.dataset.label+': n<20';
-          return ' '+ctx.dataset.label+': '+Number(value).toFixed(1)+'% · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+Number(den||0).toLocaleString();
+          const lo=ctx.dataset._lo&&ctx.dataset._lo[ctx.dataIndex];
+          const hi=ctx.dataset._hi&&ctx.dataset._hi[ctx.dataIndex];
+          const range=lo==null?'':', '+growthRangeText(lo, hi);
+          return ' '+ctx.dataset.label+': '+Number(value).toFixed(1)+'%'+range+' · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+Number(den||0).toLocaleString();
         }
       }}},
       scales:wide?{
-        x:{min:0, suggestedMax:60, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}},
+        x:{min:0, max:placeMax, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}},
         y:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', autoSkip:false}}
       }:{
         x:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
-        y:{min:0, suggestedMax:50, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
+        y:{min:0, max:placeMax, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
       }
     }
   });
