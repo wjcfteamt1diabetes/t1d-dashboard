@@ -407,6 +407,53 @@ test('same-child flows and the attrition note are computed from the children, no
   assert.equal((got.who.match(/3 months/g) || []).length, 1);
 });
 
+test('narrow charts, contact columns and the partial-month mark stay display-only', () => {
+  const {run} = setup();
+  assert.match(html, /rel="icon"/);
+  assert.match(html, /id="c1-sub">\* partial month/);
+  assert.equal(html.includes('id="growth-pace-n"'), false);
+  assert.match(html, /monthIsOpen\(label\)\?'\*'/);
+  assert.match(html, /8\.5% target/);
+  assert.match(html, /bar\.x-half/);
+  assert.equal(html.includes('getPixelForTick'), false);
+  assert.equal(run("sheetFetchQuery('Capacity_Building')"), 'select A,B,C,D,E,F,G,H,I,L,M,N,O,P,Q,R,S,T,U,V,W');
+  assert.equal(run("sheetFetchQuery('Enrolled List')"), '');
+  assert.equal(run("growthChangeAxisLabel('12–18 months', true)"), '12–18m');
+  assert.equal(run("growthChangeAxisLabel('18+ months', true)"), '18+m');
+  assert.equal(run("growthChangeAxisLabel('All', false)"), 'All');
+  assert.equal(run('growthNarrow()'), false);
+  const got = run(`(() => {
+    const grid = [[
+      'State','Name of Service Provider','Type of Service Provider','Designation/ Department','','','Attended on Day 1','Attended on Day 2','','','','Training Venue'
+    ],[
+      'RJ','Asha','Doctor','Pediatrician','B1','2024-01-01','Yes','Yes','10','4','8','Hall'
+    ]];
+    const rows = parseCapacity(grid);
+    const dropped = dropContactColumns([
+      ['Name of Service Provider','Contact Number','Email ID','Type of Service Provider'],
+      ['Asha','hidden-phone','hidden-mail','Doctor']
+    ]);
+    return {
+      batch: rows[0]['Training Batch'],
+      pre: rows[0]['Pre-test Score'],
+      post: rows[0]['Post-test Score'],
+      max: rows[0]['Maximum Score'],
+      keys: Object.keys(rows[0]).join('|'),
+      headers: dropped[0].join('|'),
+      kept: dropped[1].join('|')
+    };
+  })()`);
+  assert.equal(got.batch, 'B1');
+  assert.equal(got.pre, '4');
+  assert.equal(got.post, '8');
+  assert.equal(got.max, '10');
+  assert.equal(got.keys.includes('Contact'), false);
+  assert.equal(got.headers.includes('Contact Number'), false);
+  assert.equal(got.headers.includes('Email ID'), false);
+  assert.equal(got.kept.includes('hidden-phone'), false);
+  assert.equal(got.kept, 'Asha|Doctor');
+});
+
 test('a short growth insight is hidden below 20 children', () => {
   const {run, elements} = setup();
   run("growthInsight('growth-now-take', '21.4% are thin', 19)");

@@ -28,6 +28,7 @@ SOFTWARE.
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>T1D Program Dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f3460'/%3E%3Cpath d='M7 22h18M10 22V14M16 22V8M22 22v-6' stroke='%23dbeafe' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://docs.google.com">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -791,7 +792,9 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="sl">Enrolment trends</div>
 <div class="g2 enrol-grid" style="align-items:start">
   <div class="card">
-    <div class="ct" id="c1-title">Cumulative enrolments &amp; complete-support clinics</div><div class="cs" id="c1-clinics"></div>
+    <div class="ct" id="c1-title">Cumulative enrolments &amp; complete-support clinics</div>
+    <div class="cs" id="c1-sub">* partial month</div>
+    <div class="cs" id="c1-clinics"></div>
     <div class="lg">
       <span id="c1-lg-cs"><span class="ld" style="background:var(--b2)"></span>Complete support</span>
       <span id="c1-lg-lt"><span class="ld" style="background:var(--b4)"></span>Light touch</span>
@@ -1163,7 +1166,6 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   <div class="card">
     <div class="ct" id="growth-pace-title">Weight gain compared with normal growth (age 10 and under)</div>
     <div class="cs" id="growth-pace-sub">On track means gaining weight at the normal rate for their age (WHO). Only children aged 10 or under at both visits, because WHO weight-for-age stops at 10.</div>
-    <div class="ks" id="growth-pace-n"></div>
     <div class="growth-takeaway" id="growth-pace-take"></div>
     <div class="lg" id="growth-pace-lg"></div>
     <div style="height:160px;position:relative" id="growth-pace-box"><canvas id="c-growth-pace" role="img" aria-label="Share falling behind, on track, or catching up, compared with normal weight gain for their age"></canvas></div>
@@ -1946,11 +1948,19 @@ Chart.register({
           if(horizontal){
             const x0=Math.min(bar.x, bar.base!=null?bar.base:bar.x);
             const x1=Math.max(bar.x, bar.base!=null?bar.base:bar.x);
-            if(ds._pct!==false && v<6) return;
+            if(ds._pct!==false && v<6 && !ds._forceLabel) return;
             const lblH=ds._staticLabel||(ds._pct===false?Number(v).toLocaleString():(ds._oneDp?Number(v).toFixed(1)+'%':v+'%'));
             ctx.save();
             ctx.font=`bold ${ds._fs||11}px Trebuchet MS,sans-serif`;
-            if(ctx.measureText(lblH).width>x1-x0-4){ ctx.restore(); return; }
+            if(ctx.measureText(lblH).width>x1-x0-4){
+              if(ds._forceLabel){
+                ctx.textAlign='left'; ctx.textBaseline='middle';
+                ctx.fillStyle='#1f2937';
+                ctx.fillText(lblH, x1+3, bar.y);
+              }
+              ctx.restore();
+              return;
+            }
             const colorH=Array.isArray(bg)?bg[j]:bg;
             ctx.textAlign='center'; ctx.textBaseline='middle';
             ctx.fillStyle=ds._lc||inkOn(colorH);
@@ -2552,7 +2562,8 @@ function winLabel(o){
 
 function buildC1(o){
   if(_c1)_c1.destroy();
-  const lb=MONTHS.slice(o,o+WIN);
+  const raw=MONTHS.slice(o,o+WIN);
+  const lb=raw.map(label=>label+(monthIsOpen(label)?'*':''));
   const cs=CS_CUM.slice(o,o+WIN);
   const lt=LT_CUM.slice(o,o+WIN);
   const cl=CLIN_CS.slice(o,o+WIN);
@@ -4163,9 +4174,32 @@ function writeSheetCache(key,text){
   try{sessionStorage.setItem(key,JSON.stringify(entry));}catch(e){/* Quota/private mode: retain only the in-memory cache. */}
   return entry;
 }
+// Capacity_Building contact columns are J (Contact Number) and K (Email ID).
+// The query never asks for them, so they are not in the response.
+function sheetFetchQuery(tabName){
+  if(tabName==='Capacity_Building') return 'select A,B,C,D,E,F,G,H,I,L,M,N,O,P,Q,R,S,T,U,V,W';
+  return '';
+}
+const CONTACT_HEADER=/contact(\s*number)?|phone|mobile|e-?mail|whatsapp/i;
+function dropContactColumns(grid){
+  if(!Array.isArray(grid)) return grid;
+  let hr=-1;
+  for(let r=0;r<Math.min(grid.length,8)&&hr<0;r++){
+    const cells=Array.isArray(grid[r])?grid[r]:[];
+    if(cells.some(c=>CONTACT_HEADER.test(String(c==null?'':c)))) hr=r;
+  }
+  if(hr<0) return grid;
+  const drop=[];
+  grid[hr].forEach((h,i)=>{ if(CONTACT_HEADER.test(String(h==null?'':h))) drop.push(i); });
+  if(!drop.length) return grid;
+  const skip={}; drop.forEach(i=>{skip[i]=true;});
+  return grid.map(row=>Array.isArray(row)?row.filter((_,i)=>!skip[i]):row);
+}
 async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
   // Old Targets responses lost numeric headers in gviz; do not reuse them.
-  const cacheKey=SHEET_CACHE_PREFIX+wbId+':'+tabName+(tabName==='Targets'?':headers_v2':'');
+  // Capacity responses that still contain contact columns are not reused.
+  const query=sheetFetchQuery(tabName);
+  const cacheKey=SHEET_CACHE_PREFIX+wbId+':'+tabName+(tabName==='Targets'?':headers_v2':'')+(query?':nophone':'');
   const cached=forceFresh?null:readSheetCache(cacheKey);
   if(cached){if(onSource)onSource(cached.savedAt,true);return parseCSV(cached.text);}
   // CSV export preserves rows with missing operationalisation dates. The
@@ -4174,12 +4208,13 @@ async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
   const csvTabs={CompleteSupport_Facilities:1253968089,'Enrolled List':0,
     Followup_adherence:733015193,SMBG_Monthly:1620041867,
     'Hba1c_Baseline/Latest':3339173,'SMBG_Hyper/Hypo':1524331750,Targets:1785757412};
+  const tq=query?'&tq='+encodeURIComponent(query):'';
   const url=Object.prototype.hasOwnProperty.call(csvTabs,tabName)
     ? 'https://docs.google.com/spreadsheets/d/'+wbId+'/export?format=csv&gid='+csvTabs[tabName]
-    : 'https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName);
+    : 'https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?tqx=out:csv&headers=0&sheet='+encodeURIComponent(tabName)+tq;
   const targetHeaders=tabName==='Targets';
   const fallbackUrl='https://docs.google.com/spreadsheets/d/'+wbId+'/gviz/tq?headers='+(targetHeaders?1:0)+'&'+
-    (Object.prototype.hasOwnProperty.call(csvTabs,tabName)?'gid='+csvTabs[tabName]:'sheet='+encodeURIComponent(tabName));
+    (Object.prototype.hasOwnProperty.call(csvTabs,tabName)?'gid='+csvTabs[tabName]:'sheet='+encodeURIComponent(tabName))+tq;
   // Bound both the network request and body download; one retry handles
   // transient Google export delays without leaving the overlay stuck forever.
   for(let attempt=0;attempt<2;attempt++){
@@ -4193,8 +4228,8 @@ async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
       }
       const text=await res.text();
       if(/^\s*</.test(text)) throw new Error('Sheet "'+tabName+'" is not public. Set the workbook sharing to "Anyone with the link → Viewer".');
-      const grid=parseCSV(text);
-      const entry=writeSheetCache(cacheKey,text);
+      const grid=dropContactColumns(parseCSV(text));
+      const entry=writeSheetCache(cacheKey,grid.map(row=>row.map(value=>'"'+String(value==null?'':value).replace(/"/g,'""')+'"').join(',')).join('\n'));
       if(onSource)onSource(entry.savedAt,false);
       return grid;
     }catch(err){
@@ -4204,8 +4239,8 @@ async function fetchTab(wbId,tabName,{forceFresh=false,onSource}={}){
       // not need fetch/CORS access. Targets uses headers=1 and reconstructs
       // its header row from column labels; other tabs retain headers=0.
       if(err instanceof TypeError){
-        const grid=await fetchGoogleSheetScript(fallbackUrl,tabName,{includeHeaders:targetHeaders});
-        const text=grid.map(row=>row.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(',')).join('\n');
+        const grid=dropContactColumns(await fetchGoogleSheetScript(fallbackUrl,tabName,{includeHeaders:targetHeaders}));
+        const text=grid.map(row=>row.map(value=>'"'+String(value==null?'':value).replace(/"/g,'""')+'"').join(',')).join('\n');
         const entry=writeSheetCache(cacheKey,text);
         if(onSource)onSource(entry.savedAt,false);
         return grid;
@@ -4357,11 +4392,23 @@ function parseCapacity(grid){
   const hr=headerRowOf(grid,['Type of Service Provider','Name of Service Provider']);
   const hdr=grid[hr].map(h=>String(h).trim());
   const at=name=>hdr.indexOf(name);
-  const eI=at('Email ID');            if(eI>=0&&!hdr[eI+1]) hdr[eI+1]='Training Batch';
+  const eI=at('Email ID');
+  if(eI>=0&&!hdr[eI+1]) hdr[eI+1]='Training Batch';
+  const des=at('Designation/ Department');
+  if(des>=0){
+    if(!hdr[des+1]) hdr[des+1]='Training Batch';
+    if(!hdr[des+2]) hdr[des+2]='Training start date';
+  }
   const dI=at('Attended on Day 2');
   if(dI>=0){ if(!hdr[dI+1])hdr[dI+1]='Maximum Score'; if(!hdr[dI+2])hdr[dI+2]='Pre-test Score'; if(!hdr[dI+3])hdr[dI+3]='Post-test Score'; }
-  return grid.slice(hr+1).map(r=>{const o={};hdr.forEach((h,i)=>{if(h)o[h]=r[i]!==undefined?r[i]:'';});return o;})
-    .filter(o=>String(o['Name of Service Provider']||'').trim()!=='');
+  return grid.slice(hr+1).map(r=>{
+    const o={};
+    hdr.forEach((h,i)=>{
+      if(!h||CONTACT_HEADER.test(h)) return;
+      o[h]=r[i]!==undefined?r[i]:'';
+    });
+    return o;
+  }).filter(o=>String(o['Name of Service Provider']||'').trim()!=='');
 }
 
 // ── Light-touch facility data, filtered by State / District / Facility (Division & DPC don't apply to LT) ──
@@ -6023,27 +6070,44 @@ function growthCnnsPlugin(spec){
       }
       const rows=spec.rows||[], xScale=chart.scales.x, yScale=chart.scales.y;
       if(!xScale||!yScale){ ctx.restore(); return; }
+      const horizontal=chart.options&&chart.options.indexAxis==='y';
+      const meta=chart.getDatasetMeta(0);
       rows.forEach((r,i)=>{
         const mark=CNNS_THIN_1019[r.key];
-        if(mark==null) return;
-        const x=xScale.getPixelForTick?xScale.getPixelForTick(i):null;
-        if(x==null) return;
-        const next=i+1<rows.length&&xScale.getPixelForTick?xScale.getPixelForTick(i+1):null;
-        const prev=i>0&&xScale.getPixelForTick?xScale.getPixelForTick(i-1):null;
-        const half=next!=null?(next-x)/2:(prev!=null?(x-prev)/2:22);
-        const y=yScale.getPixelForValue(mark);
+        const bar=meta&&meta.data?meta.data[i]:null;
+        if(mark==null||!bar) return;
         ctx.setLineDash([3,2]);
         ctx.beginPath();
-        ctx.moveTo(x-half*0.7, y); ctx.lineTo(x+half*0.7, y);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.arc(x, y, 2.4, 0, Math.PI*2);
+        if(horizontal){
+          const x=xScale.getPixelForValue(mark);
+          const half=((bar.height||8)/2)+1;
+          ctx.moveTo(x, bar.y-half); ctx.lineTo(x, bar.y+half);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.arc(x, bar.y, 2.4, 0, Math.PI*2);
+        }else{
+          const y=yScale.getPixelForValue(mark);
+          const half=((bar.width||10)/2)+1;
+          ctx.moveTo(bar.x-half, y); ctx.lineTo(bar.x+half, y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.beginPath();
+          ctx.arc(bar.x, y, 2.4, 0, Math.PI*2);
+        }
         ctx.fill();
       });
       ctx.restore();
     }
   };
+}
+function growthNarrow(){
+  try{ return !!(window.matchMedia&&window.matchMedia('(max-width:720px)').matches); }
+  catch(e){ return false; }
+}
+function growthChangeAxisLabel(label, narrow){
+  const name=label||'All';
+  return narrow?name.replace(/ months$/, 'm'):name;
 }
 function growthCnnsNote(){
   const bits=[
@@ -6204,10 +6268,11 @@ function renderGrowthBmiChange(){
     const range=lo==null?'':', '+growthRangeText(lo, hi);
     return ' '+noun+', '+ctx.dataset.label.toLowerCase()+': '+Number(ctx.parsed.y).toFixed(1)+'%'+range+' · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+row.n.toLocaleString();
   };
+  const narrow=growthNarrow();
   _gBmiChg=createDashboardChart(canvas,{
     type:'bar',
     data:{
-      labels:shown.map(r=>[r.label||'All', 'n='+r.n.toLocaleString()]),
+      labels:shown.map(r=>narrow?growthChangeAxisLabel(r.label, true):[r.label||'All', 'n='+r.n.toLocaleString()]),
       datasets:[
         {label:'First visit', data:shown.map(r=>r.firstPct), backgroundColor:'#8eacc4', _n:shown.map(r=>r.firstCount), _lo:shown.map(r=>r.firstLo), _hi:shown.map(r=>r.firstHi), _oneDp:true},
         {label:'Latest visit', data:shown.map(r=>r.latestPct), backgroundColor:'#0b2545', _n:shown.map(r=>r.latestCount), _lo:shown.map(r=>r.latestLo), _hi:shown.map(r=>r.latestHi), _oneDp:true}
@@ -6216,9 +6281,13 @@ function renderGrowthBmiChange(){
     plugins:[growthErrorBars],
     options:{
       responsive:true, maintainAspectRatio:false,
-      plugins:{legend:{display:false}, tooltip:{callbacks:{label:tip}}},
+      layout:{padding:{bottom:narrow?18:0}},
+      plugins:{legend:{display:false}, tooltip:{callbacks:{
+        title(items){ const row=shown[items[0].dataIndex]; return (row.label||'All')+' · n='+row.n.toLocaleString(); },
+        label:tip
+      }}},
       scales:{
-        x:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        x:{grid:{display:false}, ticks:{font:{size:narrow?10:11}, color:'#334155', minRotation:narrow?40:0, maxRotation:narrow?40:0, autoSkip:false}},
         y:{beginAtZero:true, max:growthAxisMax(shown.flatMap(r=>[r.firstHi, r.latestHi, r.firstPct, r.latestPct])), title:{display:true, text:noun+' (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
       }
     }
@@ -6273,8 +6342,6 @@ function renderGrowthPace(){
   pace.all.label='All';
   const everyBand=pace.bands.length&&pace.bands.every(b=>b.n>=GROWTH_MIN_N);
   const rows=everyBand?[pace.all].concat(pace.bands):[pace.all].filter(r=>r.n>=GROWTH_MIN_N);
-  const nEl=document.getElementById('growth-pace-n');
-  if(nEl) nEl.textContent=pace.all.n>=GROWTH_MIN_N?'n = '+pace.all.n.toLocaleString()+' children':'n<20';
   const box=document.getElementById('growth-pace-box');
   if(box) box.style.height=(rows.length>1?Math.max(180, rows.length*56):120)+'px';
   const rules='n = '+pace.all.n.toLocaleString()+'.'+(everyBand?'':' Time-in-care groups are not shown, because not every group has 20 children.');
@@ -6335,8 +6402,9 @@ function renderGrowthPlace(){
     return;
   }
   growthRelease(canvas);
-  const wide=place.mode==='district';
-  if(canvas.parentElement) canvas.parentElement.style.height=(wide?Math.max(420, place.rows.length*32+48):280)+'px';
+  const wide=place.mode==='district'||growthNarrow();
+  const rowH=growthNarrow()?46:32;
+  if(canvas.parentElement) canvas.parentElement.style.height=(wide?Math.max(place.mode==='district'?420:260, place.rows.length*rowH+48):280)+'px';
   growthLegend('growth-place-lg', [
     {label:'Thin', color:'#0b2545'},
     {label:'Stunted', color:'#1a6aaf'},
@@ -6349,11 +6417,11 @@ function renderGrowthPlace(){
   const placeMax=growthAxisMax(rows.flatMap(r=>[r.thinHi, r.thinPct, r.stuntPct, r.overPct]));
   _gPlace=createDashboardChart(canvas,{
     type:'bar',
-    plugins:[growthErrorBars, growthCnnsPlugin(wide?{line:place.cnns}:{rows:rows})],
+    plugins:[growthErrorBars, growthCnnsPlugin(place.mode==='district'?{line:place.cnns}:{rows:rows})],
     data:{
-      labels:rows.map(r=>r.label+' (n='+r.n.toLocaleString()+')'),
+      labels:rows.map(r=>growthNarrow()?[r.label,'(n='+r.n.toLocaleString()+')']:r.label+' (n='+r.n.toLocaleString()+')'),
       datasets:[
-        {label:'Thin', data:rows.map(r=>r.thinPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.thin), _lo:rows.map(r=>r.thinLo), _hi:rows.map(r=>r.thinHi), _oneDp:true, _noLabel:wide},
+        {label:'Thin', data:rows.map(r=>r.thinPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.thin), _lo:rows.map(r=>r.thinLo), _hi:rows.map(r=>r.thinHi), _oneDp:true, _forceLabel:wide, _noLabel:false},
         {label:'Stunted', data:rows.map(r=>r.stuntPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.stunt), _den:rows.map(r=>r.stuntN), _oneDp:true, _noLabel:wide},
         {label:'Overweight', data:rows.map(r=>r.overPct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.over), _lc:'#1f2937', _oneDp:true, _noLabel:wide}
       ]
@@ -6374,7 +6442,7 @@ function renderGrowthPlace(){
       }}},
       scales:wide?{
         x:{min:0, max:placeMax, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}},
-        y:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', autoSkip:false}}
+        y:{grid:{display:false}, ticks:{font:{size:growthNarrow()?10:11}, color:'#334155', autoSkip:false}}
       }:{
         x:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
         y:{min:0, max:placeMax, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
@@ -6401,22 +6469,44 @@ function renderGrowthHbaGroup(){
   growthLegend('growth-hba-lg', [{label:'Mean latest HbA1c', color:'#1a6aaf'},{label:'Target 8.5%', color:'#0f3460'}]);
   _gHbaG=createDashboardChart(canvas,{
     type:'bar',
+    plugins:[{
+      id:'growthHbaTarget',
+      afterDatasetsDraw(chart){
+        const yScale=chart.scales&&chart.scales.y, area=chart.chartArea;
+        if(!yScale||!area) return;
+        const y=yScale.getPixelForValue(8.5);
+        const ctx=chart.ctx;
+        ctx.save();
+        ctx.strokeStyle='#0f3460';
+        ctx.lineWidth=1.5;
+        ctx.setLineDash([5,4]);
+        ctx.beginPath();
+        ctx.moveTo(area.left, y); ctx.lineTo(area.right, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle='#0f3460';
+        ctx.font='bold 11px Trebuchet MS,sans-serif';
+        ctx.textAlign='left';
+        ctx.textBaseline='bottom';
+        ctx.fillText('8.5% target', area.left+4, Math.max(area.top+12, y-3));
+        ctx.restore();
+      }
+    }],
     data:{
       labels:groups.map(g=>[g.label, g.mean==null?'n<20':'(n='+g.n.toLocaleString()+')']),
       datasets:[
-        {type:'bar', label:'Mean latest HbA1c', data:groups.map(g=>g.mean), backgroundColor:'#1a6aaf', _pct:false, _minVal:0, _n:groups.map(g=>g.n)},
-        {type:'line', label:'Target 8.5%', data:groups.map(()=>8.5), borderColor:'#0f3460', borderDash:[5,4], pointRadius:0, borderWidth:1.5, _noLabel:true}
+        {type:'bar', label:'Mean latest HbA1c', data:groups.map(g=>g.mean), backgroundColor:'#1a6aaf', _pct:false, _minVal:0, _n:groups.map(g=>g.n)}
       ]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}, tooltip:{callbacks:{
         label(ctx){
-          if(ctx.dataset.type==='line'||ctx.dataset.label==='Target 8.5%') return ' Target: 8.5%';
           const g=groups[ctx.dataIndex];
           if(g.mean==null) return ' n<20';
           return ' Mean latest HbA1c: '+g.mean.toFixed(2)+'% · n = '+g.n.toLocaleString();
-        }
+        },
+        afterBody(){ return ['Target: 8.5%']; }
       }}},
       scales:{
         x:{grid:{display:false}, ticks:{font:{size:12}, color:'#334155'}},
@@ -6425,6 +6515,16 @@ function renderGrowthHbaGroup(){
     }
   });
   if(foot) foot.textContent=rules;
+}
+if(typeof window!=='undefined'&&window.addEventListener){
+  let growthWasNarrow=growthNarrow();
+  window.addEventListener('resize',()=>{
+    const now=growthNarrow();
+    if(now===growthWasNarrow) return;
+    growthWasNarrow=now;
+    const body=document.getElementById('growth-body');
+    if(body&&!body.hidden) renderGrowth();
+  });
 }
 function showError(err){
   const ov=document.getElementById('overlay');
