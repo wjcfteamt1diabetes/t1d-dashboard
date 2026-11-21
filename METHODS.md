@@ -89,6 +89,8 @@ Every growth chart uses the same children. State, division, district, facility, 
 - The short-gap exclusion is stated once, with the count among children who have a baseline BMI-for-age in parentheses.
 - The place chart puts a 95% Wilson range on the thin bars. The highest-share note keeps one decimal and says “small group, wide range” when that range is wider than 20 points.
 - Adults leave only “Not applicable for adults”.
+- On a narrow screen the state comparison uses horizontal bars, and the same-child time labels are shortened. The CNNS mark sits on the thin bar. The HbA1c 8.5% line is drawn across the chart. The cumulative enrolment axis marks the open month with an asterisk.
+- Capacity Building is requested without the contact-number and email columns. Those fields are not kept if a response still contains them.
 - The same-child chart can show thinness or stunting. Titles no longer ask whether BMI improved or underweight fell.
 - The who-is-counted note says how many children with a baseline BMI are missing from the before-after charts, and whether their starting thinness was similar.
 - The state chart marks CNNS 2016–18 adolescent thinness for India and the four programme states.
