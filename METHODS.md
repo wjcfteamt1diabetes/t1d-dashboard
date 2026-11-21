@@ -39,7 +39,7 @@ The extract has one baseline measurement and one latest measurement per child. A
 
 For a before-and-after chart, both measurements must be valid and the gap from baseline age to latest age must be at least 3 months. Time in care is that gap, in bands that do not overlap: 3–6 months, 6 up to 12, 12 up to 18, and 18 months or more. A band with fewer than 20 children is hidden.
 
-“Kept pace” on the weight-gain chart means the weight-for-age z changed by no more than 0.5. That is growing at about the normal WHO rate for the child’s age. Fell behind is a drop of more than 0.5. Gained faster is a rise of more than 0.5. Kilograms per year are the kilogram change divided by the gap in years, and they appear only in the tooltip.
+On the weight-gain chart, on track means the weight-for-age z changed by no more than 0.5. That is gaining weight at the normal WHO rate for the child’s age. Falling behind is a drop of more than 0.5. Catching up is a rise of more than 0.5. The time-in-care split is drawn only when every group has at least 20 children. Kilograms per year are the kilogram change divided by the gap in years, and they appear only in the tooltip. The BMI change chart draws the thin share only. Healthy and overweight shares for the same children are in the note under that chart.
 
 `Growth_visits_dash` and `Growth_milestones` are not loaded. The month-on-month mean z chart was removed, and every remaining view uses the baseline and latest pair on `Growth_child`.
 

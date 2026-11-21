@@ -89,7 +89,7 @@ test('growth section uses plain shares and no longer loads the visit trend', () 
   const tab = html.slice(html.indexOf('id="tab-1"'), html.indexOf('id="tab-2"'));
   assert.match(tab, /Did BMI improve/);
   assert.match(tab, /Did underweight fall/);
-  assert.match(tab, /keeping up with expected weight gain/i);
+  assert.match(tab, /Weight gain compared with normal growth/);
   assert.match(tab, /Latest HbA1c/);
   assert.match(tab, /id="growth-thin-pct"/);
   assert.equal(tab.includes('Month-on-month'), false);

@@ -1128,10 +1128,10 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 <div class="g2">
   <div class="card">
     <div class="ct">Did BMI improve? — first visit vs latest</div>
-    <div class="cs">Same children, at least 3 months apart. Left bar is the first visit, right bar is the latest. Time in care is the gap between those visits. A group under 20 is hidden. Groups did not all start at the same level.</div>
+    <div class="cs">Percent thin (BMI-for-age below −2). Same children, at least 3 months apart. Light bar is the first visit, dark bar is the latest. A group under 20 is hidden.</div>
     <div class="growth-takeaway" id="growth-bmi-change-take"></div>
     <div class="lg" id="growth-bmi-change-lg"></div>
-    <div style="height:280px;position:relative"><canvas id="c-growth-bmi-change" role="img" aria-label="Percent thin, healthy and overweight at the first visit and the latest visit, overall and by time in care"></canvas></div>
+    <div style="height:260px;position:relative"><canvas id="c-growth-bmi-change" role="img" aria-label="Percent thin at the first visit and the latest visit, overall and by time in care"></canvas></div>
     <div class="growth-foot" id="growth-bmi-change-foot"></div>
   </div>
   <div class="card">
@@ -1146,11 +1146,12 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div class="g2">
   <div class="card">
-    <div class="ct">Are children keeping up with expected weight gain?</div>
-    <div class="cs">Same children, both visits at or under 120 months. Steady means the weight-for-age z stayed within 0.5 of where it started, which is the normal WHO rate for that age. Kilograms per year are in the tooltip.</div>
+    <div class="ct" id="growth-pace-title">Weight gain compared with normal growth (age 10 and under)</div>
+    <div class="cs" id="growth-pace-sub">On track means gaining weight at the normal rate for their age (WHO). Only children aged 10 or under at both visits, because WHO weight-for-age stops at 10.</div>
+    <div class="ks" id="growth-pace-n"></div>
     <div class="growth-takeaway" id="growth-pace-take"></div>
     <div class="lg" id="growth-pace-lg"></div>
-    <div style="height:280px;position:relative"><canvas id="c-growth-pace" role="img" aria-label="Share whose weight-for-age z fell, held steady, or rose, by time in care"></canvas></div>
+    <div style="height:160px;position:relative" id="growth-pace-box"><canvas id="c-growth-pace" role="img" aria-label="Share falling behind, on track, or catching up, compared with normal weight gain for their age"></canvas></div>
     <div class="growth-foot" id="growth-pace-foot"></div>
   </div>
   <div class="card">
@@ -3147,12 +3148,12 @@ function buildInfoTable(){
     {n:'20',ind:'Average HbA1c (baseline vs last)',tab:'T2',type:'Average',num:'Mean HbA1c at baseline and at last available reading, by time bucket since enrolment',den:'PLT1D enrolled >3m with both values. Target: <8.5',sheet:'Hba1c_Baseline/Latest',cols:'Baseline HbA1c, Latest HbA1c, time bucket'},
     {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1D by TDD/kg range: below/in/above · Pediatric 0–17: 0.7-1.0 u/kg · Adults ≥18: 1.0-1.5 u/kg',den:'PLT1D with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
     {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1D by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1D with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
-    {n:'22a',ind:'Did BMI improve — first visit vs latest',tab:'T2',type:'%',num:'Share thin (BMI-for-age below −2), healthy (−2 to +1) and overweight (above +1) at the first visit and the latest visit, overall and by the gap between those visits (3–6, 6–12, 12–18, 18+ months).',den:'Same child, both BMI-for-age z valid, gap at least 3 months. A group under 20 is hidden.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
+    {n:'22a',ind:'Did BMI improve — first visit vs latest',tab:'T2',type:'%',num:'Percent thin (BMI-for-age below −2) at the first visit and the latest visit, overall and by the gap between those visits (3–6, 6–12, 12–18, 18+ months). Healthy and overweight shares are in the note.',den:'Same child, both BMI-for-age z valid, gap at least 3 months. A group under 20 is hidden.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
     {n:'22b',ind:'Growth status now',tab:'T2',type:'%',num:'Latest visit: % thin, % stunted (height-for-age below −2), % overweight, and % underweight (weight-for-age below −2, through 120 months). One bar of thin / healthy / overweight for all ages.',den:'Children with a valid latest z. Weight-for-age is not calculated at 121 months or older. Shares under 20 are hidden.',sheet:'Growth_child',cols:'Sex, Latest_age_y, Latest_weight_kg, Latest_height_cm'},
     {n:'22c',ind:'Thin, stunted and overweight by state',tab:'T2',type:'%',num:'Latest % thin, % stunted and % overweight by state. When one state is selected, the same shares by district for districts with at least 20 children.',den:'Latest BMI-for-age z for thin and overweight. Latest height-for-age z for stunted. n<20 withheld.',sheet:'Growth_child',cols:'State, District, Sex, Latest_age_y, Latest_weight_kg, Latest_height_cm'},
     {n:'22d',ind:'Latest HbA1c by growth group',tab:'T2',type:'Average',num:'Mean latest HbA1c for thin, in-range and overweight children. Reference line at 8.5%.',den:'Children with a latest BMI-for-age z and a latest HbA1c. Groups under 20 are hidden.',sheet:'Growth_child',cols:'Latest_HbA1c, Sex, Latest_age_y, Latest_weight_kg, Latest_height_cm'},
     {n:'22e',ind:'Did underweight fall',tab:'T2',type:'%',num:'Share underweight (weight-for-age below −2) at the first visit and the latest visit.',den:'Same child, both visits at or under 120 months, gap at least 3 months. n<20 withheld.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
-    {n:'22f',ind:'Keeping up with expected weight gain',tab:'T2',type:'%',num:'Share whose weight-for-age z fell by more than 0.5, stayed within 0.5 (the normal WHO rate for age), or rose by more than 0.5, by time in care. Kilograms per year are in the tooltip.',den:'Same child, both visits at or under 120 months, gap at least 3 months. A group under 20 is hidden.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
+    {n:'22f',ind:'Weight gain compared with normal growth',tab:'T2',type:'%',num:'Share falling behind (weight-for-age z down by more than 0.5), on track (within 0.5, the normal WHO rate for age), or catching up (z up by more than 0.5). Time-in-care groups are shown only when every group has at least 20 children. Kilograms per year are in the tooltip.',den:'Same child, both visits at or under 120 months, gap at least 3 months.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm'},
     {sec:'TAB 3 — Capacity Building'},
     {n:'23',ind:'Batches held — doctors / nurses',tab:'T3',type:'Absolute #',num:'Count of distinct training batches by date and state',den:'—',sheet:'Capacity_Building',cols:'Training Batch, Type of Service Provider'},
     {n:'24',ind:'Doctors / nurses trained',tab:'T3',type:'Absolute #',num:'Distinct participant names within each state; ≥1 session',den:'—',sheet:'Capacity_Building',cols:'Name of Service Provider, Type of Service Provider'},
@@ -5660,7 +5661,7 @@ function growthUnderTakeaway(block){
 function growthPaceTakeaway(pace){
   const all=pace&&pace.all;
   if(!all||all.n<GROWTH_MIN_N||all.steadyPct==null) return '';
-  return growthPctText(all.steadyPct)+' kept pace with the normal WHO rate for their age, '+growthPctText(all.rosePct)+' gained faster, and '+growthPctText(all.fellPct)+' fell behind.';
+  return growthPctText(all.steadyPct)+' are on track, '+growthPctText(all.rosePct)+' are catching up, and '+growthPctText(all.fellPct)+' are falling behind.';
 }
 function growthPlaceTakeaway(place){
   const rows=(place&&place.rows||[]).filter(r=>r.thinPct!=null);
@@ -5798,61 +5799,52 @@ function renderGrowthNow(){
   });
   if(foot) foot.textContent='n = '+mix.n.toLocaleString()+' children with a latest BMI-for-age z, all ages together.';
 }
-function growthStackPair(canvas, slot, rows, foot, footText, legendId){
-  if(slot.chart){slot.chart.destroy(); slot.chart=null;}
-  if(!canvas) return null;
-  const shown=rows.filter(r=>!r.hidden&&r.n>=GROWTH_MIN_N);
+function renderGrowthBmiChange(){
+  const plain=GROWTH.plain, block=plain.bmiChange;
+  const canvas=document.getElementById('c-growth-bmi-change');
+  const foot=document.getElementById('growth-bmi-change-foot');
+  if(_gBmiChg){_gBmiChg.destroy();_gBmiChg=null;}
+  if(!canvas) return;
+  block.all.label='All';
+  const shown=[block.all].concat(block.bands).filter(r=>!r.hidden&&r.n>=GROWTH_MIN_N);
+  const hidden=block.bands.filter(b=>b.hidden).map(b=>b.label+' (n='+b.n.toLocaleString()+')');
+  const all=block.all;
+  const mixNote=all.n>=GROWTH_MIN_N&&all.first.healthyPct!=null
+    ? ' Healthy: '+growthPctText(all.first.healthyPct)+' at the first visit, '+growthPctText(all.latest.healthyPct)+' at the latest. Overweight: '+growthPctText(all.first.overPct)+' then '+growthPctText(all.latest.overPct)+'.'
+    : '';
+  const text='n = '+all.n.toLocaleString()+' with both visits at least 3 months apart.'+mixNote+(hidden.length?' Hidden, n<20: '+hidden.join(', ')+'.':'');
+  growthShowTakeaway('growth-bmi-change-take', growthBmiChangeTakeaway(block));
   if(!shown.length){
-    growthHold(canvas, 'Not enough children in this view.');
-    if(foot) foot.textContent=footText;
-    return null;
+    growthHold(canvas, 'Not enough children with both visits.');
+    if(foot) foot.textContent=text;
+    return;
   }
   growthRelease(canvas);
-  growthLegend(legendId, [
+  growthLegend('growth-bmi-change-lg', [
     {label:'Thin, first visit', color:'#8eacc4'},
-    {label:'Healthy, first visit', color:'#b7d4ea'},
-    {label:'Overweight, first visit', color:'#d5e6f2'},
-    {label:'Thin, latest', color:GROWTH_GROUP_COLOR.thin},
-    {label:'Healthy, latest', color:GROWTH_GROUP_COLOR.healthy},
-    {label:'Overweight, latest', color:GROWTH_GROUP_COLOR.over}
+    {label:'Thin, latest visit', color:'#0b2545'}
   ]);
-  const chart=createDashboardChart(canvas,{
+  _gBmiChg=createDashboardChart(canvas,{
     type:'bar',
     data:{
-      labels:shown.map(r=>[r.label||'All', '(n='+r.n.toLocaleString()+')']),
+      labels:shown.map(r=>[r.label||'All', 'n='+r.n.toLocaleString()]),
       datasets:[
-        {label:'Thin, first visit', stack:'first', backgroundColor:'#8eacc4', data:shown.map(r=>r.first.thinPct), _n:shown.map(r=>r.first.thin), _oneDp:true},
-        {label:'Healthy, first visit', stack:'first', backgroundColor:'#b7d4ea', data:shown.map(r=>r.first.healthyPct), _n:shown.map(r=>r.first.healthy), _oneDp:true},
-        {label:'Overweight, first visit', stack:'first', backgroundColor:'#d5e6f2', data:shown.map(r=>r.first.overPct), _n:shown.map(r=>r.first.over), _lc:'#1f2937', _oneDp:true},
-        {label:'Thin, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.thin, data:shown.map(r=>r.latest.thinPct), _n:shown.map(r=>r.latest.thin), _oneDp:true},
-        {label:'Healthy, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.healthy, data:shown.map(r=>r.latest.healthyPct), _n:shown.map(r=>r.latest.healthy), _oneDp:true},
-        {label:'Overweight, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.over, data:shown.map(r=>r.latest.overPct), _n:shown.map(r=>r.latest.over), _lc:'#1f2937', _oneDp:true}
+        {label:'First visit', data:shown.map(r=>r.first.thinPct), backgroundColor:'#8eacc4', _n:shown.map(r=>r.first.thin), _oneDp:true},
+        {label:'Latest visit', data:shown.map(r=>r.latest.thinPct), backgroundColor:'#0b2545', _n:shown.map(r=>r.latest.thin), _oneDp:true}
       ]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
       plugins:{legend:{display:false}, tooltip:{callbacks:{
-        label(ctx){ const n=ctx.dataset._n[ctx.dataIndex]; const total=shown[ctx.dataIndex].n; return ' '+ctx.dataset.label+': '+(ctx.parsed.y==null?'n<20':Number(ctx.parsed.y).toFixed(1)+'%')+' · n = '+(n||0).toLocaleString()+' of '+total.toLocaleString(); }
+        label(ctx){ const row=shown[ctx.dataIndex]; return ' Thin, '+ctx.dataset.label.toLowerCase()+': '+Number(ctx.parsed.y).toFixed(1)+'% · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+row.n.toLocaleString(); }
       }}},
       scales:{
-        x:{stacked:true, grid:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
-        y:{stacked:true, min:0, max:100, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
+        x:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
+        y:{beginAtZero:true, title:{display:true, text:'Thin (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
       }
     }
   });
-  if(foot) foot.textContent=footText;
-  return chart;
-}
-function renderGrowthBmiChange(){
-  const plain=GROWTH.plain, block=plain.bmiChange;
-  const canvas=document.getElementById('c-growth-bmi-change');
-  const foot=document.getElementById('growth-bmi-change-foot');
-  const hidden=block.bands.filter(b=>b.hidden).map(b=>b.label+' (n='+b.n.toLocaleString()+')');
-  const rows=[block.all].concat(block.bands);
-  rows[0].label='All';
-  const text='n = '+block.all.n.toLocaleString()+'. Same children, both visits valid and at least 3 months apart. Left bar is the first visit, right bar is the latest.'+(hidden.length?' Hidden, n<20: '+hidden.join(', ')+'.':'');
-  _gBmiChg=growthStackPair(canvas, {get chart(){return _gBmiChg;}, set chart(v){_gBmiChg=v;}}, rows, foot, text, 'growth-bmi-change-lg');
-  growthShowTakeaway('growth-bmi-change-take', growthBmiChangeTakeaway(block));
+  if(foot) foot.textContent=text;
 }
 function renderGrowthUnder(){
   const plain=GROWTH.plain, block=plain.under;
@@ -5894,42 +5886,45 @@ function renderGrowthPace(){
   const foot=document.getElementById('growth-pace-foot');
   if(_gPace){_gPace.destroy();_gPace=null;}
   if(!canvas) return;
-  const rows=[pace.all].concat(pace.bands).filter(r=>!r.hidden);
-  if(pace.all) rows[0] && (rows[0].label=rows[0].label||'All');
   pace.all.label='All';
-  const hidden=pace.bands.filter(b=>b.hidden).map(b=>b.label+' (n='+b.n.toLocaleString()+')');
-  const rules='n = '+pace.all.n.toLocaleString()+'. Both visits at or under 120 months, at least 3 months apart. Fell is a drop of more than 0.5 in weight-for-age z. Steady, within 0.5, is the normal WHO rate for that age. Rose is a rise of more than 0.5.'+(hidden.length?' Hidden, n<20: '+hidden.join(', ')+'.':'');
+  const everyBand=pace.bands.length&&pace.bands.every(b=>b.n>=GROWTH_MIN_N);
+  const rows=everyBand?[pace.all].concat(pace.bands):[pace.all].filter(r=>r.n>=GROWTH_MIN_N);
+  const nEl=document.getElementById('growth-pace-n');
+  if(nEl) nEl.textContent=pace.all.n>=GROWTH_MIN_N?'n = '+pace.all.n.toLocaleString()+' children':'n<20';
+  const box=document.getElementById('growth-pace-box');
+  if(box) box.style.height=(rows.length>1?Math.max(180, rows.length*56):120)+'px';
+  const rules='n = '+pace.all.n.toLocaleString()+'.'+(everyBand?'':' Time-in-care groups are not shown, because not every group has 20 children.');
   growthShowTakeaway('growth-pace-take', growthPaceTakeaway(pace));
   if(!rows.length){
-    growthHold(canvas, 'Not enough children under the age limit at both visits.');
+    growthHold(canvas, 'Not enough children aged 10 or under at both visits.');
     if(foot) foot.textContent=rules;
     return;
   }
   growthRelease(canvas);
   growthLegend('growth-pace-lg', [
-    {label:'Fell behind (z down by more than 0.5)', color:'#0b2545'},
-    {label:'Kept pace (within 0.5)', color:'#1a6aaf'},
-    {label:'Gained faster (z up by more than 0.5)', color:'#8ec0e4'}
+    {label:'Falling behind', color:'#0b2545'},
+    {label:'On track', color:'#1a6aaf'},
+    {label:'Catching up', color:'#8ec0e4'}
   ]);
   _gPace=createDashboardChart(canvas,{
     type:'bar',
     data:{
-      labels:rows.map(r=>[r.label, '(n='+r.n.toLocaleString()+')']),
+      labels:rows.map(r=>r.label+' · n='+r.n.toLocaleString()),
       datasets:[
-        {label:'Fell behind', data:rows.map(r=>r.fellPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.fell), _oneDp:true},
-        {label:'Kept pace', data:rows.map(r=>r.steadyPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.steady), _oneDp:true},
-        {label:'Gained faster', data:rows.map(r=>r.rosePct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.rose), _lc:'#1f2937', _oneDp:true}
+        {label:'Falling behind', data:rows.map(r=>r.fellPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.fell), _oneDp:true},
+        {label:'On track', data:rows.map(r=>r.steadyPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.steady), _oneDp:true},
+        {label:'Catching up', data:rows.map(r=>r.rosePct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.rose), _lc:'#1f2937', _oneDp:true}
       ]
     },
     options:{
-      responsive:true, maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false, indexAxis:'y',
       plugins:{legend:{display:false}, tooltip:{callbacks:{
-        label(ctx){ const row=rows[ctx.dataIndex]; return ' '+ctx.dataset.label+': '+Number(ctx.parsed.y).toFixed(1)+'% · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+row.n.toLocaleString(); },
+        label(ctx){ const row=rows[ctx.dataIndex]; return ' '+ctx.dataset.label+': '+Number(ctx.parsed.x).toFixed(1)+'% · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+row.n.toLocaleString(); },
         afterBody(items){ const row=rows[items[0].dataIndex]; if(!row||row.kgYear==null) return []; return ['Mean change: '+Number(row.kgYear).toFixed(2)+' kg/year']; }
       }}},
       scales:{
-        x:{stacked:true, grid:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
-        y:{stacked:true, min:0, max:100, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
+        x:{stacked:true, min:0, max:100, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}},
+        y:{stacked:true, grid:{display:false}, ticks:{font:{size:12}, color:'#334155'}}
       }
     }
   });
