@@ -270,6 +270,18 @@ test('sex, period and the roster change who is counted', () => {
   assert.equal(got.hbaN, 24);
 });
 
+test('the age heading and the shared who-is-counted note are computed', () => {
+  const {run} = setup();
+  assert.match(html, /_oneDp\?Number\(v\)\.toFixed\(1\)\+'%':v\+'%'/);
+  const heading = run('growthAgeHeading([{latestAge:2},{latestAge:18.6},{latestAge:18.1}])');
+  assert.match(heading, /latest age 2\.0–18\.6 years/);
+  assert.match(heading, /2 are 18 or older/);
+  const who = run("growthWhoText({cohort:10, noSexOrPair:1, shortGap:2, bazImplausible:3, hazImplausible:0, wazImplausible:0, wazNotApplicable:4})");
+  assert.match(who, /^Who is counted/);
+  assert.match(who, /No usable sex or weight and height: 1/);
+  assert.match(who, /after 120 months/);
+});
+
 test('a short growth insight is hidden below 20 children', () => {
   const {run, elements} = setup();
   run("growthInsight('growth-now-take', '21.4% are thin', 19)");

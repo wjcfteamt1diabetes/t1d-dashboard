@@ -1082,8 +1082,9 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 </div>
 
 <div id="growth-section">
-<div class="sl">Growth (ages 2–18)</div>
+<div class="sl" id="growth-heading">Growth</div>
 <p class="growth-lead" id="growth-lead">Shares of children who are thin, stunted, overweight or underweight. Z-scores are calculated on this page from weight, height, age and sex with the WHO tables. Thin is BMI-for-age below −2. Healthy is −2 to +1. Overweight is above +1. Stunted is height-for-age below −2. Underweight is weight-for-age below −2, only through 120 months. Every chart uses the same filtered children as the rest of the page.</p>
+<p class="growth-foot" id="growth-who"></p>
 <div id="growth-status" class="data-pending-chart" role="status" hidden></div>
 <div id="growth-body">
 
@@ -1931,7 +1932,7 @@ Chart.register({
           const minH=ds._minH||16;
           if(bh<minH) return;
           if(!ds._staticLabel && v<(ds._minVal!==undefined?ds._minVal:8)) return;
-          const lbl=ds._staticLabel||(ds._pct===false?Number(v).toLocaleString():v+'%');
+          const lbl=ds._staticLabel||(ds._pct===false?Number(v).toLocaleString():(ds._oneDp?Number(v).toFixed(1)+'%':v+'%'));
           const color=Array.isArray(bg)?bg[j]:bg;
           const fill=ds._lc||inkOn(color);
           ctx.save();
@@ -5628,9 +5629,17 @@ function computeGrowth(idSet, childRows, f){
   kids.exclusions=exclusions;
   return {status:'ok', cohort:kids.length, kids, plain:growthPlain(kids, f)};
 }
-function growthRules(ex){
+function growthAgeHeading(kids){
+  const ages=(kids||[]).map(k=>k.latestAge).filter(a=>a!=null&&isFinite(a));
+  if(!ages.length) return 'Growth';
+  const min=Math.min.apply(null, ages), max=Math.max.apply(null, ages);
+  const older=ages.filter(a=>a>=18).length;
+  const fmt=a=>(Math.floor(a*10+1e-8)/10).toFixed(1);
+  return 'Growth (latest age '+fmt(min)+'–'+fmt(max)+' years'+(older?' · '+older.toLocaleString()+' are 18 or older':'')+')';
+}
+function growthWhoText(ex){
   ex=ex||{};
-  return 'Same filtered children as the rest of the page. No usable sex or weight and height: '+(ex.noSexOrPair||0).toLocaleString()+'. Gap under 3 months, left out of the before-and-after charts: '+(ex.shortGap||0).toLocaleString()+'. Implausible BMI-for-age z excluded: '+(ex.bazImplausible||0).toLocaleString()+'. Weight-for-age is not calculated after 120 months (age 121 months or older): '+(ex.wazNotApplicable||0).toLocaleString()+'.';
+  return 'Who is counted. '+(ex.cohort||0).toLocaleString()+' children in this filtered view. No usable sex or weight and height: '+(ex.noSexOrPair||0).toLocaleString()+'. Gap under 3 months, left out of the before-and-after charts: '+(ex.shortGap||0).toLocaleString()+'. Implausible BMI-for-age z: '+(ex.bazImplausible||0).toLocaleString()+'. Implausible height-for-age z: '+(ex.hazImplausible||0).toLocaleString()+'. Implausible weight-for-age z: '+(ex.wazImplausible||0).toLocaleString()+'. Weight-for-age is not calculated after 120 months (age 121 months or older): '+(ex.wazNotApplicable||0).toLocaleString()+'.';
 }
 function growthNowTakeaway(now){
   if(!now||now.thin.N<GROWTH_MIN_N) return '';
@@ -5719,6 +5728,10 @@ function renderGrowth(){
   }
   box.hidden=true;
   body.hidden=false;
+  const heading=document.getElementById('growth-heading');
+  if(heading) heading.textContent=growthAgeHeading(GROWTH.kids);
+  const who=document.getElementById('growth-who');
+  if(who) who.textContent=growthWhoText(GROWTH.plain.exclusions);
   renderGrowthNow();
   renderGrowthBmiChange();
   renderGrowthUnder();
@@ -5743,7 +5756,7 @@ function renderGrowthNow(){
     const u5line=u5.n>=GROWTH_MIN_N
       ? ' '+u5.n.toLocaleString()+' of the BMI group are under 5 years, and '+u5.thin.toLocaleString()+' of them are thin. Under 5, WHO calls below −2 wasted, and above +1 possible risk of overweight, overweight or obese. They are counted in the same three groups.'
       : ' Under 5 years in this view: '+u5.n.toLocaleString()+' with a BMI-for-age z'+(u5.n&&u5.n<GROWTH_MIN_N?' (share hidden, n<20)':'')+'. The same three groups are used: below −2, −2 to +1, and above +1.';
-    note.textContent='Thin, stunted and overweight use the latest visit. Underweight is weight-for-age below −2 through 120 months. '+now.wazNotApplicable.toLocaleString()+' children are past that age, so weight-for-age does not apply.'+u5line+' '+growthRules(plain.exclusions);
+    note.textContent='Thin, stunted and overweight use the latest visit. Underweight is weight-for-age below −2 through 120 months. '+now.wazNotApplicable.toLocaleString()+' children are past that age, so weight-for-age does not apply.'+u5line;
   }
   growthShowTakeaway('growth-now-take', growthNowTakeaway(now));
   const canvas=document.getElementById('c-growth-mix');
@@ -5752,7 +5765,7 @@ function renderGrowthNow(){
   if(!canvas) return;
   if(now.mix.n<GROWTH_MIN_N){
     growthHold(canvas, 'Not enough children with a BMI-for-age z in this view.');
-    if(foot) foot.textContent='n = '+now.mix.n.toLocaleString()+'. '+growthRules(plain.exclusions);
+    if(foot) foot.textContent='n = '+now.mix.n.toLocaleString()+'.';
     return;
   }
   growthRelease(canvas);
@@ -5767,9 +5780,9 @@ function renderGrowthNow(){
     data:{
       labels:[['All ages','(n='+mix.n.toLocaleString()+')']],
       datasets:[
-        {label:'Thin', data:[mix.thinPct], backgroundColor:GROWTH_GROUP_COLOR.thin, _counts:[mix.thin]},
-        {label:'Healthy', data:[mix.healthyPct], backgroundColor:GROWTH_GROUP_COLOR.healthy, _counts:[mix.healthy]},
-        {label:'Overweight', data:[mix.overPct], backgroundColor:GROWTH_GROUP_COLOR.over, _counts:[mix.over]}
+        {label:'Thin', data:[mix.thinPct], backgroundColor:GROWTH_GROUP_COLOR.thin, _counts:[mix.thin], _oneDp:true},
+        {label:'Healthy', data:[mix.healthyPct], backgroundColor:GROWTH_GROUP_COLOR.healthy, _counts:[mix.healthy], _oneDp:true},
+        {label:'Overweight', data:[mix.overPct], backgroundColor:GROWTH_GROUP_COLOR.over, _counts:[mix.over], _oneDp:true}
       ]
     },
     options:{
@@ -5783,7 +5796,7 @@ function renderGrowthNow(){
       }
     }
   });
-  if(foot) foot.textContent='n = '+mix.n.toLocaleString()+' children with a latest BMI-for-age z, all ages together. '+growthRules(plain.exclusions);
+  if(foot) foot.textContent='n = '+mix.n.toLocaleString()+' children with a latest BMI-for-age z, all ages together.';
 }
 function growthStackPair(canvas, slot, rows, foot, footText, legendId){
   if(slot.chart){slot.chart.destroy(); slot.chart=null;}
@@ -5808,12 +5821,12 @@ function growthStackPair(canvas, slot, rows, foot, footText, legendId){
     data:{
       labels:shown.map(r=>[r.label||'All', '(n='+r.n.toLocaleString()+')']),
       datasets:[
-        {label:'Thin, first visit', stack:'first', backgroundColor:'#8eacc4', data:shown.map(r=>r.first.thinPct), _n:shown.map(r=>r.first.thin)},
-        {label:'Healthy, first visit', stack:'first', backgroundColor:'#b7d4ea', data:shown.map(r=>r.first.healthyPct), _n:shown.map(r=>r.first.healthy)},
-        {label:'Overweight, first visit', stack:'first', backgroundColor:'#d5e6f2', data:shown.map(r=>r.first.overPct), _n:shown.map(r=>r.first.over), _lc:'#1f2937'},
-        {label:'Thin, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.thin, data:shown.map(r=>r.latest.thinPct), _n:shown.map(r=>r.latest.thin)},
-        {label:'Healthy, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.healthy, data:shown.map(r=>r.latest.healthyPct), _n:shown.map(r=>r.latest.healthy)},
-        {label:'Overweight, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.over, data:shown.map(r=>r.latest.overPct), _n:shown.map(r=>r.latest.over), _lc:'#1f2937'}
+        {label:'Thin, first visit', stack:'first', backgroundColor:'#8eacc4', data:shown.map(r=>r.first.thinPct), _n:shown.map(r=>r.first.thin), _oneDp:true},
+        {label:'Healthy, first visit', stack:'first', backgroundColor:'#b7d4ea', data:shown.map(r=>r.first.healthyPct), _n:shown.map(r=>r.first.healthy), _oneDp:true},
+        {label:'Overweight, first visit', stack:'first', backgroundColor:'#d5e6f2', data:shown.map(r=>r.first.overPct), _n:shown.map(r=>r.first.over), _lc:'#1f2937', _oneDp:true},
+        {label:'Thin, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.thin, data:shown.map(r=>r.latest.thinPct), _n:shown.map(r=>r.latest.thin), _oneDp:true},
+        {label:'Healthy, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.healthy, data:shown.map(r=>r.latest.healthyPct), _n:shown.map(r=>r.latest.healthy), _oneDp:true},
+        {label:'Overweight, latest visit', stack:'latest', backgroundColor:GROWTH_GROUP_COLOR.over, data:shown.map(r=>r.latest.overPct), _n:shown.map(r=>r.latest.over), _lc:'#1f2937', _oneDp:true}
       ]
     },
     options:{
@@ -5837,7 +5850,7 @@ function renderGrowthBmiChange(){
   const hidden=block.bands.filter(b=>b.hidden).map(b=>b.label+' (n='+b.n.toLocaleString()+')');
   const rows=[block.all].concat(block.bands);
   rows[0].label='All';
-  const text='Same children, both visits valid and at least 3 months apart. Left bar is the first visit, right bar is the latest. '+(hidden.length?'Hidden, n<20: '+hidden.join(', ')+'. ':'')+growthRules(plain.exclusions);
+  const text='n = '+block.all.n.toLocaleString()+'. Same children, both visits valid and at least 3 months apart. Left bar is the first visit, right bar is the latest.'+(hidden.length?' Hidden, n<20: '+hidden.join(', ')+'.':'');
   _gBmiChg=growthStackPair(canvas, {get chart(){return _gBmiChg;}, set chart(v){_gBmiChg=v;}}, rows, foot, text, 'growth-bmi-change-lg');
   growthShowTakeaway('growth-bmi-change-take', growthBmiChangeTakeaway(block));
 }
@@ -5847,7 +5860,7 @@ function renderGrowthUnder(){
   const foot=document.getElementById('growth-under-foot');
   if(_gUnder){_gUnder.destroy();_gUnder=null;}
   if(!canvas) return;
-  const rules='Both visits at or under 120 months, and at least 3 months apart. n = '+block.n.toLocaleString()+'. Past 120 months at the latest visit, so not scored: '+block.wazNotApplicable.toLocaleString()+'. '+growthRules(plain.exclusions);
+  const rules='n = '+block.n.toLocaleString()+'. Both visits at or under 120 months, and at least 3 months apart. Past 120 months at the latest visit, so not scored: '+block.wazNotApplicable.toLocaleString()+'.';
   growthShowTakeaway('growth-under-take', growthUnderTakeaway(block));
   if(block.n<GROWTH_MIN_N){
     growthHold(canvas, 'Not enough children under the age limit at both visits.');
@@ -5860,7 +5873,7 @@ function renderGrowthUnder(){
     type:'bar',
     data:{
       labels:['First visit','Latest visit'],
-      datasets:[{label:'Underweight', data:[block.firstPct, block.latestPct], backgroundColor:['#8eacc4','#0b2545'], _n:[block.first, block.latest], _pct:true}]
+      datasets:[{label:'Underweight', data:[block.firstPct, block.latestPct], backgroundColor:['#8eacc4','#0b2545'], _n:[block.first, block.latest], _oneDp:true}]
     },
     options:{
       responsive:true, maintainAspectRatio:false,
@@ -5885,7 +5898,7 @@ function renderGrowthPace(){
   if(pace.all) rows[0] && (rows[0].label=rows[0].label||'All');
   pace.all.label='All';
   const hidden=pace.bands.filter(b=>b.hidden).map(b=>b.label+' (n='+b.n.toLocaleString()+')');
-  const rules='Children at or under 120 months at both visits, at least 3 months apart. Fell means the weight-for-age z dropped by more than 0.5. Steady, within 0.5, means weight kept up with the normal WHO rate for that age. Rose means the z increased by more than 0.5. '+(hidden.length?'Hidden, n<20: '+hidden.join(', ')+'. ':'')+growthRules(plain.exclusions);
+  const rules='n = '+pace.all.n.toLocaleString()+'. Both visits at or under 120 months, at least 3 months apart. Fell is a drop of more than 0.5 in weight-for-age z. Steady, within 0.5, is the normal WHO rate for that age. Rose is a rise of more than 0.5.'+(hidden.length?' Hidden, n<20: '+hidden.join(', ')+'.':'');
   growthShowTakeaway('growth-pace-take', growthPaceTakeaway(pace));
   if(!rows.length){
     growthHold(canvas, 'Not enough children under the age limit at both visits.');
@@ -5903,9 +5916,9 @@ function renderGrowthPace(){
     data:{
       labels:rows.map(r=>[r.label, '(n='+r.n.toLocaleString()+')']),
       datasets:[
-        {label:'Fell behind', data:rows.map(r=>r.fellPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.fell)},
-        {label:'Kept pace', data:rows.map(r=>r.steadyPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.steady)},
-        {label:'Gained faster', data:rows.map(r=>r.rosePct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.rose), _lc:'#1f2937'}
+        {label:'Fell behind', data:rows.map(r=>r.fellPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.fell), _oneDp:true},
+        {label:'Kept pace', data:rows.map(r=>r.steadyPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.steady), _oneDp:true},
+        {label:'Gained faster', data:rows.map(r=>r.rosePct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.rose), _lc:'#1f2937', _oneDp:true}
       ]
     },
     options:{
@@ -5935,7 +5948,7 @@ function renderGrowthPlace(){
   if(sub) sub.textContent=place.mode==='district'
     ? 'Districts in this state with at least 20 children who have a latest BMI-for-age z. Smaller districts are hidden.'
     : 'Latest visit. Each state with at least 20 children. Choose a state to see its districts.';
-  const rules=(place.rows.length?'':'No '+place.mode+' has 20 children in this view. ')+growthRules(plain.exclusions);
+  const rules=(place.rows.length?'':'No '+place.mode+' has 20 children in this view. ');
   growthShowTakeaway('growth-place-take', growthPlaceTakeaway(place));
   if(!place.rows.length){
     growthHold(canvas, 'Not enough children in any '+(place.mode==='district'?'district':'state')+'.');
@@ -5943,39 +5956,46 @@ function renderGrowthPlace(){
     return;
   }
   growthRelease(canvas);
+  const wide=place.mode==='district';
+  if(canvas.parentElement) canvas.parentElement.style.height=(wide?Math.max(420, place.rows.length*32+48):280)+'px';
   growthLegend('growth-place-lg', [
     {label:'Thin', color:'#0b2545'},
     {label:'Stunted', color:'#1a6aaf'},
     {label:'Overweight', color:'#8ec0e4'}
   ]);
   const rows=place.rows;
+  const valueOf=ctx=>wide?ctx.parsed.x:ctx.parsed.y;
   _gPlace=createDashboardChart(canvas,{
     type:'bar',
     data:{
-      labels:rows.map(r=>[r.label, '(n='+r.n.toLocaleString()+')']),
+      labels:rows.map(r=>r.label+' (n='+r.n.toLocaleString()+')'),
       datasets:[
-        {label:'Thin', data:rows.map(r=>r.thinPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.thin)},
-        {label:'Stunted', data:rows.map(r=>r.stuntPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.stunt), _den:rows.map(r=>r.stuntN)},
-        {label:'Overweight', data:rows.map(r=>r.overPct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.over), _lc:'#1f2937'}
+        {label:'Thin', data:rows.map(r=>r.thinPct), backgroundColor:'#0b2545', _n:rows.map(r=>r.thin), _oneDp:true, _noLabel:wide},
+        {label:'Stunted', data:rows.map(r=>r.stuntPct), backgroundColor:'#1a6aaf', _n:rows.map(r=>r.stunt), _den:rows.map(r=>r.stuntN), _oneDp:true, _noLabel:wide},
+        {label:'Overweight', data:rows.map(r=>r.overPct), backgroundColor:'#8ec0e4', _n:rows.map(r=>r.over), _lc:'#1f2937', _oneDp:true, _noLabel:wide}
       ]
     },
     options:{
-      responsive:true, maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false, indexAxis:wide?'y':'x',
       plugins:{legend:{display:false}, tooltip:{callbacks:{
         label(ctx){
           const row=rows[ctx.dataIndex];
           const den=ctx.dataset._den?ctx.dataset._den[ctx.dataIndex]:row.n;
-          if(ctx.parsed.y==null) return ' '+ctx.dataset.label+': n<20';
-          return ' '+ctx.dataset.label+': '+Number(ctx.parsed.y).toFixed(1)+'% · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+Number(den||0).toLocaleString();
+          const value=valueOf(ctx);
+          if(value==null) return ' '+ctx.dataset.label+': n<20';
+          return ' '+ctx.dataset.label+': '+Number(value).toFixed(1)+'% · n = '+ctx.dataset._n[ctx.dataIndex].toLocaleString()+' of '+Number(den||0).toLocaleString();
         }
       }}},
-      scales:{
-        x:{grid:{display:false}, ticks:{font:{size:10}, color:'#334155', maxRotation:place.mode==='district'?50:0, minRotation:place.mode==='district'?40:0, autoSkip:false}},
+      scales:wide?{
+        x:{min:0, suggestedMax:60, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}},
+        y:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', autoSkip:false}}
+      }:{
+        x:{grid:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
         y:{min:0, suggestedMax:50, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}}
       }
     }
   });
-  if(foot) foot.textContent='Thin and overweight use children with a latest BMI-for-age z. Stunted uses children with a latest height-for-age z, and is hidden for a place when that count is under 20. '+rules;
+  if(foot) foot.textContent='n is children with a latest BMI-for-age z. Stunted uses height-for-age and is hidden when that count is under 20. '+rules;
 }
 function renderGrowthHbaGroup(){
   const plain=GROWTH.plain, groups=plain.hba.groups;
@@ -5985,7 +6005,7 @@ function renderGrowthHbaGroup(){
   if(!canvas) return;
   growthShowTakeaway('growth-hba-take', growthHbaTakeaway(plain.hba));
   const any=groups.some(g=>g.mean!=null);
-  const rules='Latest HbA1c for children with a latest BMI-for-age z. Thin is below −2, in range is −2 to +1, overweight is above +1. The HbA1c may not be from the same day as the weight and height. Groups under 20 are hidden. '+growthRules(plain.exclusions);
+  const rules='Latest HbA1c for children with a latest BMI-for-age z. The reading may not be from the same day as the weight and height. Groups under 20 are hidden.';
   if(!any){
     growthHold(canvas, 'Not enough children with both a growth z and an HbA1c.');
     if(foot) foot.textContent=rules;

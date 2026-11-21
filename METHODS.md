@@ -1,6 +1,6 @@
 # Growth monitoring methods
 
-The growth charts read `Growth_child` from the programme workbook. They do not use placeholder values. Z-scores are calculated on the page from weight, height, age and sex. Where a z-score cannot be computed, the chart says who is left out.
+The growth charts read `Growth_child` from the programme workbook. Children are those enrolled in the 2–18 growth cohort. Latest age can be older than 18 and younger than 19; the page heading shows the latest-age range in the current filter. They do not use placeholder values. Z-scores are calculated on the page from weight, height, age and sex. Where a z-score cannot be computed, the chart says who is left out.
 
 ## Reference data
 
