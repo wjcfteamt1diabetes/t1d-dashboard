@@ -386,6 +386,11 @@ test('takeaways describe the filtered trend and skip groups under 20', () => {
       {bin:'3', bazN:10, bazMean:2, hazN:10, hazMean:2},
       {bin:'12', bazN:28, bazMean:-0.81, hazN:28, hazMean:-1.52}
     ]);
+    const through18 = growthTrendTakeaway([
+      {bin:'0', bazN:30, bazMean:-1, hazN:30, hazMean:-1.5, wazN:30, wazMean:-1},
+      {bin:'12', bazN:28, bazMean:-0.8, hazN:28, hazMean:-1.58, wazN:28, wazMean:-0.8},
+      {bin:'18+', bazN:22, bazMean:-0.7, hazN:22, hazMean:-1.4, wazN:10, wazMean:2}
+    ]);
     const thin = growthBmiTakeaway({
       overallN:60, overallThin:14, overallStunt:0, overallStuntN:10,
       bars:[
@@ -403,11 +408,12 @@ test('takeaways describe the filtered trend and skip groups under 20', () => {
       {key:'behind', n:12, suppressed:true, mean:null},
       {key:'steady', n:40, suppressed:false, mean:10.24}
     ]);
-    return {rising, onlyOne, trend, thin, hba, hbaSmall};
+    return {rising, onlyOne, trend, through18, thin, hba, hbaSmall};
   })()`);
   assert.equal(text.rising, 'Falling behind rises from 8% at 0–6 months to 16% at 12–18 months');
   assert.equal(text.onlyOne, 'Not enough data for a takeaway');
-  assert.equal(text.trend, 'BMI-for-age improves +0.19 SD by 12 months; height-for-age stays flat');
+  assert.equal(text.trend, 'BMI-for-age improves +0.19 SD by 12 months; height-for-age stays flat through 12 months');
+  assert.equal(text.through18, 'BMI-for-age improves +0.30 SD by 18+ months; height-for-age improves +0.10 SD by 18+ months; weight-for-age improves +0.20 SD by 12 months');
   assert.equal(text.thin, 'Madhya Pradesh has the highest BMI-for-age thinness, 30% against 23.3% overall');
   assert.equal(text.hba, 'Children whose BMI-for-age fell behind have 0.46 points higher mean HbA1c');
   assert.equal(text.hbaSmall, 'Not enough data for a takeaway');

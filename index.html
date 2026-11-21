@@ -1098,12 +1098,12 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
   </div>
   <div class="card">
     <div class="ct" id="growth-trend-title">Month-on-month growth trend</div>
-    <div class="cs" id="growth-trend-sub">Mean stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The benchmark is the WHO median, z = 0, for the same age and sex. To recompute each point, Growth_milestones would need one row per child per visit with: Claude_ID, sex, weight in kilograms, height in centimetres, and either age at that measurement or the measurement date plus a date of birth. Months since enrolment (or the enrolment date) is also required. Mean_BAZ and Mean_HAZ alone are not enough. A point is hidden below 20 children.</div>
+    <div class="cs" id="growth-trend-sub">Mean WHO BMI-for-age, height-for-age and weight-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. BMI-for-age uses a clean weight in kilograms, height in centimetres. Height-for-age uses a clean height. Weight-for-age uses weight only through 120 months (10 years), and is left off after that or when a weight is out of range or jumps by 10 kg within 90 days. The benchmark is the WHO median, z = 0, for the same age and sex. Each point is the unweighted mean of one value per child. More than one visit in a bin is averaged for that child first. A point, and an enrolment-quarter line, is hidden below 20 children. Dashed lines, when shown, are BMI-for-age by enrolment quarter.</div>
     <div class="growth-takeaway" id="growth-trend-take"></div>
     <div class="lg" id="growth-trend-lg"></div>
     <label class="growth-toggle" for="growth-cohort"><input type="checkbox" id="growth-cohort" onchange="renderGrowthTrend()"> By enrolment cohort</label>
     <div class="lg" id="growth-cohort-lg"></div>
-    <div style="height:280px;position:relative"><canvas id="c-growth-trend" role="img" aria-label="Weight-for-height and height-for-age scores by months since enrolment"></canvas></div>
+    <div style="height:280px;position:relative"><canvas id="c-growth-trend" role="img" aria-label="WHO BMI-for-age, height-for-age and weight-for-age z-scores by months since enrolment"></canvas></div>
     <div class="growth-foot" id="growth-trend-foot"></div>
   </div>
 </div>
@@ -5793,7 +5793,7 @@ function growthFoot(measured, cohort, phrase){
 function growthLimitNote(d){
   if(!d||!d.exclusions) return '';
   const e=d.exclusions;
-  return ' Excluded: no sex or no weight and height '+(e.noSexOrPair||0).toLocaleString()+'; latest pair missing '+(e.noLaterPair||0).toLocaleString()+'; gap under 3 months '+(e.shortGap||0).toLocaleString()+' (change charts); implausible BMI-for-age z '+(e.bazImplausible||0).toLocaleString()+'; weight-for-age not applicable over 10 years '+(e.wazNotApplicable||0).toLocaleString()+'.';
+  return ' Excluded: no sex or no weight and height '+(e.noSexOrPair||0).toLocaleString()+'; latest pair missing '+(e.noLaterPair||0).toLocaleString()+'; gap under 3 months '+(e.shortGap||0).toLocaleString()+' (change charts); implausible BMI-for-age z '+(e.bazImplausible||0).toLocaleString()+'; weight-for-age not applicable after 120 months (10 years) '+(e.wazNotApplicable||0).toLocaleString()+'.';
 }
 function growthView(f, data){
   if(f&&f.age==='adu') return {mode:'adults', message:'Not applicable for adults'};
@@ -6188,10 +6188,7 @@ function growthTrendTakeaway(bins){
   const haz=(bins||[]).filter(b=>b.hazN>=GROWTH_MIN_N&&b.hazMean!=null);
   const waz=(bins||[]).filter(b=>b.wazN>=GROWTH_MIN_N&&b.wazMean!=null);
   if(baz.length<2&&haz.length<2&&waz.length<2) return 'Not enough data for a takeaway';
-  const endOf=(list, key)=>{
-    const later=list.find(b=>b.bin==='12'&&b!==list[0])||list[list.length-1];
-    return later===list[0]?list[list.length-1]:later;
-  };
+  const endOf=list=>list[list.length-1];
   const when=bin=>bin==='18+'?'18+ months':bin+' months';
   const parts=[];
   if(baz.length>=2){
@@ -6204,16 +6201,16 @@ function growthTrendTakeaway(bins){
   if(haz.length>=2){
     const a=haz[0], b=endOf(haz);
     const d=Math.round((b.hazMean-a.hazMean)*100)/100;
-    if(Math.abs(d)<0.05) parts.push('height-for-age stays flat');
-    else if(d>0) parts.push('height-for-age improves +'+d.toFixed(2)+' SD');
-    else parts.push('height-for-age falls '+Math.abs(d).toFixed(2)+' SD');
+    if(Math.abs(d)<0.05) parts.push('height-for-age stays flat through '+when(b.bin));
+    else if(d>0) parts.push('height-for-age improves +'+d.toFixed(2)+' SD by '+when(b.bin));
+    else parts.push('height-for-age falls '+Math.abs(d).toFixed(2)+' SD by '+when(b.bin));
   }
   if(waz.length>=2){
     const a=waz[0], b=endOf(waz);
     const d=Math.round((b.wazMean-a.wazMean)*100)/100;
-    if(Math.abs(d)<0.05) parts.push('weight-for-age stays flat');
-    else if(d>0) parts.push('weight-for-age improves +'+d.toFixed(2)+' SD');
-    else parts.push('weight-for-age falls '+Math.abs(d).toFixed(2)+' SD');
+    if(Math.abs(d)<0.05) parts.push('weight-for-age stays flat through '+when(b.bin));
+    else if(d>0) parts.push('weight-for-age improves +'+d.toFixed(2)+' SD by '+when(b.bin));
+    else parts.push('weight-for-age falls '+Math.abs(d).toFixed(2)+' SD by '+when(b.bin));
   }
   if(!parts.length) return 'Not enough data for a takeaway';
   const sentence=parts.join('; ');
@@ -6760,9 +6757,12 @@ function renderGrowthTrend(){
   const title=document.getElementById('growth-trend-title');
   const sub=document.getElementById('growth-trend-sub');
   if(title) title.textContent=visits?'Month-on-month WHO z-score':'Month-on-month growth trend';
+  if(canvas) canvas.setAttribute('aria-label', visits
+    ? 'WHO BMI-for-age, height-for-age and weight-for-age z-scores by months since enrolment'
+    : 'Stored BMI-for-age and height-for-age means by months since enrolment');
   if(sub) sub.textContent=visits
-    ? 'Mean WHO z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. BMI-for-age uses a clean weight and height. Height-for-age uses a clean height. Weight-for-age uses weight only, under 10 years, and is left off when a weight is out of range or jumps by 10 kg within 90 days. The benchmark is the WHO median, z = 0, for the same age and sex. Each point is the unweighted mean of one value per child. More than one visit in a bin is averaged for that child first. A point, and an enrolment-quarter line, is hidden below 20 children. Dashed lines, when shown, are BMI-for-age by enrolment quarter.'
-    : 'Mean stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The benchmark is the WHO median, z = 0, for the same age and sex. To recompute each point, Growth_milestones would need one row per child per visit with: Claude_ID, sex, weight in kilograms, height in centimetres, and either age at that measurement or the measurement date plus a date of birth. Months since enrolment (or the enrolment date) is also required. Mean_BAZ and Mean_HAZ alone are not enough. A point is hidden below 20 children.';
+    ? 'Mean WHO BMI-for-age, height-for-age and weight-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. BMI-for-age uses a clean weight in kilograms, height in centimetres. Height-for-age uses a clean height. Weight-for-age uses weight only through 120 months (10 years), and is left off after that or when a weight is out of range or jumps by 10 kg within 90 days. The benchmark is the WHO median, z = 0, for the same age and sex. Each point is the unweighted mean of one value per child. More than one visit in a bin is averaged for that child first. A point, and an enrolment-quarter line, is hidden below 20 children. Dashed lines, when shown, are BMI-for-age by enrolment quarter.'
+    : 'Mean stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The benchmark is the WHO median, z = 0, for the same age and sex. Growth_visits_dash is not available, so these points stay the stored means. A point is hidden below 20 children.';
   const countNote=n=>n==null?'':(' · n = '+Number(n).toLocaleString());
   growthLegend('growth-trend-lg', visits?[
     {label:'BMI-for-age z (BAZ)'+countNote(trend.bazChildren), color:GROWTH_LINE.baz},
@@ -6817,7 +6817,7 @@ function renderGrowthTrend(){
         afterBody(items){
           const b=trend.bins[items[0].dataIndex]; if(!b) return [];
           const bits=[];
-          if(b.bazN<GROWTH_MIN_N) bits.push((visits?'BMI-for-age z (BAZ)':'Weight-for-height (BAZ)')+' n<20');
+          if(b.bazN<GROWTH_MIN_N) bits.push('BMI-for-age (BAZ) n<20');
           if(b.hazN<GROWTH_MIN_N) bits.push('Height-for-age (HAZ) n<20');
           if(visits&&b.wazN<GROWTH_MIN_N) bits.push('Weight-for-age z (WAZ) n<20');
           return bits;
@@ -6840,7 +6840,7 @@ function renderGrowthTrend(){
         gap=' Recomputed BMI-for-age is within 0.15 of the stored milestone mean at '+agree.bazClose+' of '+agree.bazBins+' points'+(agree.bazGap==null?'':(' (mean gap '+(agree.bazGap>0?'+':'')+agree.bazGap.toFixed(2)+')'))+'.';
         if(agree.hazBins) gap+=' Height-for-age: '+agree.hazClose+' of '+agree.hazBins+(agree.hazGap==null?'':(' (mean gap '+(agree.hazGap>0?'+':'')+agree.hazGap.toFixed(2)+')'))+'.';
       }
-      foot.textContent='n = '+trend.measured.toLocaleString()+' children with at least one eligible value. BMI-for-age n = '+(trend.bazChildren||0).toLocaleString()+', height-for-age n = '+(trend.hazChildren||0).toLocaleString()+', weight-for-age n = '+(trend.wazChildren||0).toLocaleString()+'. Visits dropped: '+(d.noBin||0).toLocaleString()+' with no month bin; '+(d.outOfScope||0).toLocaleString()+' out of scope; '+(d.notClean||0).toLocaleString()+' with BMI-for-age or height-for-age not clean; '+(d.implausible||0).toLocaleString()+' implausible z-scores; '+(d.wazNotApplicable||0).toLocaleString()+' with weight-for-age not applicable because age is 10 years or older. Age at the visit is not taken from a date of birth and can be off by several months.'+gap;
+      foot.textContent='n = '+trend.measured.toLocaleString()+' children with at least one eligible value. BMI-for-age n = '+(trend.bazChildren||0).toLocaleString()+', height-for-age n = '+(trend.hazChildren||0).toLocaleString()+', weight-for-age n = '+(trend.wazChildren||0).toLocaleString()+'. Visits dropped: '+(d.noBin||0).toLocaleString()+' with no month bin; '+(d.outOfScope||0).toLocaleString()+' out of scope; '+(d.notClean||0).toLocaleString()+' with BMI-for-age or height-for-age not clean; '+(d.implausible||0).toLocaleString()+' implausible z-scores; '+(d.wazNotApplicable||0).toLocaleString()+' with weight-for-age not applicable after 120 months (10 years). Age at the visit is not taken from a date of birth and can be off by several months.'+gap;
     }
   }
 }
@@ -7189,7 +7189,7 @@ function renderGrowthWeightPos(){
     const series=cats.map((label,i)=>({label, color:GROWTH_BMI[i].color}));
     growthLegend('growth-wt-pos-lg', series);
     _gWtPos=renderGrowthShare({get chart(){return _gWtPos;}, set chart(v){_gWtPos=v;}}, 'c-growth-wt-pos', 'growth-wt-pos-foot', bars, series, 'under 10 years at both visits', 'growthWazPair');
-    if(foot) foot.textContent='Same children at baseline and at the latest visit. Both ages are under 10 years and the visits are at least 3 months apart. n = '+n.toLocaleString()+'. Over 10 years, WAZ is not calculated: '+(GROWTH.displayed.wazNotApplicable||0).toLocaleString()+' children.'+growthLimitNote(GROWTH.displayed);
+    if(foot) foot.textContent='Same children at baseline and at the latest visit. Both ages are 120 months (10 years) or under and the visits are at least 3 months apart. n = '+n.toLocaleString()+'. After 120 months (10 years), WAZ is not calculated: '+(GROWTH.displayed.wazNotApplicable||0).toLocaleString()+' children.'+growthLimitNote(GROWTH.displayed);
     return;
   }
   if(_gWtPos){_gWtPos.destroy();_gWtPos=null;}
@@ -7273,7 +7273,7 @@ function renderGrowthWeightNow(){
     const slot={get chart(){return _gWtNow;}, set chart(v){_gWtNow=v;}};
     _gWtNow=renderGrowthShare(slot, 'c-growth-wt-now', 'growth-wt-now-foot', [bar], series, 'under 10 years with a valid weight-for-age z', 'growthWazNow');
     const foot=document.getElementById('growth-wt-now-foot');
-    if(foot) foot.textContent+=' WAZ is not calculated at 10 years or older. Children with a weight but over 10 years: '+(GROWTH.displayed.wazNotApplicable||0).toLocaleString()+'.'+growthLimitNote(GROWTH.displayed);
+    if(foot) foot.textContent+=' WAZ is not calculated after 120 months (10 years). Children with a weight but past that age: '+(GROWTH.displayed.wazNotApplicable||0).toLocaleString()+'.'+growthLimitNote(GROWTH.displayed);
     return;
   }
   const block=GROWTH&&GROWTH.weightNow;
