@@ -87,8 +87,13 @@ test('growth monitoring is shown while SHOW_GROWTH is on', () => {
 
 test('growth section uses plain shares and no longer loads the visit trend', () => {
   const tab = html.slice(html.indexOf('id="tab-1"'), html.indexOf('id="tab-2"'));
-  assert.match(tab, /Did BMI improve/);
-  assert.match(tab, /Did underweight fall/);
+  assert.match(tab, /Thinness: first visit vs latest \(same children\)/);
+  assert.match(tab, /Underweight: first visit vs latest \(same children\)/);
+  assert.match(tab, /id="growth-change-metric"/);
+  assert.match(tab, /id="growth-paired-caveat"/);
+  assert.match(tab, /regression to the mean/);
+  assert.equal(tab.includes('Did BMI improve'), false);
+  assert.equal(tab.includes('Did underweight fall'), false);
   assert.match(tab, /Weight gain compared with normal growth/);
   assert.match(tab, /Latest HbA1c/);
   assert.match(tab, /id="growth-thin-pct"/);
@@ -280,6 +285,97 @@ test('the age heading and the shared who-is-counted note are computed', () => {
   assert.match(who, /^Who is counted/);
   assert.match(who, /No usable sex or weight and height: 1/);
   assert.match(who, /after 120 months/);
+});
+
+test('Wilson intervals, McNemar and the paired net change match the checked counts', () => {
+  const {run} = setup();
+  const got = run(`(() => {
+    const thin = growthWilson(371, 1736);
+    const stunt = growthWilson(556, 1738);
+    const over = growthWilson(206, 1736);
+    const under = growthWilson(99, 474);
+    const thinFlow = growthPairedDiff(131, 68, 1195);
+    const stuntFlow = growthPairedDiff(43, 77, 1195);
+    const thinText = growthBmiChangeTakeaway({all:{
+      n:1195, leftThin:131, enteredThin:68,
+      first:{thinPct:25}, latest:{thinPct:19.7},
+      net:-5.3, netLo:-7.6, netHi:-3, p:0.000009
+    }});
+    const underText = growthUnderTakeaway({n:295, firstPct:19.3, latestPct:18, net:-1.4, lo:-4, hi:1.3, p:0.68});
+    const stuntText = growthStuntTakeaway({all:{n:1195, firstPct:29.5, latestPct:32.3, out:43, inn:77, net:2.8, lo:1.1, hi:4.6, p:0.0024468567628141693}});
+    const attrition = growthAttritionSentence({baseN:1734, leftN:539, keptN:1195, shortN:539, noLaterN:0, leftThinPct:25.6, keptThinPct:25});
+    return {
+      thin, stunt, over, under, thinFlow, stuntFlow, thinText, underText, stuntText, attrition,
+      tie: growthMcNemar(4, 4),
+      real: growthVerdict(0.0024),
+      noise: growthVerdict(0.68)
+    };
+  })()`);
+  assert.equal(got.thin.lo, 19.5);
+  assert.equal(got.thin.hi, 23.4);
+  assert.equal(got.stunt.lo, 29.8);
+  assert.equal(got.stunt.hi, 34.2);
+  assert.equal(got.over.lo, 10.4);
+  assert.equal(got.over.hi, 13.5);
+  assert.equal(got.under.lo, 17.5);
+  assert.equal(got.under.hi, 24.8);
+  assert.equal(got.thinFlow.net, -5.3);
+  assert.equal(got.thinFlow.lo, -7.6);
+  assert.equal(got.thinFlow.hi, -3);
+  assert.ok(got.thinFlow.p < 0.05);
+  assert.equal(got.stuntFlow.net, 2.8);
+  assert.equal(got.stuntFlow.lo, 1.1);
+  assert.equal(got.stuntFlow.hi, 4.6);
+  assert.ok(Math.abs(got.stuntFlow.p - 0.0024) < 0.0001);
+  assert.equal(got.tie, 1);
+  assert.equal(got.real, 'a real change');
+  assert.equal(got.noise, 'within normal variation');
+  assert.match(got.thinText, /131 moved out of thin, 68 moved into thin, net -5\.3 points \(95% CI -7\.6 to -3\.0\)/);
+  assert.match(got.thinText, /a real change/);
+  assert.match(got.underText, /19\.3% to 18\.0%/);
+  assert.match(got.underText, /n=295/);
+  assert.match(got.underText, /within normal variation/);
+  assert.match(got.underText, /p=0\.68/);
+  assert.match(got.stuntText, /29\.5% to 32\.3%/);
+  assert.match(got.stuntText, /43 moved out of stunting, 77 moved into stunting, net \+2\.8 points \(95% CI \+1\.1 to \+4\.6\)/);
+  assert.match(got.stuntText, /p=0\.0024/);
+  assert.match(got.stuntText, /Height catch-up is slow/);
+  assert.match(got.attrition, /539 of 1,734 children with a baseline BMI are not in before-after charts \(second measurement less than 3 months later\)/);
+  assert.match(got.attrition, /similar \(25\.6% vs 25\.0%\)/);
+});
+
+test('same-child flows and the attrition note are computed from the children, not typed in', () => {
+  const {run, context} = setup();
+  const kids = [];
+  for (let i = 0; i < 12; i++) kids.push(kid('stay'+i, {baseBaz: -2.5, baz: -2.5, gap: 8, band: '6–12', baseExtra: {haz: -2.5, waz: -2.4}, latestExtra: {haz: -1, waz: -1}}));
+  for (let i = 0; i < 8; i++) kids.push(kid('out'+i, {baseBaz: -2.5, baz: -1, gap: 14, band: '12–18', baseExtra: {haz: -1, waz: -1}, latestExtra: {haz: -2.5, waz: -2.4}}));
+  for (let i = 0; i < 6; i++) kids.push(kid('short'+i, {baseBaz: -3, baz: -1, gap: 1}));
+  context.kids = kids;
+  const got = run(`(() => {
+    const plain = growthPlain(kids, {state:'all'});
+    const thin = plain.bmiChange.all;
+    const stunt = plain.stuntChange.all;
+    const who = growthWhoText(plain.exclusions, plain.attrition);
+    return {
+      out: thin.leftThin, inn: thin.enteredThin, net: thin.net, p: thin.p,
+      stuntOut: stunt.out, stuntIn: stunt.inn, stuntNet: stunt.net,
+      underOut: plain.under.out, underIn: plain.under.inn,
+      lo: plain.now.thin.lo, hi: plain.now.thin.hi,
+      who
+    };
+  })()`);
+  assert.equal(got.out, 8);
+  assert.equal(got.inn, 0);
+  assert.ok(got.net < 0);
+  assert.ok(got.p < 0.05);
+  assert.equal(got.stuntOut, 12);
+  assert.equal(got.stuntIn, 8);
+  assert.ok(got.stuntNet < 0);
+  assert.equal(got.underOut, 12);
+  assert.equal(got.underIn, 8);
+  assert.equal(typeof got.lo, 'number');
+  assert.ok(got.hi > got.lo);
+  assert.match(got.who, /not in before-after charts/);
 });
 
 test('a short growth insight is hidden below 20 children', () => {
