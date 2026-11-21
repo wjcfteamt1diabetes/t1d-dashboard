@@ -1927,6 +1927,22 @@ Chart.register({
         meta.data.forEach((bar,j)=>{
           const v=ds.data[j];
           if(v==null||v==='') return;
+          const horizontal=(chart.options&&chart.options.indexAxis==='y')||(chart.config&&chart.config.options&&chart.config.options.indexAxis==='y');
+          if(horizontal){
+            const x0=Math.min(bar.x, bar.base!=null?bar.base:bar.x);
+            const x1=Math.max(bar.x, bar.base!=null?bar.base:bar.x);
+            if(ds._pct!==false && v<6) return;
+            const lblH=ds._staticLabel||(ds._pct===false?Number(v).toLocaleString():(ds._oneDp?Number(v).toFixed(1)+'%':v+'%'));
+            ctx.save();
+            ctx.font=`bold ${ds._fs||11}px Trebuchet MS,sans-serif`;
+            if(ctx.measureText(lblH).width>x1-x0-4){ ctx.restore(); return; }
+            const colorH=Array.isArray(bg)?bg[j]:bg;
+            ctx.textAlign='center'; ctx.textBaseline='middle';
+            ctx.fillStyle=ds._lc||inkOn(colorH);
+            ctx.fillText(lblH, (x0+x1)/2, bar.y);
+            ctx.restore();
+            return;
+          }
           const top=Math.min(bar.y, bar.base!=null?bar.base:bar.y);
           const bottom=Math.max(bar.y, bar.base!=null?bar.base:bar.y);
           const bh=bottom-top;
