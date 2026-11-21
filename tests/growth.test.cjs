@@ -365,7 +365,8 @@ test('missing growth tabs and the adult filter show a friendly state', async () 
   assert.equal(run('GROWTH.status'), 'missing');
   assert.ok(calls.includes('Growth_child'));
   assert.ok(calls.includes('Growth_milestones'));
-  assert.equal(calls.length, 14);
+  assert.ok(calls.includes('Growth_visits_dash'));
+  assert.equal(calls.length, 15);
   assert.equal(elements['overlay'].style.display, 'none');
 });
 
@@ -652,4 +653,124 @@ test('every growth chart follows the roster, sex, age and enrolment period', () 
   assert.equal(typeof got.dwaz, 'number');
   assert.ok(got.dwazN >= 20);
   assert.ok(got.underNames.includes('Severely wasted') || got.underNames.includes('Normal') || got.underNames.length > 0);
+});
+
+function visit(id, extra){
+  return Object.assign({
+    Claude_ID: id, Sex: 'Male', age_m: 96, weight_kg: 25, height_cm: 125,
+    month_bin: 6, clean_bmi: 1, clean_haz: 1, in_scope_2_18: 1,
+    qc_wt_range: 0, qc_wt_jump10: 0
+  }, extra);
+}
+
+test('a missing visit tab leaves the trend on the stored milestone means', () => {
+  const plain = setup();
+  const who = setupWho();
+  const rows = [];
+  const miles = [];
+  for(let i = 0; i < 20; i++){
+    rows.push(child('m'+i, {Enrolment_quarter: '2025-Q1'}));
+    miles.push({Claude_ID: 'm'+i, Month_bin: '6', Mean_BAZ: '-0.40', Mean_HAZ: '-1.10', Enrolment_quarter: '2025-Q1'});
+  }
+  const ids = idSet(rows.map(r => r.Claude_ID));
+  plain.context.rows = rows;
+  plain.context.miles = miles;
+  plain.context.ids = ids;
+  plain.context.visits = rows.map(r => visit(r.Claude_ID));
+  const withoutWho = plain.run(`computeGrowth(ids, rows, miles, {period:'all', sex:'all', age:'all'}, visits).trend`);
+  assert.equal(withoutWho.source, 'milestones');
+  assert.equal(withoutWho.bins.find(b => b.bin === '6').bazMean, -0.4);
+  who.context.rows = rows;
+  who.context.miles = miles;
+  who.context.ids = ids;
+  who.context.broken = rows.map(r => ({Claude_ID: r.Claude_ID, Sex: 'Male'}));
+  const fallback = who.run(`computeGrowth(ids, rows, miles, {period:'all', sex:'all', age:'all'}, broken).trend`);
+  const absent = who.run(`computeGrowth(ids, rows, miles, {period:'all', sex:'all', age:'all'}, null).trend`);
+  assert.equal(fallback.source, 'milestones');
+  assert.equal(absent.source, 'milestones');
+  assert.equal(fallback.bins.find(b => b.bin === '6').bazMean, -0.4);
+  assert.match(html, /load\(C\.wb1,'Growth_visits_dash',\{soft:true\}\)/);
+});
+
+test('visit trend averages one child per bin, hides n under 20, and omits WAZ from age 10', () => {
+  const {run, context} = setupWho();
+  const rows = [child('c1', {Sex: 'Male', Enrolment_quarter: '2025-Q1'})];
+  const visits = [
+    visit('c1', {weight_kg: 22, height_cm: 125}),
+    visit('c1', {weight_kg: 28, height_cm: 125}),
+    visit('c1', {month_bin: '', weight_kg: 40}),
+    visit('old', {age_m: 130, weight_kg: 35, height_cm: 145, month_bin: 12}),
+    visit('out', {in_scope_2_18: 0}),
+    visit('c1', {clean_bmi: 0, clean_haz: 0, weight_kg: 25, height_cm: 125, month_bin: 9})
+  ];
+  rows.push(child('old', {Sex: 'Male'}));
+  context.rows = rows;
+  context.visits = visits;
+  context.ids = idSet(['c1', 'old', 'out']);
+  const got = run(`(() => {
+    const open = {period:'all', sex:'all', age:'all', state:'all'};
+    const data = computeGrowth(ids, rows, [], open, visits);
+    const bin6 = data.trend.bins.find(b => b.bin === '6');
+    const z1 = whoZ.measure({sex:'Male', ageMonths:96, weightKg:22, heightCm:125}).baz;
+    const z2 = whoZ.measure({sex:'Male', ageMonths:96, weightKg:28, heightCm:125}).baz;
+    const many = [];
+    const manyVisits = [];
+    for(let i = 0; i < 19; i++){
+      many.push({Claude_ID:'n'+i, Sex:'Male', State:'RJ', Enrolment_quarter:'2025-Q1', BAZ_bucket:'Stable'});
+      manyVisits.push({Claude_ID:'n'+i, Sex:'Male', age_m:96, weight_kg:25, height_cm:125, month_bin:0, clean_bmi:1, clean_haz:1, in_scope_2_18:1, qc_wt_range:0, qc_wt_jump10:0});
+    }
+    const smallIds = {};
+    many.forEach(r => { smallIds[r.Claude_ID.toLowerCase()] = true; });
+    const hidden = computeGrowth(smallIds, many, null, open, manyVisits).trend.bins.find(b => b.bin === '0');
+    many.push({Claude_ID:'n19', Sex:'Female', State:'MP', Enrolment_quarter:'2025-Q1', BAZ_bucket:'Stable'});
+    manyVisits.push({Claude_ID:'n19', Sex:'Female', age_m:96, weight_kg:24, height_cm:124, month_bin:0, clean_bmi:1, clean_haz:1, in_scope_2_18:1, qc_wt_range:0, qc_wt_jump10:0});
+    smallIds.n19 = true;
+    const shownAll = computeGrowth(smallIds, many, null, open, manyVisits);
+    const shown = shownAll.trend.bins.find(b => b.bin === '0');
+    const males = computeGrowth(smallIds, many, null, Object.assign({}, open, {sex:'M'}), manyVisits).trend;
+    const onlyRj = {};
+    many.filter(r => r.State === 'RJ').forEach(r => { onlyRj[r.Claude_ID.toLowerCase()] = true; });
+    const roster = computeGrowth(onlyRj, many, null, open, manyVisits).trend;
+    const one = whoZ.measure({sex:'Male', ageMonths:96, weightKg:25, heightCm:125}).baz;
+    return {
+      source: data.trend.source,
+      childMean: data.trend.members.find(m => m.bin === '6').baz,
+      expected: (z1 + z2) / 2,
+      bazN: bin6.bazN,
+      bazMean: bin6.bazMean,
+      wazAt10: data.trend.members.find(m => m.id === 'old').waz,
+      bazAt10: data.trend.members.find(m => m.id === 'old').baz,
+      wazNa: data.trend.drops.wazNotApplicable,
+      noBin: data.trend.drops.noBin,
+      outOfScope: data.trend.drops.outOfScope,
+      notClean: data.trend.drops.notClean,
+      hiddenN: hidden.bazN,
+      hiddenMean: hidden.bazMean,
+      shownN: shown.bazN,
+      shownMean: shown.bazMean,
+      one,
+      maleN: males.measured,
+      allN: shownAll.trend.measured,
+      rosterN: roster.measured,
+      placeholder: shown.bazMean === 0 && one !== 0
+    };
+  })()`);
+  assert.equal(got.source, 'visits');
+  assert.ok(Math.abs(got.childMean - got.expected) < 1e-6);
+  assert.equal(got.bazN, 1);
+  assert.equal(got.bazMean, null);
+  assert.equal(got.wazAt10, null);
+  assert.equal(typeof got.bazAt10, 'number');
+  assert.equal(got.wazNa, 1);
+  assert.equal(got.noBin, 1);
+  assert.ok(got.outOfScope >= 1);
+  assert.equal(got.notClean, 1);
+  assert.equal(got.hiddenN, 19);
+  assert.equal(got.hiddenMean, null);
+  assert.equal(got.shownN, 20);
+  assert.equal(typeof got.shownMean, 'number');
+  assert.equal(got.placeholder, false);
+  assert.ok(Math.abs(got.shownMean - got.one) < 0.05);
+  assert.ok(got.maleN < got.allN);
+  assert.ok(got.rosterN < got.allN);
 });

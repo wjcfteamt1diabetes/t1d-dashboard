@@ -37,20 +37,15 @@ The extract has one baseline measurement and one latest measurement per child, n
 
 For change over time, both measurements must be valid and the gap from baseline age to latest age must be at least 3 months. Time in care is that gap, in bands that do not overlap: under 6 months, 6 up to 12, 12 up to 18, and 18 months or more. The change-in-weight chart has a control for three values: kilograms, kilograms per year (the kilogram change divided by the gap in years), and the change in weight-for-age z. The z is drawn only when both measurements are under 10 years and that bar has at least 20 children.
 
-## What cannot be recomputed
+## Month-on-month trend
 
-`Growth_milestones` stores a mean BMI-for-age z and a mean height-for-age z at each month since enrolment. It does not store the weight, height and age of each visit. The month-on-month lines are those stored means for the children who remain after the page filters. They are not recalculated from the LMS tables.
+`Growth_visits_dash` has one row per growth visit: sex, age in months, weight, height, and the month bin since enrolment. The page recomputes BMI-for-age, height-for-age and weight-for-age from those columns with the same WHO code as the other growth charts. Age in months is used as given. The page does not have a date of birth, and that age can be off by several months.
 
-To recompute that chart, `Growth_milestones` would need one row per child per visit, with these columns:
+A visit counts only for a child still in the filtered 2–18 cohort, with `in_scope_2_18` = 1 and a month bin of 0, 3, 6, 9, 12, 15 or 18+. BMI-for-age needs `clean_bmi` = 1 and both weight and height. Height-for-age needs `clean_haz` = 1 and a height. Weight-for-age needs a weight, neither weight-quality flag, and age under 121 months. Several eligible visits in the same bin are averaged for that child, then the point is the unweighted mean of those child values. A point is hidden below 20 children. The same minimum applies to an enrolment-quarter line.
 
-- `Claude_ID`
-- `Sex` (already on the child row, but needed if the visit file is used on its own)
-- `weight_kg`
-- `height_cm`
-- age at that measurement, **or** `measurement_date` plus `date_of_birth`
-- months since enrolment, **or** the enrolment date together with the measurement date
+If `Growth_visits_dash` is missing, empty, or lacks Claude_ID, sex, age, weight, height and month bin, the chart stays on the stored `Growth_milestones` means and says so.
 
-`Mean_BAZ` and `Mean_HAZ` are not enough to rebuild the point. The page reports how often the baseline and latest z-scores recomputed here fall within 0.15 of the stored scores, so the reader can see whether the sheet used the same reference.
+The other growth charts still use `Growth_child` only. The page reports how often the baseline and latest z-scores recomputed there fall within 0.15 of the stored scores.
 
 ## Filters
 

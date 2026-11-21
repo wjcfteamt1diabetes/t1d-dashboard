@@ -1083,7 +1083,7 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div id="growth-section">
 <div class="sl">Growth (ages 2–18)</div>
-<p class="growth-lead" id="growth-lead">BMI-for-age, height-for-age and weight-for-age for children aged 2–18 in complete support. Z-scores are calculated on this page from weight, height, age and sex with the WHO tables. Every growth chart uses the same filtered children as the rest of the page, including state, division, district, facility, DPC, support, sex, age group, status and enrolment period. The month-on-month lines are the exception on method only: that file has no visit-level measurements, so those points stay the stored means for the filtered children.</p>
+<p class="growth-lead" id="growth-lead">BMI-for-age, height-for-age and weight-for-age for children aged 2–18 in complete support. Z-scores are calculated on this page from weight, height, age and sex with the WHO tables. Every growth chart uses the same filtered children as the rest of the page, including state, division, district, facility, DPC, support, sex, age group, status and enrolment period. The month-on-month lines use each visit in Growth_visits_dash when that tab is available, and the stored means when it is not.</p>
 <p class="growth-lead" id="growth-score-note">BMI-for-age (BAZ) is BMI, weight divided by height squared, scored against the WHO reference for the same age and sex. 0 is the WHO median. From age 5 the categories are severe thinness, thinness, normal, overweight and obese. Under 5 the WHO 2006 labels are used and are kept separate. Height-for-age (HAZ) below −2 is stunted. Weight-for-age (WAZ) is only calculated under 10 years.</p>
 <div id="growth-status" class="data-pending-chart" role="status" hidden></div>
 <div id="growth-body">
@@ -1097,8 +1097,8 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
     <div class="growth-foot" id="growth-baz-foot"></div>
   </div>
   <div class="card">
-    <div class="ct">Month-on-month growth trend</div>
-    <div class="cs">Mean stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The benchmark is the WHO median, z = 0, for the same age and sex. To recompute each point, Growth_milestones would need one row per child per visit with: Claude_ID, sex, weight in kilograms, height in centimetres, and either age at that measurement or the measurement date plus a date of birth. Months since enrolment (or the enrolment date) is also required. Mean_BAZ and Mean_HAZ alone are not enough. A point is hidden below 20 children.</div>
+    <div class="ct" id="growth-trend-title">Month-on-month growth trend</div>
+    <div class="cs" id="growth-trend-sub">Mean stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The benchmark is the WHO median, z = 0, for the same age and sex. To recompute each point, Growth_milestones would need one row per child per visit with: Claude_ID, sex, weight in kilograms, height in centimetres, and either age at that measurement or the measurement date plus a date of birth. Months since enrolment (or the enrolment date) is also required. Mean_BAZ and Mean_HAZ alone are not enough. A point is hidden below 20 children.</div>
     <div class="growth-takeaway" id="growth-trend-take"></div>
     <div class="lg" id="growth-trend-lg"></div>
     <label class="growth-toggle" for="growth-cohort"><input type="checkbox" id="growth-cohort" onchange="renderGrowthTrend()"> By enrolment cohort</label>
@@ -3147,7 +3147,7 @@ function buildInfoTable(){
     {n:'21',ind:'TDD ranges — last visit',tab:'T2',type:'%',num:'PLT1D by TDD/kg range: below/in/above · Pediatric 0–17: 0.7-1.0 u/kg · Adults ≥18: 1.0-1.5 u/kg',den:'PLT1D with In Range? column populated',sheet:'Enrolled List',cols:'In Range?, Age'},
     {n:'22',ind:'Basal dose as % of TDD — last visit',tab:'T2',type:'%',num:'PLT1D by bucket: Basal ÷ TDD × 100 → <20% / 20-30% / 30-50% (ideal) / 50-60% / >60%',den:'PLT1D with Basal % column populated',sheet:'Enrolled List',cols:'Basal %'},
     {n:'22a',ind:'BMI-for-age change by time in care',tab:'T2',type:'Average',num:'Mean WHO BMI-for-age z at baseline and at the latest visit. Time in care is the gap between those visits: 0–6, 6–12, 12–18, 18+ months, mutually exclusive. Gap under 3 months is excluded.',den:'One row per child with a valid pair at both visits. Enrolment period, geography, sex, age group, status and support follow the page filters.',sheet:'Growth_child',cols:'Sex, Baseline_age_y, Latest_age_y, Baseline_weight_kg, Latest_weight_kg, Baseline_height_cm, Latest_height_cm, Enrolment_date'},
-    {n:'22b',ind:'Growth trend by months since enrolment',tab:'T2',type:'Average',num:'Mean of the stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. Benchmark is the WHO median, z = 0. These points are not recomputed.',den:'Filtered children with a stored mean. A point or cohort line is hidden below 20. Recomputing would need, per child per visit: Claude_ID, sex, weight_kg, height_cm, and age at measurement or measurement date plus date of birth, plus months since enrolment or enrolment date.',sheet:'Growth_milestones',cols:'Claude_ID, Month_bin, Mean_BAZ, Mean_HAZ, Enrolment_quarter. Not on the sheet, but required to recompute: weight_kg, height_cm, age_at_measurement or measurement_date and date_of_birth.'},
+    {n:'22b',ind:'Growth trend by months since enrolment',tab:'T2',type:'Average',num:'Mean WHO BMI-for-age, height-for-age and weight-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. 0 is the WHO median for the same age and sex. One value per child per bin: several visits in a bin are averaged first. Weight-for-age only under 10 years.',den:'Filtered children in the 2–18 cohort with a usable visit. A point or cohort line is hidden below 20 children. If Growth_visits_dash is missing, the lines stay the stored Growth_milestones means.',sheet:'Growth_visits_dash',cols:'Claude_ID, Sex, age_m, weight_kg, height_cm, months_since_enrol, month_bin, clean_bmi, clean_haz, in_scope_2_18, qc_wt_range, qc_wt_jump10. Fallback: Growth_milestones Mean_BAZ, Mean_HAZ.'},
     {n:'22c',ind:'Current BMI-for-age category and height-for-age stunting',tab:'T2',type:'%',num:'Bars: latest BMI-for-age category (Severe thinness / Thinness / Normal / Overweight / Obese) by state, or by district or facility when that geography is selected. The label under each bar is height-for-age stunting (HAZ below −2), a separate metric.',den:'BMI bars: children with a BMI in the last 6 months. Height-for-age % uses Stunted_latest among children with a height-for-age reading in the last 6 months. n<20 withheld.',sheet:'Growth_child',cols:'State, District, Facility, BMI_category_latest, Stunted_latest, Latest_BMI_within_6m, Latest_HAZ_within_6m'},
     {n:'22d',ind:'BMI-for-age group vs HbA1c',tab:'T2',type:'Average',num:'Mean latest HbA1c (%) by the sheet’s BMI-for-age change group (fell behind / steady or improved / excess gain), with mean change in HbA1c since enrolment where the sheet recorded it',den:'Joined children with a BMI-for-age group and a latest HbA1c. Groups with n<20 are withheld.',sheet:'Growth_child',cols:'Growth_group, Latest_HbA1c, dHbA1c'},
     {sec:'TAB 3 — Capacity Building'},
@@ -4298,6 +4298,7 @@ const LT_CANON=['T1D Clinic Operational?','State','District','Facility category'
 const ORI_CANON=['State','District','Block','Type of Service Provider','# of Service Providers','Session #','Pilot District? (Yes/No)','Month of Orientation','Year of Orientation','Remarks'];
 const GR_CHILD_CANON=['Claude_ID','State','District','Facility','Sex','Age_at_enrolment_y','Enrolment_date','Enrolment_quarter','N_visits_measured','N_clean_BMI_visits','N_QC_flagged_visits','N_carried_fwd_heights','Carried_fwd_flag','Baseline_date','Baseline_age_y','Baseline_height_cm','Baseline_weight_kg','Baseline_BMI','Baseline_BAZ','Latest_date','Latest_age_y','Latest_height_cm','Latest_weight_kg','Latest_BMI','Latest_BAZ','HAZ_baseline_date','Baseline_HAZ','HAZ_latest_date','Latest_HAZ','dBAZ','dHAZ','BAZ_bucket','HAZ_bucket','Growth_group','Months_in_care','Time_in_care_bucket','BMI_category_latest','Stunted_latest','Latest_BMI_within_6m','Latest_HAZ_within_6m','Baseline_HbA1c','Latest_HbA1c','Latest_HbA1c_date','dHbA1c','Latest_HbA1c_days_after_enrol'];
 const GR_MILE_CANON=['Claude_ID','Month_bin','Mean_BAZ','Mean_HAZ','N_BAZ_visits','N_HAZ_visits','Enrolment_quarter','State','Sex','Facility','District'];
+const GR_VISIT_CANON=['Claude_ID','Sex','age_m','weight_kg','height_cm','months_since_enrol','month_bin','clean_bmi','clean_haz','n_qc_flags','in_scope_2_18','qc_wt_range','qc_wt_jump10'];
 // Growth.gs clears the whole header when IDs misalign. fillRow would invent
 // names for that blank row and show a section that should stay hidden, so only
 // refill blanks once a real anchor header is present.
@@ -4928,7 +4929,7 @@ function recompute(){
   HBA_AVG_BASE=hba.avgB; HBA_AVG_LAST=hba.avgL; HBA_DIST_LBLS=hba.distLabels;
   HBA_D_LT7=hba.lt7; HBA_D_7_10=hba.d710; HBA_D_10_13=hba.d1013; HBA_D_13_16=hba.d1316; HBA_D_GT16=hba.gt16; HBA_LATEST=hba.latest;
   HBA_ALL_LBLS=hba.allDistLabels; HBA_ALL_LT7=hba.allLt7; HBA_ALL_710=hba.allD710; HBA_ALL_1013=hba.allD1013; HBA_ALL_1316=hba.allD1316; HBA_ALL_GT16=hba.allGt16;
-  GROWTH=computeGrowth(idSet, RAW.growthChild, RAW.growthMilestones, f);
+  GROWTH=computeGrowth(idSet, RAW.growthChild, RAW.growthMilestones, f, RAW.growthVisits);
 
   // merged object for renderKPIs (geo + patient)
   const csEnr=P.length, ltEnr=lt.totalEnr, target=TARGETS[f.state]??null;
@@ -5374,7 +5375,7 @@ const GROWTH_GROUP=[
   {key:'steady', label:'Steady or improved', color:'#1a6aaf'},
   {key:'excess', label:'Excess gain', color:'#c5dff5'}
 ];
-const GROWTH_LINE={baz:'#0b2545', haz:'#4c8ec4'};
+const GROWTH_LINE={baz:'#0b2545', haz:'#4c8ec4', waz:'#1a6aaf'};
 const GROWTH_COHORT_BLUES=['#123a63','#1a527f','#2170a8','#3b8ec4','#63aad6','#8ec3e4'];
 const GROWTH_STATE={RJ:'RJ',RAJASTHAN:'RJ',MP:'MP','MADHYA PRADESH':'MP',UK:'UK',UTTARAKHAND:'UK',CG:'CG',CHHATTISGARH:'CG',CHHATISGARH:'CG',GA:'GA',GOA:'GA'};
 function growthNormHeader(h){
@@ -5529,6 +5530,182 @@ function growthMileRecord(row){
     quarter:String(growthVal(row,['Enrolment_quarter','enrolment quarter','Enrolment quarter'])).trim()
   };
 }
+function growthOn(v){
+  if(v===true||v===1) return true;
+  const s=String(v==null?'':v).trim().toLowerCase();
+  return s==='1'||s==='yes'||s==='true'||s==='y';
+}
+function growthVisitsReady(rows){
+  if(!Array.isArray(rows)||!rows.length) return false;
+  const need=['Claude_ID','Sex','age_m','weight_kg','height_cm','month_bin'];
+  return need.every(name=>rows.some(row=>growthKey(row,[name])));
+}
+function growthVisitRecord(row){
+  return {
+    id:String(growthVal(row,['Claude_ID','Claude ID'])).trim(),
+    sex:growthVal(row,['Sex']),
+    ageM:num(growthVal(row,['age_m','age m'])),
+    weight:num(growthVal(row,['weight_kg','weight kg'])),
+    height:num(growthVal(row,['height_cm','height cm'])),
+    bin:growthBinKey(growthVal(row,['month_bin','month bin'])),
+    cleanBmi:growthOn(growthVal(row,['clean_bmi'])),
+    cleanHaz:growthOn(growthVal(row,['clean_haz'])),
+    inScope:growthOn(growthVal(row,['in_scope_2_18'])),
+    qcRange:growthOn(growthVal(row,['qc_wt_range'])),
+    qcJump:growthOn(growthVal(row,['qc_wt_jump10']))
+  };
+}
+function growthTrendAgreement(live, stored){
+  const by={};
+  (stored.bins||[]).forEach(b=>{by[b.bin]=b;});
+  let bazBins=0, bazClose=0, bazGap=0, hazBins=0, hazClose=0, hazGap=0;
+  (live.bins||[]).forEach(b=>{
+    const s=by[b.bin];
+    if(!s) return;
+    if(b.bazMean!=null&&s.bazMean!=null){
+      const d=b.bazMean-s.bazMean;
+      bazBins++; bazGap+=d; if(Math.abs(d)<=0.15) bazClose++;
+    }
+    if(b.hazMean!=null&&s.hazMean!=null){
+      const d=b.hazMean-s.hazMean;
+      hazBins++; hazGap+=d; if(Math.abs(d)<=0.15) hazClose++;
+    }
+  });
+  const round=n=>Math.round(n*100)/100;
+  return {
+    bazBins, bazClose, bazGap:bazBins?round(bazGap/bazBins):null,
+    hazBins, hazClose, hazGap:hazBins?round(hazGap/hazBins):null
+  };
+}
+function growthTrendFromMilestones(seen, milestoneRows){
+  if(milestoneRows==null) return {status:'missing'};
+  const per=new Map();
+  milestoneRows.forEach(row=>{
+    const m=growthMileRecord(row);
+    const id=normv(m.id);
+    const kid=seen[id];
+    if(!kid||!m.bin) return;
+    const slot=id+'|'+m.bin;
+    if(!per.has(slot)) per.set(slot,{id, bin:m.bin, quarter:kid.quarter||m.quarter||'Not recorded', baz:[], haz:[]});
+    const cell=per.get(slot);
+    if(m.baz!=null) cell.baz.push(m.baz);
+    if(m.haz!=null) cell.haz.push(m.haz);
+  });
+  const bins=GROWTH_BINS.map(bin=>({bin, baz:[], haz:[]}));
+  const at=Object.create(null);
+  GROWTH_BINS.forEach((bin,i)=>{at[bin]=i;});
+  const cohorts=new Map();
+  const withMilestone={};
+  const members=[];
+  per.forEach(cell=>{
+    withMilestone[cell.id]=true;
+    const bz=growthAvg(cell.baz), hz=growthAvg(cell.haz);
+    const i=at[cell.bin];
+    if(bz!=null) bins[i].baz.push(bz);
+    if(hz!=null) bins[i].haz.push(hz);
+    const kid=seen[cell.id];
+    members.push({id:kid?kid.id:cell.id, bin:cell.bin, quarter:cell.quarter, baz:bz, haz:hz});
+    if(!cohorts.has(cell.quarter)) cohorts.set(cell.quarter,{quarter:cell.quarter, ids:{}, baz:GROWTH_BINS.map(()=>[])});
+    const c=cohorts.get(cell.quarter);
+    if(bz!=null){ c.ids[cell.id]=true; c.baz[i].push(bz); }
+  });
+  return {
+    status:'ok',
+    source:'milestones',
+    measured:Object.keys(withMilestone).length,
+    members,
+    bins:bins.map(b=>({
+      bin:b.bin, bazN:b.baz.length, hazN:b.haz.length,
+      bazMean:b.baz.length>=GROWTH_MIN_N?Math.round(growthAvg(b.baz)*100)/100:null,
+      hazMean:b.haz.length>=GROWTH_MIN_N?Math.round(growthAvg(b.haz)*100)/100:null
+    })),
+    cohorts:Array.from(cohorts.values()).map(c=>{
+      const n=Object.keys(c.ids).length;
+      return {
+        quarter:c.quarter, n, hidden:n<GROWTH_MIN_N,
+        baz:c.baz.map(vals=>vals.length>=GROWTH_MIN_N?Math.round(growthAvg(vals)*100)/100:null),
+        bazN:c.baz.map(vals=>vals.length)
+      };
+    }).sort((a,b)=>growthQuarterRank(a.quarter)-growthQuarterRank(b.quarter)||a.quarter.localeCompare(b.quarter))
+  };
+}
+function growthTrendFromVisits(seen, visitRows){
+  const drops={noBin:0, outOfScope:0, notClean:0, implausible:0, wazNotApplicable:0};
+  const per=new Map();
+  visitRows.forEach(row=>{
+    const v=growthVisitRecord(row);
+    const id=normv(v.id);
+    if(!v.bin){ drops.noBin++; return; }
+    const kid=id?seen[id]:null;
+    if(!kid||!v.inScope){ drops.outOfScope++; return; }
+    if(!v.cleanBmi||!v.cleanHaz) drops.notClean++;
+    const point=(typeof whoZ!=='undefined'&&whoZ.measure&&v.sex&&v.ageM!=null)
+      ? whoZ.measure({sex:v.sex, ageMonths:v.ageM, weightKg:v.weight, heightCm:v.height})
+      : null;
+    const slot=id+'|'+v.bin;
+    if(!per.has(slot)) per.set(slot,{id, bin:v.bin, quarter:kid.quarter||'Not recorded', baz:[], haz:[], waz:[]});
+    const cell=per.get(slot);
+    if(v.cleanBmi&&v.weight!=null&&v.height!=null&&point){
+      if(point.bazImplausible) drops.implausible++;
+      else if(point.baz!=null) cell.baz.push(point.baz);
+    }
+    if(v.cleanHaz&&v.height!=null&&point){
+      if(point.hazImplausible) drops.implausible++;
+      else if(point.haz!=null) cell.haz.push(point.haz);
+    }
+    if(v.weight!=null&&!v.qcRange&&!v.qcJump){
+      if(v.ageM==null||v.ageM>=121) drops.wazNotApplicable++;
+      else if(point&&point.wazImplausible) drops.implausible++;
+      else if(point&&point.waz!=null) cell.waz.push(point.waz);
+    }
+  });
+  const bins=GROWTH_BINS.map(bin=>({bin, baz:[], haz:[], waz:[]}));
+  const at=Object.create(null);
+  GROWTH_BINS.forEach((bin,i)=>{at[bin]=i;});
+  const cohorts=new Map();
+  const bazIds={}, hazIds={}, wazIds={}, anyIds={};
+  const members=[];
+  per.forEach(cell=>{
+    const bz=cell.baz.length?growthAvg(cell.baz):null;
+    const hz=cell.haz.length?growthAvg(cell.haz):null;
+    const wz=cell.waz.length?growthAvg(cell.waz):null;
+    const i=at[cell.bin];
+    if(i==null) return;
+    if(bz!=null){ bins[i].baz.push(bz); bazIds[cell.id]=true; anyIds[cell.id]=true; }
+    if(hz!=null){ bins[i].haz.push(hz); hazIds[cell.id]=true; anyIds[cell.id]=true; }
+    if(wz!=null){ bins[i].waz.push(wz); wazIds[cell.id]=true; anyIds[cell.id]=true; }
+    const kid=seen[cell.id];
+    members.push({id:kid?kid.id:cell.id, bin:cell.bin, quarter:cell.quarter, baz:bz, haz:hz, waz:wz});
+    if(bz==null) return;
+    if(!cohorts.has(cell.quarter)) cohorts.set(cell.quarter,{quarter:cell.quarter, ids:{}, baz:GROWTH_BINS.map(()=>[])});
+    const c=cohorts.get(cell.quarter);
+    c.ids[cell.id]=true; c.baz[i].push(bz);
+  });
+  const meanOf=vals=>vals.length>=GROWTH_MIN_N?Math.round(growthAvg(vals)*100)/100:null;
+  return {
+    status:'ok',
+    source:'visits',
+    measured:Object.keys(anyIds).length,
+    bazChildren:Object.keys(bazIds).length,
+    hazChildren:Object.keys(hazIds).length,
+    wazChildren:Object.keys(wazIds).length,
+    drops,
+    members,
+    bins:bins.map(b=>({
+      bin:b.bin,
+      bazN:b.baz.length, hazN:b.haz.length, wazN:b.waz.length,
+      bazMean:meanOf(b.baz), hazMean:meanOf(b.haz), wazMean:meanOf(b.waz)
+    })),
+    cohorts:Array.from(cohorts.values()).map(c=>{
+      const n=Object.keys(c.ids).length;
+      return {
+        quarter:c.quarter, n, hidden:n<GROWTH_MIN_N,
+        baz:c.baz.map(vals=>vals.length>=GROWTH_MIN_N?Math.round(growthAvg(vals)*100)/100:null),
+        bazN:c.baz.map(vals=>vals.length)
+      };
+    }).sort((a,b)=>growthQuarterRank(a.quarter)-growthQuarterRank(b.quarter)||a.quarter.localeCompare(b.quarter))
+  };
+}
 function growthBlankSeg(){ return {behind:0,steady:0,improved:0,excess:0}; }
 function growthPackBar(label, time, bag){
   const counts=GROWTH_SEG.map(s=>bag.counts[s.key]);
@@ -5623,7 +5800,7 @@ function growthView(f, data){
   if(!data||data.status!=='ok') return {mode:'missing', message:'Growth data not yet available'};
   return {mode:'ready'};
 }
-function computeGrowth(idSet, childRows, milestoneRows, f){
+function computeGrowth(idSet, childRows, milestoneRows, f, visitRows){
   idSet=idSet||{};
   if(!childRows||!childRows.length) return {status:'missing', cohort:0, baz:null, trend:{status:'missing'}, bmi:null, hba:null};
   const seen={}, kids=[];
@@ -5713,57 +5890,11 @@ function computeGrowth(idSet, childRows, milestoneRows, f){
     })
   };
   let trend;
-  if(milestoneRows==null) trend={status:'missing'};
-  else{
-    const per=new Map();
-    milestoneRows.forEach(row=>{
-      const m=growthMileRecord(row);
-      const id=normv(m.id);
-      const kid=seen[id];
-      if(!kid||!m.bin) return;
-      const slot=id+'|'+m.bin;
-      if(!per.has(slot)) per.set(slot,{id, bin:m.bin, quarter:kid.quarter||m.quarter||'Not recorded', baz:[], haz:[]});
-      const cell=per.get(slot);
-      if(m.baz!=null) cell.baz.push(m.baz);
-      if(m.haz!=null) cell.haz.push(m.haz);
-    });
-    const bins=GROWTH_BINS.map(bin=>({bin, baz:[], haz:[]}));
-    const at=Object.create(null);
-    GROWTH_BINS.forEach((bin,i)=>{at[bin]=i;});
-    const cohorts=new Map();
-    const withMilestone={};
-    const members=[];
-    per.forEach(cell=>{
-      withMilestone[cell.id]=true;
-      const bz=growthAvg(cell.baz), hz=growthAvg(cell.haz);
-      const i=at[cell.bin];
-      if(bz!=null) bins[i].baz.push(bz);
-      if(hz!=null) bins[i].haz.push(hz);
-      const kid=seen[cell.id];
-      members.push({id:kid?kid.id:cell.id, bin:cell.bin, quarter:cell.quarter, baz:bz, haz:hz});
-      if(!cohorts.has(cell.quarter)) cohorts.set(cell.quarter,{quarter:cell.quarter, ids:{}, baz:GROWTH_BINS.map(()=>[])});
-      const c=cohorts.get(cell.quarter);
-      if(bz!=null){ c.ids[cell.id]=true; c.baz[i].push(bz); }
-    });
-    trend={
-      status:'ok',
-      measured:Object.keys(withMilestone).length,
-      members,
-      bins:bins.map(b=>({
-        bin:b.bin, bazN:b.baz.length, hazN:b.haz.length,
-        bazMean:b.baz.length>=GROWTH_MIN_N?Math.round(growthAvg(b.baz)*100)/100:null,
-        hazMean:b.haz.length>=GROWTH_MIN_N?Math.round(growthAvg(b.haz)*100)/100:null
-      })),
-      cohorts:Array.from(cohorts.values()).map(c=>{
-        const n=Object.keys(c.ids).length;
-        return {
-          quarter:c.quarter, n, hidden:n<GROWTH_MIN_N,
-          baz:c.baz.map(vals=>vals.length>=GROWTH_MIN_N?Math.round(growthAvg(vals)*100)/100:null),
-          bazN:c.baz.map(vals=>vals.length)
-        };
-      }).sort((a,b)=>growthQuarterRank(a.quarter)-growthQuarterRank(b.quarter)||a.quarter.localeCompare(b.quarter))
-    };
-  }
+  if(typeof whoZ!=='undefined'&&growthVisitsReady(visitRows)){
+    trend=growthTrendFromVisits(seen, visitRows);
+    const stored=growthTrendFromMilestones(seen, milestoneRows);
+    if(stored.status==='ok') trend.agreement=growthTrendAgreement(trend, stored);
+  }else trend=growthTrendFromMilestones(seen, milestoneRows);
   const more=growthMoreCharts(kids);
   const displayed=typeof whoZ==='undefined'?null:growthDisplayed(kids, f);
   return Object.assign({status:'ok', cohort:kids.length, kids, baz, trend, bmi, hba, displayed}, more);
@@ -6055,7 +6186,8 @@ function growthBazTakeaway(bars){
 function growthTrendTakeaway(bins){
   const baz=(bins||[]).filter(b=>b.bazN>=GROWTH_MIN_N&&b.bazMean!=null);
   const haz=(bins||[]).filter(b=>b.hazN>=GROWTH_MIN_N&&b.hazMean!=null);
-  if(baz.length<2&&haz.length<2) return 'Not enough data for a takeaway';
+  const waz=(bins||[]).filter(b=>b.wazN>=GROWTH_MIN_N&&b.wazMean!=null);
+  if(baz.length<2&&haz.length<2&&waz.length<2) return 'Not enough data for a takeaway';
   const endOf=(list, key)=>{
     const later=list.find(b=>b.bin==='12'&&b!==list[0])||list[list.length-1];
     return later===list[0]?list[list.length-1]:later;
@@ -6075,6 +6207,13 @@ function growthTrendTakeaway(bins){
     if(Math.abs(d)<0.05) parts.push('height-for-age stays flat');
     else if(d>0) parts.push('height-for-age improves +'+d.toFixed(2)+' SD');
     else parts.push('height-for-age falls '+Math.abs(d).toFixed(2)+' SD');
+  }
+  if(waz.length>=2){
+    const a=waz[0], b=endOf(waz);
+    const d=Math.round((b.wazMean-a.wazMean)*100)/100;
+    if(Math.abs(d)<0.05) parts.push('weight-for-age stays flat');
+    else if(d>0) parts.push('weight-for-age improves +'+d.toFixed(2)+' SD');
+    else parts.push('weight-for-age falls '+Math.abs(d).toFixed(2)+' SD');
   }
   if(!parts.length) return 'Not enough data for a takeaway';
   const sentence=parts.join('; ');
@@ -6132,6 +6271,7 @@ function growthDrill(data, spec){
     return ((data.trend&&data.trend.members)||[]).filter(m=>{
       if(m.bin!==spec.bin) return false;
       if(spec.series==='haz') return m.haz!=null;
+      if(spec.series==='waz') return m.waz!=null;
       if(spec.series==='cohort') return m.baz!=null&&m.quarter===spec.quarter;
       return m.baz!=null;
     }).map(m=>{
@@ -6616,7 +6756,22 @@ function renderGrowthTrend(){
     return;
   }
   growthRelease(canvas);
-  growthLegend('growth-trend-lg', [{label:'BMI-for-age score (BAZ)', color:GROWTH_LINE.baz},{label:'Height-for-age score (HAZ)', color:GROWTH_LINE.haz}]);
+  const visits=trend.source==='visits';
+  const title=document.getElementById('growth-trend-title');
+  const sub=document.getElementById('growth-trend-sub');
+  if(title) title.textContent=visits?'Month-on-month WHO z-score':'Month-on-month growth trend';
+  if(sub) sub.textContent=visits
+    ? 'Mean WHO z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. BMI-for-age uses a clean weight and height. Height-for-age uses a clean height. Weight-for-age uses weight only, under 10 years, and is left off when a weight is out of range or jumps by 10 kg within 90 days. The benchmark is the WHO median, z = 0, for the same age and sex. Each point is the unweighted mean of one value per child. More than one visit in a bin is averaged for that child first. A point, and an enrolment-quarter line, is hidden below 20 children. Dashed lines, when shown, are BMI-for-age by enrolment quarter.'
+    : 'Mean stored BMI-for-age and height-for-age z at 0, 3, 6, 9, 12, 15 and 18+ months since enrolment. The benchmark is the WHO median, z = 0, for the same age and sex. To recompute each point, Growth_milestones would need one row per child per visit with: Claude_ID, sex, weight in kilograms, height in centimetres, and either age at that measurement or the measurement date plus a date of birth. Months since enrolment (or the enrolment date) is also required. Mean_BAZ and Mean_HAZ alone are not enough. A point is hidden below 20 children.';
+  const countNote=n=>n==null?'':(' · n = '+Number(n).toLocaleString());
+  growthLegend('growth-trend-lg', visits?[
+    {label:'BMI-for-age z (BAZ)'+countNote(trend.bazChildren), color:GROWTH_LINE.baz},
+    {label:'Height-for-age z (HAZ)'+countNote(trend.hazChildren), color:GROWTH_LINE.haz},
+    {label:'Weight-for-age z (WAZ)'+countNote(trend.wazChildren), color:GROWTH_LINE.waz}
+  ]:[
+    {label:'BMI-for-age score (BAZ)', color:GROWTH_LINE.baz},
+    {label:'Height-for-age score (HAZ)', color:GROWTH_LINE.haz}
+  ]);
   growthShowTakeaway('growth-trend-take', growthTrendTakeaway(trend.bins));
   const on=!!(document.getElementById('growth-cohort')&&document.getElementById('growth-cohort').checked);
   const shown=(trend.cohorts||[]).filter(c=>!c.hidden&&c.baz.some(v=>v!=null));
@@ -6627,9 +6782,10 @@ function renderGrowthTrend(){
       : '<span>No enrolment cohort has 20 children at a point in care.</span>');
   }
   const datasets=[
-    {label:'BMI-for-age score (BAZ)', data:trend.bins.map(b=>b.bazMean), _n:trend.bins.map(b=>b.bazN), _total:GROWTH.cohort, _drill:{series:'baz'}, borderColor:GROWTH_LINE.baz, backgroundColor:GROWTH_LINE.baz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.baz, _noLabel:true},
-    {label:'Height-for-age score (HAZ)', data:trend.bins.map(b=>b.hazMean), _n:trend.bins.map(b=>b.hazN), _total:GROWTH.cohort, _drill:{series:'haz'}, borderColor:GROWTH_LINE.haz, backgroundColor:GROWTH_LINE.haz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.haz, _noLabel:true}
+    {label:visits?'BMI-for-age z (BAZ)':'BMI-for-age score (BAZ)', data:trend.bins.map(b=>b.bazMean), _n:trend.bins.map(b=>b.bazN), _total:visits?trend.bazChildren:GROWTH.cohort, _drill:{series:'baz'}, borderColor:GROWTH_LINE.baz, backgroundColor:GROWTH_LINE.baz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.baz, _noLabel:true},
+    {label:visits?'Height-for-age z (HAZ)':'Height-for-age score (HAZ)', data:trend.bins.map(b=>b.hazMean), _n:trend.bins.map(b=>b.hazN), _total:visits?trend.hazChildren:GROWTH.cohort, _drill:{series:'haz'}, borderColor:GROWTH_LINE.haz, backgroundColor:GROWTH_LINE.haz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.haz, _noLabel:true}
   ];
+  if(visits) datasets.push({label:'Weight-for-age z (WAZ)', data:trend.bins.map(b=>b.wazMean), _n:trend.bins.map(b=>b.wazN), _total:trend.wazChildren, _drill:{series:'waz'}, borderColor:GROWTH_LINE.waz, backgroundColor:GROWTH_LINE.waz, borderWidth:2.5, tension:.25, spanGaps:false, pointRadius:4, pointHitRadius:10, pointBackgroundColor:GROWTH_LINE.waz, _noLabel:true});
   if(on) shown.forEach((c,i)=>{
     const color=cols[i%cols.length];
     datasets.push({label:c.quarter+' BMI-for-age (BAZ)', data:c.baz, _n:c.bazN, _total:c.n, _drill:{series:'cohort', quarter:c.quarter}, borderColor:color, backgroundColor:color, borderWidth:1.5, borderDash:[4,3], tension:.25, spanGaps:false, pointRadius:3.5, pointHitRadius:10, pointBackgroundColor:color, _noLabel:true});
@@ -6637,7 +6793,7 @@ function renderGrowthTrend(){
   _gTrend=createDashboardChart(canvas,{
     type:'line',
     data:{
-      labels:trend.bins.map(b=>[b.bin+' mo', (b.bazN<GROWTH_MIN_N&&b.hazN<GROWTH_MIN_N)?'n<20':'']),
+      labels:trend.bins.map(b=>[b.bin+' mo', (b.bazN<GROWTH_MIN_N&&b.hazN<GROWTH_MIN_N&&(!visits||b.wazN<GROWTH_MIN_N))?'n<20':'']),
       datasets
     },
     options:{
@@ -6661,18 +6817,32 @@ function renderGrowthTrend(){
         afterBody(items){
           const b=trend.bins[items[0].dataIndex]; if(!b) return [];
           const bits=[];
-          if(b.bazN<GROWTH_MIN_N) bits.push('Weight-for-height (BAZ) n<20');
+          if(b.bazN<GROWTH_MIN_N) bits.push((visits?'BMI-for-age z (BAZ)':'Weight-for-height (BAZ)')+' n<20');
           if(b.hazN<GROWTH_MIN_N) bits.push('Height-for-age (HAZ) n<20');
+          if(visits&&b.wazN<GROWTH_MIN_N) bits.push('Weight-for-age z (WAZ) n<20');
           return bits;
         }
       }}},
       scales:{
         x:{grid:{display:false}, border:{display:false}, ticks:{font:{size:11}, color:'#334155', maxRotation:0, autoSkip:false}},
-        y:{grace:'12%', grid:{display:false}, border:{display:false}, title:{display:true, text:'Score (0 = reference median for the same age and sex)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}}
+        y:{grace:'12%', grid:{display:false}, border:{display:false}, title:{display:true, text:visits?'WHO z-score (0 = WHO median for the same age and sex)':'Score (0 = reference median for the same age and sex)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}}
       }
     }
   });
-  if(foot) foot.textContent=growthFoot(trend.measured, GROWTH.cohort, 'with a milestone mean')+(GROWTH.displayed?growthAgreeText(GROWTH.displayed)+growthLimitNote(GROWTH.displayed):'')+' These points are the sheet’s stored visit means. To recompute each point, Growth_milestones needs one row per child per visit with Claude_ID, sex, weight_kg, height_cm, and either age at that measurement or measurement_date plus date_of_birth, plus months since enrolment or the enrolment date. Mean_BAZ and Mean_HAZ alone are not enough.';
+  if(foot){
+    if(!visits){
+      foot.textContent=growthFoot(trend.measured, GROWTH.cohort, 'with a milestone mean')+(GROWTH.displayed?growthAgreeText(GROWTH.displayed)+growthLimitNote(GROWTH.displayed):'')+' These points are the sheet’s stored visit means. To recompute each point, Growth_milestones needs one row per child per visit with Claude_ID, sex, weight_kg, height_cm, and either age at that measurement or measurement_date plus date_of_birth, plus months since enrolment or the enrolment date. Mean_BAZ and Mean_HAZ alone are not enough.';
+    }else{
+      const d=trend.drops||{};
+      const agree=trend.agreement;
+      let gap='';
+      if(agree&&agree.bazBins){
+        gap=' Recomputed BMI-for-age is within 0.15 of the stored milestone mean at '+agree.bazClose+' of '+agree.bazBins+' points'+(agree.bazGap==null?'':(' (mean gap '+(agree.bazGap>0?'+':'')+agree.bazGap.toFixed(2)+')'))+'.';
+        if(agree.hazBins) gap+=' Height-for-age: '+agree.hazClose+' of '+agree.hazBins+(agree.hazGap==null?'':(' (mean gap '+(agree.hazGap>0?'+':'')+agree.hazGap.toFixed(2)+')'))+'.';
+      }
+      foot.textContent='n = '+trend.measured.toLocaleString()+' children with at least one eligible value. BMI-for-age n = '+(trend.bazChildren||0).toLocaleString()+', height-for-age n = '+(trend.hazChildren||0).toLocaleString()+', weight-for-age n = '+(trend.wazChildren||0).toLocaleString()+'. Visits dropped: '+(d.noBin||0).toLocaleString()+' with no month bin; '+(d.outOfScope||0).toLocaleString()+' out of scope; '+(d.notClean||0).toLocaleString()+' with BMI-for-age or height-for-age not clean; '+(d.implausible||0).toLocaleString()+' implausible z-scores; '+(d.wazNotApplicable||0).toLocaleString()+' with weight-for-age not applicable because age is 10 years or older. Age at the visit is not taken from a date of birth and can be off by several months.'+gap;
+    }
+  }
 }
 function renderDisplayedBmi(displayed){
   if(_gBmi){_gBmi.destroy();_gBmi=null;}
@@ -7181,7 +7351,7 @@ async function boot({forceFresh=false}={}){
   try{
     const C=window.DASHBOARD_CONFIG;
     let loaded=0, oldestFetch=Infinity, cachedSheets=0;
-    const sheetTotal=14;
+    const sheetTotal=15;
     const reportLoad=()=>{
       if(dashboardLoading&&loadVersion===dashboardLoadVersion){
         const el=document.getElementById('ov-msg');
@@ -7202,7 +7372,7 @@ async function boot({forceFresh=false}={}){
         return null;
       }
     };
-    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid,growthChildGrid,growthMileGrid]=await Promise.all([
+    const [enr,csFac,ltGrid,cap,orient,fupGrid,opsGrid,offsGrid,smbgGrid,hhGrid,hbaGrid,tgtGrid,growthChildGrid,growthMileGrid,growthVisitGrid]=await Promise.all([
       load(C.wb1,'Enrolled List'),
       load(C.wb1,'CompleteSupport_Facilities'),
       load(C.wb1,'Light_touch_facilities'),
@@ -7216,7 +7386,8 @@ async function boot({forceFresh=false}={}){
       load(C.wb1,'Hba1c_Baseline/Latest'),
       load(C.wb1,'Targets'),
       load(C.wb1,'Growth_child',{soft:true}),
-      load(C.wb1,'Growth_milestones',{soft:true})
+      load(C.wb1,'Growth_milestones',{soft:true}),
+      load(C.wb1,'Growth_visits_dash',{soft:true})
     ]);
     // Always replace previous targets, including when a refresh returns missing values.
     TARGETS=parseTargets(tgtGrid);
@@ -7229,6 +7400,7 @@ async function boot({forceFresh=false}={}){
     fillRow(orient, ['State','Type of Service Provider','Pilot District? (Yes/No)'], ORI_CANON);
     fillGrowthHeaders(growthChildGrid, ['Claude_ID','State','BAZ_bucket'], GR_CHILD_CANON);
     fillGrowthHeaders(growthMileGrid, ['Claude_ID','Enrolment_quarter','State'], GR_MILE_CANON);
+    fillGrowthHeaders(growthVisitGrid, ['Claude_ID','Sex'], GR_VISIT_CANON);
     // Every row the tab returned, before we drop the blank placeholders. Kept so the
     // guard below can tell "the tab is unreachable" apart from "the tab is empty".
     const enrRows=toObjects(enr, ['Claude_ID','State','Survival Status']);
@@ -7246,6 +7418,7 @@ async function boot({forceFresh=false}={}){
       hba:     toObjects(hbaGrid, ['Claude_ID','State','Latest hba1c time bucket']),
       growthChild: growthObjects(growthChildGrid),
       growthMilestones: growthObjects(growthMileGrid),
+      growthVisits: growthObjects(growthVisitGrid),
       stock:   null // Fetch only when the Stock Levels tab (or PDF export) needs it.
     };
     if(RAW.enrolled.length<50) throw new Error(enrRows.length<50
