@@ -47,13 +47,13 @@ A headline share uses a 95% Wilson score interval, shown as the small range unde
 
 For a paired change, moved out is children in the group at the first visit and not at the latest. Moved in is the opposite. The net change, in percentage points, is `(moved in − moved out) / N`. The p-value is the two-sided exact McNemar test, a binomial test on the discordant pairs. The 95% interval is the equal-tailed Clopper–Pearson interval for the share of those discordant pairs that moved in, rescaled to the whole group. It excludes zero only when that exact p is below 0.05, so the interval and the wording follow one rule. A Wald interval is not used, because it can exclude zero when the exact p is 0.05 or higher.
 
-The wording uses that exact p only. Below 0.05 the note says “a real change”. From 0.05 up to but not including 0.10 it says “borderline, may be chance”. At 0.10 or above it says “within normal variation”. If a printed interval ever disagreed with that wording, the note would say “borderline, may be chance” rather than a verdict the interval contradicts.
+On the page, below 0.05 the note says “a real change”. At 0.05 or above it says “within normal variation”. The longer definitions, the short-gap detail, and the population benchmark list sit in the collapsed “About this data” note.
 
 These comparisons are before and after, not proof the program caused the change. Children who start very thin tend to improve on their own (regression to the mean), and groups with longer time in care started at different levels. Height catch-up is slow, and stunting is often linked with long-standing poor glycaemic control.
 
 ## Who is left out of the before-after charts
 
-The “Who is counted” note states the short gap once. The count is every child whose second measurement is less than 3 months after the first. In parentheses it says how many of those also have a baseline BMI-for-age z, out of everyone with a baseline BMI-for-age z. The two numbers differ when a short-gap child has no baseline BMI-for-age z. The note then compares starting thinness for the children with a baseline BMI who are not in the before-after charts with starting thinness for the children who are in the charts, and says the two were similar only when they differ by less than 2 percentage points.
+The line under the heading states the cohort, how many have no usable measure, and how many have a second visit under 3 months later. It says their starting thinness was similar only when the two rates differ by less than 2 percentage points. The full count, including how many of the short-gap children also have a baseline BMI-for-age, is in “About this data”.
 
 ## Population benchmark
 
