@@ -87,15 +87,14 @@ test('growth monitoring is shown while SHOW_GROWTH is on', () => {
 
 test('growth section uses plain shares and no longer loads the visit trend', () => {
   const tab = html.slice(html.indexOf('id="tab-1"'), html.indexOf('id="tab-2"'));
-  assert.match(tab, /Thinness: first visit vs latest \(same children\)/);
-  assert.match(tab, /Underweight: first visit vs latest \(same children\)/);
   assert.match(tab, /id="growth-change-metric"/);
-  assert.match(tab, /id="growth-paired-caveat"/);
-  assert.match(tab, /regression to the mean/);
+  assert.match(tab, /About this data/);
+  assert.equal(tab.includes('id="c-growth-mix"'), false);
+  assert.equal(tab.includes('id="growth-paired-caveat"'), false);
   assert.equal(tab.includes('Did BMI improve'), false);
   assert.equal(tab.includes('Did underweight fall'), false);
-  assert.match(tab, /Weight gain compared with normal growth/);
-  assert.match(tab, /Latest HbA1c/);
+  assert.match(tab, /id="growth-pace-title"/);
+  assert.match(tab, /id="growth-hba-title"/);
   assert.match(tab, /id="growth-thin-pct"/);
   assert.equal(tab.includes('Month-on-month'), false);
   assert.equal(tab.includes('weight-for-height'), false);
@@ -351,11 +350,17 @@ test('Wilson intervals, McNemar and the paired net change match the checked coun
   assert.equal(got.checks.every(Boolean), true);
   assert.equal(got.contradict, 'borderline, may be chance');
   assert.equal(got.contradictHigh, 'borderline, may be chance');
-  assert.match(got.placeExact, /24\.0% \(range 20\.1–28\.4, n=100\)/);
+  assert.match(got.placeExact, /Madhya Pradesh has the highest thinness \(24\.0%\)/);
   assert.equal(got.placeExact.includes('wide range'), false);
-  assert.match(got.placeWide, /Narsinghpur has the highest share thin/);
-  assert.match(got.placeWide, /45\.5% \(range 24\.5–68\.0, n=22\)/);
+  assert.match(got.placeWide, /Narsinghpur has the highest thinness \(45\.5%\)/);
   assert.match(got.placeWide, /Small group, wide range/);
+  assert.equal(run("growthChangeTitle('Thinness', 25, 19.7, 0.00001)"), 'Thinness fell from 25.0% to 19.7%');
+  assert.equal(run("growthChangeTitle('Stunting', 29.5, 32.3, 0.0024)"), 'Stunting rose from 29.5% to 32.3%');
+  assert.equal(run("growthChangeTitle('Underweight', 19.3, 18, 0.68)"), 'Underweight is about the same (19.3% to 18.0%)');
+  assert.match(run('growthChangeNote(131, 68, 0.000009)'), /131 moved out, 68 moved in\. This is a real change/);
+  assert.match(run('growthChangeNote(29, 25, 0.68)'), /within normal variation/);
+  assert.match(run("growthNowNote({under:{n:99,N:474}, wazNotApplicable:1267})"), /Underweight is only scored to age 10 \(99 of 474\)\. 1,267 children are older\./);
+  assert.match(run("growthFaceLine({cohort:2018, noSexOrPair:277, shortGap:545}, {shortGap:545, leftN:539, keptN:1195, leftThinPct:25.6, keptThinPct:25})"), /2,018 children in this view\. 277 have no usable measure\. 545 have a second visit under 3 months later; their starting thinness was similar\./);
   assert.equal(got.who.includes('Gap under 3 months'), false);
   assert.equal((got.who.match(/3 months/g) || []).length, 1);
   assert.match(got.thinText, /131 moved out of thin, 68 moved into thin, net -5\.3 points \(95% CI -7\.6 to -3\.0\)/);
@@ -479,7 +484,6 @@ test('missing growth tab and the adult filter show a friendly state', async () =
   run(`getF=()=>({age:'adu', state:'all'}); GROWTH={status:'ok', cohort:4}; renderGrowth();`);
   assert.equal(elements['growth-status'].textContent, 'Not applicable for adults');
   assert.equal(elements['growth-heading'].hidden, true);
-  assert.equal(elements['growth-who'].hidden, true);
   assert.equal(elements['growth-lead'].hidden, true);
   assert.equal(elements['growth-body'].hidden, true);
   const calls = [];

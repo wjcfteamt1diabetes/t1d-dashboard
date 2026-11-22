@@ -217,6 +217,9 @@ body.support-lt .enrol-grid{grid-template-columns:minmax(0,1fr)}
 .growth-toggle input{margin:0}
 .growth-toggle select{font:inherit;color:#334155;background:#fff;border:1px solid var(--bdr);border-radius:4px;padding:2px 6px}
 .growth-foot{font-size:10px;color:var(--t2);margin-top:8px;line-height:1.45}
+.growth-about{margin:14px 0 4px;font-size:12px;color:#334155}
+.growth-about summary{cursor:pointer;font-weight:600;color:#17375e}
+.growth-about p{margin:8px 0 0;line-height:1.45}
 .growth-toggle{font-size:11px;color:#334155;white-space:nowrap;margin:2px 0 0 8px}
 .growth-toggle select{font:inherit;margin-left:4px;color:#17375e}
 .growth-delta{font-size:10px;color:var(--t2);margin-top:6px;line-height:1.45}
@@ -1088,56 +1091,46 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 
 <div id="growth-section">
 <div class="sl" id="growth-heading">Growth</div>
-<p class="growth-lead" id="growth-lead">Shares of children who are thin, stunted, overweight or underweight. Z-scores are calculated on this page from weight, height, age and sex with the WHO tables. Thin is BMI-for-age below −2. Healthy is −2 to +1. Overweight is above +1. Stunted is height-for-age below −2. Underweight is weight-for-age below −2, only through 120 months. Every chart uses the same filtered children as the rest of the page.</p>
-<p class="growth-foot" id="growth-who"></p>
+<p class="growth-lead" id="growth-lead"></p>
 <div id="growth-status" class="data-pending-chart" role="status" hidden></div>
 <div id="growth-body">
 
-<div class="sl">Growth status now</div>
 <div class="g4">
   <div class="card cab">
     <div class="ct">Thin</div>
-    <div class="cs">BMI-for-age below −2 · latest visit</div>
+    <div class="cs">Latest visit</div>
     <div class="kv b" id="growth-thin-pct">—</div>
     <div class="ks" id="growth-thin-n"></div>
     <div class="ks" id="growth-thin-ci"></div>
   </div>
   <div class="card cab">
     <div class="ct">Stunted</div>
-    <div class="cs">Height-for-age below −2 · latest visit</div>
+    <div class="cs">Latest visit</div>
     <div class="kv b" id="growth-stunt-pct">—</div>
     <div class="ks" id="growth-stunt-n"></div>
     <div class="ks" id="growth-stunt-ci"></div>
   </div>
   <div class="card cab">
     <div class="ct">Overweight</div>
-    <div class="cs">BMI-for-age above +1 · latest visit</div>
+    <div class="cs">Latest visit</div>
     <div class="kv b" id="growth-over-pct">—</div>
     <div class="ks" id="growth-over-n"></div>
     <div class="ks" id="growth-over-ci"></div>
   </div>
   <div class="card cab">
     <div class="ct">Underweight</div>
-    <div class="cs">Weight-for-age below −2 · through 120 months</div>
+    <div class="cs">To age 10</div>
     <div class="kv b" id="growth-under-pct">—</div>
     <div class="ks" id="growth-under-n"></div>
     <div class="ks" id="growth-under-ci"></div>
   </div>
 </div>
 <p class="growth-foot" id="growth-now-note"></p>
-<div class="growth-takeaway" id="growth-now-take"></div>
-<div class="card">
-  <div class="ct">BMI-for-age mix — latest visit</div>
-  <div class="cs">All ages in one bar. Under 5 years use the same three groups. Below −2 is thin (WHO calls this wasted under 5). −2 to +1 is healthy. Above +1 is overweight (under 5, +1 to +2 is called possible risk of overweight).</div>
-  <div class="lg" id="growth-mix-lg"></div>
-  <div style="height:120px;position:relative"><canvas id="c-growth-mix" role="img" aria-label="Share thin, healthy and overweight at the latest visit, all ages"></canvas></div>
-  <div class="growth-foot" id="growth-mix-foot"></div>
-</div>
 
 <div class="g2">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-      <div class="ct" id="growth-change-title">Thinness: first visit vs latest (same children)</div>
+      <div class="ct" id="growth-change-title">Thinness</div>
       <label class="growth-toggle" for="growth-change-metric">Show
         <select id="growth-change-metric" onchange="renderGrowthBmiChange()">
           <option value="thin">Thin</option>
@@ -1145,36 +1138,30 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
         </select>
       </label>
     </div>
-    <div class="cs" id="growth-change-sub">Percent thin (BMI-for-age below −2). Same children, at least 3 months apart. Light bar is the first visit, dark bar is the latest. Whiskers are the 95% range. A group under 20 is hidden.</div>
-    <div class="growth-takeaway" id="growth-bmi-change-take"></div>
-    <div class="lg" id="growth-bmi-change-lg"></div>
-    <div style="height:260px;position:relative"><canvas id="c-growth-bmi-change" role="img" aria-label="Percent thin at the first visit and the latest visit, overall and by time in care"></canvas></div>
+    <div class="cs" id="growth-change-sub"></div>
     <div class="growth-foot" id="growth-bmi-change-foot"></div>
+    <div class="lg" id="growth-bmi-change-lg"></div>
+    <div style="height:260px;position:relative"><canvas id="c-growth-bmi-change" role="img" aria-label="Percent thin or stunted at the first visit and the latest visit"></canvas></div>
   </div>
   <div class="card">
-    <div class="ct">Underweight: first visit vs latest (same children)</div>
-    <div class="cs">Same children, both visits at or under 120 months, at least 3 months apart. Weight-for-age below −2. Whiskers are the 95% range.</div>
-    <div class="growth-takeaway" id="growth-under-take"></div>
+    <div class="ct" id="growth-under-title">Underweight</div>
+    <div class="cs" id="growth-under-sub"></div>
     <div class="lg" id="growth-under-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-under" role="img" aria-label="Percent underweight at the first visit and the latest visit"></canvas></div>
-    <div class="growth-foot" id="growth-under-foot"></div>
   </div>
 </div>
-<p class="growth-foot" id="growth-paired-caveat">Before-after comparison, not proof the program caused the change. Children who start very thin tend to improve on their own (regression to the mean), and groups with longer time in care started at different levels.</p>
 
 <div class="g2">
   <div class="card">
-    <div class="ct" id="growth-pace-title">Weight gain compared with normal growth (age 10 and under)</div>
-    <div class="cs" id="growth-pace-sub">On track means gaining weight at the normal rate for their age (WHO). Only children aged 10 or under at both visits, because WHO weight-for-age stops at 10.</div>
-    <div class="growth-takeaway" id="growth-pace-take"></div>
+    <div class="ct" id="growth-pace-title">Weight gain</div>
+    <div class="cs" id="growth-pace-sub"></div>
     <div class="lg" id="growth-pace-lg"></div>
-    <div style="height:160px;position:relative" id="growth-pace-box"><canvas id="c-growth-pace" role="img" aria-label="Share falling behind, on track, or catching up, compared with normal weight gain for their age"></canvas></div>
+    <div style="height:160px;position:relative" id="growth-pace-box"><canvas id="c-growth-pace" role="img" aria-label="Share falling behind, on track, or catching up"></canvas></div>
     <div class="growth-foot" id="growth-pace-foot"></div>
   </div>
   <div class="card">
-    <div class="ct" id="growth-place-title">Thin, stunted and overweight — by state</div>
-    <div class="cs" id="growth-place-sub">Latest visit. Each state with at least 20 children. Choose a state to see its districts.</div>
-    <div class="growth-takeaway" id="growth-place-take"></div>
+    <div class="ct" id="growth-place-title">Thinness by place</div>
+    <div class="cs" id="growth-place-sub">Latest visit, places with at least 20 children.</div>
     <div class="lg" id="growth-place-lg"></div>
     <div style="height:280px;position:relative"><canvas id="c-growth-place" role="img" aria-label="Percent thin, stunted and overweight by state or district"></canvas></div>
     <div class="growth-foot" id="growth-place-foot"></div>
@@ -1182,13 +1169,17 @@ html.pdf-exporting .tc *,html.pdf-exporting .tc *::before,html.pdf-exporting .tc
 </div>
 
 <div class="card" style="max-width:680px">
-  <div class="ct">Latest HbA1c — by growth group</div>
-    <div class="cs">Mean latest HbA1c for children who are thin, a healthy BMI, or overweight. The line is the 8.5% target used on the HbA1c charts. The reading may not be from the same day as the weight and height.</div>
-  <div class="growth-takeaway" id="growth-hba-take"></div>
+  <div class="ct" id="growth-hba-title">HbA1c</div>
+  <div class="cs" id="growth-hba-sub">Target 8.5%. The blood test may not be from the same day as the weighing.</div>
+  <div class="growth-foot" id="growth-hba-take"></div>
   <div class="lg" id="growth-hba-lg"></div>
   <div style="height:260px;position:relative"><canvas id="c-growth-hba" role="img" aria-label="Mean latest HbA1c for thin, healthy BMI and overweight children, with a line at 8.5 percent"></canvas></div>
-  <div class="growth-foot" id="growth-hba-foot"></div>
 </div>
+
+<details class="growth-about" id="growth-about">
+  <summary>About this data</summary>
+  <div id="growth-about-body"></div>
+</details>
 
 </div>
 </div>
@@ -5967,6 +5958,67 @@ function growthNowTakeaway(now){
   if(now.over.N>=GROWTH_MIN_N) bits.push(growthPctText(now.over.pct)+' are overweight');
   return bits.join(', ')+'.';
 }
+function growthFaceLine(ex, a){
+  ex=ex||{}; a=a||{};
+  const gap=a.shortGap>0?a.shortGap:(a.shortWithBase!=null?a.shortWithBase:(ex.shortGap||0));
+  let line=(ex.cohort||0).toLocaleString()+' children in this view. '+(ex.noSexOrPair||0).toLocaleString()+' have no usable measure.';
+  if(!gap) return line;
+  line+=' '+Number(gap).toLocaleString()+' have a second visit under 3 months later';
+  if(a.leftThinPct!=null&&a.keptThinPct!=null&&a.leftN>=GROWTH_MIN_N&&a.keptN>=GROWTH_MIN_N){
+    const close=Math.abs(a.leftThinPct-a.keptThinPct)<2;
+    line+=close?'; their starting thinness was similar.':'. Their starting thinness was '+Number(a.leftThinPct).toFixed(1)+'% vs '+Number(a.keptThinPct).toFixed(1)+'%.';
+  }else line+='.';
+  return line;
+}
+function growthMoveWord(first, latest, p){
+  if(first==null||latest==null||p==null||p>=0.05) return 'about';
+  if(Number(first).toFixed(1)===Number(latest).toFixed(1)) return 'about';
+  return Number(latest)<Number(first)?'fell':'rose';
+}
+function growthChangeTitle(noun, first, latest, p){
+  const a=growthPctText(first), b=growthPctText(latest);
+  const move=growthMoveWord(first, latest, p);
+  if(move==='fell') return noun+' fell from '+a+' to '+b;
+  if(move==='rose') return noun+' rose from '+a+' to '+b;
+  return noun+' is about the same ('+a+' to '+b+')';
+}
+function growthChangeNote(outN, inN, p){
+  if(p==null) return '';
+  const call=p<0.05?'This is a real change':'This is within normal variation';
+  return outN.toLocaleString()+' moved out, '+inN.toLocaleString()+' moved in. '+call+' ('+growthPText(p)+'). Not proof the programme caused the change.';
+}
+function growthNowNote(now){
+  if(!now||!now.under) return '';
+  return 'Underweight is only scored to age 10 ('+now.under.n.toLocaleString()+' of '+now.under.N.toLocaleString()+'). '+now.wazNotApplicable.toLocaleString()+' children are older.';
+}
+function growthPaceTitle(pct){
+  if(pct==null) return 'Weight gain for under-10s';
+  return growthPctText(pct)+' of under-10s are gaining weight on track';
+}
+function growthHbaTitle(hba){
+  const rows=(hba&&hba.groups||[]).filter(g=>g.mean!=null&&g.n>=GROWTH_MIN_N);
+  if(!rows.length) return 'HbA1c by growth group';
+  const top=rows.slice().sort((a,b)=>b.mean-a.mean||b.n-a.n)[0];
+  const who=top.label.toLowerCase();
+  if(rows.every(g=>g.mean>8.5)) return 'Mean HbA1c is high in every BMI group, and highest if '+who+' ('+top.mean.toFixed(2)+'%)';
+  return 'Mean HbA1c is highest if '+who+' ('+top.mean.toFixed(2)+'%)';
+}
+function growthHbaNote(hba){
+  const rows=(hba&&hba.groups||[]).filter(g=>g.n>=GROWTH_MIN_N);
+  if(!rows.length) return '';
+  const name=g=>g.key==='healthy'?'healthy BMI':g.label.toLowerCase();
+  return 'n = '+rows.map(g=>g.n.toLocaleString()+' '+name(g)).join(', ')+'.';
+}
+function growthAboutText(ex, attrition, plain){
+  const who=growthWhoText(ex, attrition);
+  const u5=plain&&plain.now&&plain.now.under5;
+  const u5line=u5?' Under 5 years in this view: '+u5.n.toLocaleString()+' with a BMI measure'+(u5.n?', of whom '+u5.thin.toLocaleString()+' are thin':'')+'.':'';
+  const bmi=plain&&plain.bmiChange&&plain.bmiChange.all;
+  const mix=bmi&&bmi.n>=GROWTH_MIN_N&&bmi.first&&bmi.first.healthyPct!=null
+    ? ' For the same children, healthy weight was '+growthPctText(bmi.first.healthyPct)+' then '+growthPctText(bmi.latest.healthyPct)+', and overweight was '+growthPctText(bmi.first.overPct)+' then '+growthPctText(bmi.latest.overPct)+'.'
+    : '';
+  return who+' Thin means BMI-for-age below −2. Healthy is −2 to +1. Overweight is above +1. Stunted means height-for-age below −2. Underweight means weight-for-age below −2, and that measure stops at 120 months (age 10). Under 5, the same thin cut is called wasted, and above +1 is called possible risk of overweight.'+u5line+' The whiskers are 95% ranges. A paired change is called a real change only when the exact test is below 0.05. Children who start very thin tend to improve on their own (regression to the mean), and groups with longer time in care started at different levels. Height catch-up is slow, and stunting is often linked with long-standing poor blood sugar control.'+mix+' '+growthCnnsNote();
+}
 function growthFlowSentence(outWord, inWord, outN, inN, net, lo, hi, p){
   if(net==null||p==null) return '';
   return outN.toLocaleString()+' '+outWord+', '+inN.toLocaleString()+' '+inWord+', net '+growthSigned(net)+' points (95% CI '+growthSigned(lo)+' to '+growthSigned(hi)+'). '+growthVerdictPhrase(p, lo, hi)+' ('+growthPText(p)+').';
@@ -5994,10 +6046,8 @@ function growthPlaceTakeaway(place){
   const rows=(place&&place.rows||[]).filter(r=>r.thinPct!=null&&r.n>=GROWTH_MIN_N);
   if(rows.length<1) return '';
   const top=rows.slice().sort((a,b)=>b.thinPct-a.thinPct||b.n-a.n)[0];
-  const where=place.mode==='district'?'district':'state';
-  const range=top.thinLo!=null?growthRangeText(top.thinLo, top.thinHi)+', ':'';
   const wide=top.thinLo!=null&&top.thinHi-top.thinLo>20?' Small group, wide range.':'';
-  return top.label+' has the highest share thin among '+where+'s with at least 20 children: '+Number(top.thinPct).toFixed(1)+'% ('+range+'n='+top.n.toLocaleString()+').'+wide;
+  return top.label+' has the highest thinness ('+Number(top.thinPct).toFixed(1)+'%).'+wide;
 }
 function growthHbaTakeaway(hba){
   const rows=(hba&&hba.groups||[]).filter(g=>g.mean!=null&&g.n>=GROWTH_MIN_N);
@@ -6153,9 +6203,9 @@ function growthCnnsNote(){
 function growthDestroy(slot){
   if(slot.chart){ slot.chart.destroy(); slot.chart=null; }
 }
-let _gMix=null,_gBmiChg=null,_gUnder=null,_gPace=null,_gPlace=null,_gHbaG=null;
+let _gBmiChg=null,_gUnder=null,_gPace=null,_gPlace=null,_gHbaG=null;
 function growthChrome(show){
-  ['growth-heading','growth-lead','growth-who'].forEach(id=>{
+  ['growth-heading','growth-lead'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.hidden=!show;
   });
@@ -6168,8 +6218,8 @@ function renderGrowth(){
   if(!box||!body) return;
   const view=growthView(getF(), GROWTH);
   if(view.mode!=='ready'||!GROWTH.plain){
-    [_gMix,_gBmiChg,_gUnder,_gPace,_gPlace,_gHbaG].forEach(ch=>{ if(ch) ch.destroy(); });
-    _gMix=_gBmiChg=_gUnder=_gPace=_gPlace=_gHbaG=null;
+    [_gBmiChg,_gUnder,_gPace,_gPlace,_gHbaG].forEach(ch=>{ if(ch) ch.destroy(); });
+    _gBmiChg=_gUnder=_gPace=_gPlace=_gHbaG=null;
     body.hidden=true;
     growthChrome(false);
     box.hidden=false;
@@ -6181,8 +6231,10 @@ function renderGrowth(){
   growthChrome(true);
   const heading=document.getElementById('growth-heading');
   if(heading) heading.textContent=growthAgeHeading(GROWTH.kids);
-  const who=document.getElementById('growth-who');
-  if(who) who.textContent=growthWhoText(GROWTH.plain.exclusions, GROWTH.plain.attrition);
+  const lead=document.getElementById('growth-lead');
+  if(lead) lead.textContent=growthFaceLine(GROWTH.plain.exclusions, GROWTH.plain.attrition);
+  const about=document.getElementById('growth-about-body');
+  if(about) about.textContent=growthAboutText(GROWTH.plain.exclusions, GROWTH.plain.attrition, GROWTH.plain);
   renderGrowthNow();
   renderGrowthBmiChange();
   renderGrowthUnder();
@@ -6203,52 +6255,7 @@ function renderGrowthNow(){
   put('growth-over-pct','growth-over-n','growth-over-ci', now.over);
   put('growth-under-pct','growth-under-n','growth-under-ci', now.under);
   const note=document.getElementById('growth-now-note');
-  if(note){
-    const u5=now.under5;
-    const u5line=u5.n>=GROWTH_MIN_N
-      ? ' '+u5.n.toLocaleString()+' of the BMI group are under 5 years, and '+u5.thin.toLocaleString()+' of them are thin. Under 5, WHO calls below −2 wasted, and above +1 possible risk of overweight, overweight or obese. They are counted in the same three groups.'
-      : ' Under 5 years in this view: '+u5.n.toLocaleString()+' with a BMI-for-age z'+(u5.n&&u5.n<GROWTH_MIN_N?' (share hidden, n<20)':'')+'. The same three groups are used: below −2, −2 to +1, and above +1.';
-    note.textContent='Thin, stunted and overweight use the latest visit. Underweight is weight-for-age below −2 through 120 months. '+now.wazNotApplicable.toLocaleString()+' children are past that age, so weight-for-age does not apply.'+u5line;
-  }
-  growthShowTakeaway('growth-now-take', growthNowTakeaway(now));
-  const canvas=document.getElementById('c-growth-mix');
-  const foot=document.getElementById('growth-mix-foot');
-  if(_gMix){_gMix.destroy();_gMix=null;}
-  if(!canvas) return;
-  if(now.mix.n<GROWTH_MIN_N){
-    growthHold(canvas, 'Not enough children with a BMI-for-age z in this view.');
-    if(foot) foot.textContent='n = '+now.mix.n.toLocaleString()+'.';
-    return;
-  }
-  growthRelease(canvas);
-  growthLegend('growth-mix-lg', [
-    {label:'Thin (below −2)', color:GROWTH_GROUP_COLOR.thin},
-    {label:'Healthy (−2 to +1)', color:GROWTH_GROUP_COLOR.healthy},
-    {label:'Overweight (above +1)', color:GROWTH_GROUP_COLOR.over}
-  ]);
-  const mix=now.mix;
-  _gMix=createDashboardChart(canvas,{
-    type:'bar',
-    data:{
-      labels:[['All ages','(n='+mix.n.toLocaleString()+')']],
-      datasets:[
-        {label:'Thin', data:[mix.thinPct], backgroundColor:GROWTH_GROUP_COLOR.thin, _counts:[mix.thin], _oneDp:true},
-        {label:'Healthy', data:[mix.healthyPct], backgroundColor:GROWTH_GROUP_COLOR.healthy, _counts:[mix.healthy], _oneDp:true},
-        {label:'Overweight', data:[mix.overPct], backgroundColor:GROWTH_GROUP_COLOR.over, _counts:[mix.over], _oneDp:true}
-      ]
-    },
-    options:{
-      responsive:true, maintainAspectRatio:false, indexAxis:'y',
-      plugins:{legend:{display:false}, tooltip:{callbacks:{
-        label(ctx){ const n=ctx.dataset._counts[ctx.dataIndex]; return ' '+ctx.dataset.label+': '+Number(ctx.parsed.x).toFixed(1)+'% · n = '+n.toLocaleString()+' of '+mix.n.toLocaleString(); }
-      }}},
-      scales:{
-        x:{stacked:true, min:0, max:100, title:{display:true, text:'Share of children (%)', font:{size:11}, color:'#334155'}, ticks:{font:{size:11}, color:'#334155'}, grid:{display:false}},
-        y:{stacked:true, grid:{display:false}, ticks:{font:{size:12}, color:'#334155'}}
-      }
-    }
-  });
-  if(foot) foot.textContent='n = '+mix.n.toLocaleString()+' children with a latest BMI-for-age z, all ages together.';
+  if(note) note.textContent=growthNowNote(now);
 }
 function renderGrowthBmiChange(){
   const plain=GROWTH&&GROWTH.plain;
@@ -6258,10 +6265,11 @@ function renderGrowthBmiChange(){
   const stunt=metric==='stunt';
   const title=document.getElementById('growth-change-title');
   const sub=document.getElementById('growth-change-sub');
-  if(title) title.textContent=stunt?'Stunting: first visit vs latest (same children)':'Thinness: first visit vs latest (same children)';
-  if(sub) sub.textContent=stunt
-    ? 'Percent stunted (height-for-age below −2). Same children, at least 3 months apart. Light bar is the first visit, dark bar is the latest. Whiskers are the 95% range. A group under 20 is hidden.'
-    : 'Percent thin (BMI-for-age below −2). Same children, at least 3 months apart. Light bar is the first visit, dark bar is the latest. Whiskers are the 95% range. A group under 20 is hidden.';
+  const blockAll=stunt?plain.stuntChange.all:plain.bmiChange.all;
+  const firstPct=stunt?blockAll.firstPct:blockAll.first.thinPct;
+  const latestPct=stunt?blockAll.latestPct:blockAll.latest.thinPct;
+  if(title) title.textContent=blockAll.n>=GROWTH_MIN_N&&firstPct!=null?growthChangeTitle(stunt?'Stunting':'Thinness', firstPct, latestPct, blockAll.p):(stunt?'Stunting':'Thinness');
+  if(sub) sub.textContent='Same '+(blockAll.n||0).toLocaleString()+' children, first visit vs latest, at least 3 months apart.';
   const canvas=document.getElementById('c-growth-bmi-change');
   const foot=document.getElementById('growth-bmi-change-foot');
   if(_gBmiChg){_gBmiChg.destroy();_gBmiChg=null;}
@@ -6276,12 +6284,10 @@ function renderGrowthBmiChange(){
   const shown=rows.filter(r=>!r.hidden&&r.n>=GROWTH_MIN_N);
   const hidden=rows.filter(r=>r.hidden&&r.label!=='All').map(b=>b.label+' (n='+b.n.toLocaleString()+')');
   const noun=stunt?'Stunted':'Thin';
-  const bmi=plain.bmiChange.all;
-  const mixNote=!stunt&&bmi.n>=GROWTH_MIN_N&&bmi.first.healthyPct!=null
-    ? ' Healthy: '+growthPctText(bmi.first.healthyPct)+' at the first visit, '+growthPctText(bmi.latest.healthyPct)+' at the latest. Overweight: '+growthPctText(bmi.first.overPct)+' then '+growthPctText(bmi.latest.overPct)+'.'
-    : '';
-  const text='n = '+source.all.n.toLocaleString()+' with both visits at least 3 months apart.'+mixNote+(hidden.length?' Hidden, n<20: '+hidden.join(', ')+'.':'');
-  growthShowTakeaway('growth-bmi-change-take', stunt?growthStuntTakeaway(source):growthBmiChangeTakeaway(source));
+  const flow=stunt
+    ? growthChangeNote(source.all.out, source.all.inn, source.all.p)
+    : growthChangeNote(source.all.leftThin, source.all.enteredThin, source.all.p);
+  const text=(source.all.n>=GROWTH_MIN_N?flow:'')+(hidden.length?(flow?' ':'')+'Some time groups are hidden (under 20 children).':'');
   if(!shown.length){
     growthHold(canvas, 'Not enough children with both visits.');
     if(foot) foot.textContent=text;
@@ -6331,11 +6337,15 @@ function renderGrowthUnder(){
   const foot=document.getElementById('growth-under-foot');
   if(_gUnder){_gUnder.destroy();_gUnder=null;}
   if(!canvas) return;
-  const rules='n = '+block.n.toLocaleString()+'. Both visits at or under 120 months, and at least 3 months apart. Past 120 months at the latest visit, so not scored: '+block.wazNotApplicable.toLocaleString()+'.';
-  growthShowTakeaway('growth-under-take', growthUnderTakeaway(block));
+  const title=document.getElementById('growth-under-title');
+  const sub=document.getElementById('growth-under-sub');
+  if(title) title.textContent=block.n>=GROWTH_MIN_N&&block.firstPct!=null?growthChangeTitle('Underweight', block.firstPct, block.latestPct, block.p):'Underweight';
+  if(sub){
+    const call=block.p==null?'':(block.p<0.05?' This is a real change.':' The change is within normal variation.');
+    sub.textContent='Same children aged 10 or under, n = '+block.n.toLocaleString()+'.'+call;
+  }
   if(block.n<GROWTH_MIN_N){
     growthHold(canvas, 'Not enough children under the age limit at both visits.');
-    if(foot) foot.textContent=rules;
     return;
   }
   growthRelease(canvas);
@@ -6362,7 +6372,7 @@ function renderGrowthUnder(){
       }
     }
   });
-  if(foot) foot.textContent=rules;
+  if(foot) foot.textContent='';
 }
 function renderGrowthPace(){
   const plain=GROWTH.plain, pace=plain.pace;
@@ -6375,8 +6385,11 @@ function renderGrowthPace(){
   const rows=everyBand?[pace.all].concat(pace.bands):[pace.all].filter(r=>r.n>=GROWTH_MIN_N);
   const box=document.getElementById('growth-pace-box');
   if(box) box.style.height=(rows.length>1?Math.max(180, rows.length*56):120)+'px';
-  const rules='n = '+pace.all.n.toLocaleString()+'.'+(everyBand?'':' Time-in-care groups are not shown, because not every group has 20 children.');
-  growthShowTakeaway('growth-pace-take', growthPaceTakeaway(pace));
+  const rules=everyBand?'':'Time groups are hidden because not every one has 20 children.';
+  const paceTitle=document.getElementById('growth-pace-title');
+  const paceSub=document.getElementById('growth-pace-sub');
+  if(paceTitle) paceTitle.textContent=growthPaceTitle(pace.all.steadyPct);
+  if(paceSub) paceSub.textContent='Compared with the usual rate for their age, n = '+pace.all.n.toLocaleString()+'.';
   if(!rows.length){
     growthHold(canvas, 'Not enough children aged 10 or under at both visits.');
     if(foot) foot.textContent=rules;
@@ -6420,13 +6433,9 @@ function renderGrowthPlace(){
   const sub=document.getElementById('growth-place-sub');
   if(_gPlace){_gPlace.destroy();_gPlace=null;}
   if(!canvas) return;
-  const where=place.mode==='district'?'by district':'by state';
-  if(title) title.textContent='Thin, stunted and overweight — '+where;
-  if(sub) sub.textContent=place.mode==='district'
-    ? 'Districts in this state with at least 20 children who have a latest BMI-for-age z. Smaller districts are hidden.'
-    : 'Latest visit. Each state with at least 20 children. Choose a state to see its districts.';
-  const rules=(place.rows.length?'':'No '+place.mode+' has 20 children in this view. ');
-  growthShowTakeaway('growth-place-take', growthPlaceTakeaway(place));
+  if(title) title.textContent=growthPlaceTakeaway(place)||'Thinness by place';
+  if(sub) sub.textContent='Latest visit, places with at least 20 children.';
+  const rules='Marks are general-population thinness, ages 10–19, for context only.';
   if(!place.rows.length){
     growthHold(canvas, 'Not enough children in any '+(place.mode==='district'?'district':'state')+'.');
     if(foot) foot.textContent=rules;
@@ -6440,8 +6449,8 @@ function renderGrowthPlace(){
     {label:'Thin', color:'#0b2545'},
     {label:'Stunted', color:'#1a6aaf'},
     {label:'Overweight', color:'#8ec0e4'},
-    {label:'95% range (thin)', color:'#1f2937'},
-    {label:'CNNS 2016–18 thinness, ages 10–19', color:'#0f3460'}
+    {label:'Range', color:'#1f2937'},
+    {label:'Context', color:'#0f3460'}
   ]);
   const rows=place.rows;
   const valueOf=ctx=>wide?ctx.parsed.x:ctx.parsed.y;
@@ -6480,20 +6489,20 @@ function renderGrowthPlace(){
       }
     }
   });
-  if(foot) foot.textContent='n is children with a latest BMI-for-age z. Stunted uses height-for-age and is hidden when that count is under 20. '+(wide&&place.cnns!=null?'The line is this state’s CNNS thinness ('+Number(place.cnns).toFixed(1)+'%). ':'')+growthCnnsNote()+' '+rules;
+  if(foot) foot.textContent=place.rows.length?rules:'No '+place.mode+' has 20 children in this view.';
 }
 function renderGrowthHbaGroup(){
   const plain=GROWTH.plain, groups=plain.hba.groups;
   const canvas=document.getElementById('c-growth-hba');
-  const foot=document.getElementById('growth-hba-foot');
+  const note=document.getElementById('growth-hba-take');
+  const title=document.getElementById('growth-hba-title');
   if(_gHbaG){_gHbaG.destroy();_gHbaG=null;}
   if(!canvas) return;
-  growthShowTakeaway('growth-hba-take', growthHbaTakeaway(plain.hba));
+  if(title) title.textContent=growthHbaTitle(plain.hba);
+  if(note) note.textContent=growthHbaNote(plain.hba);
   const any=groups.some(g=>g.mean!=null);
-  const rules='Latest HbA1c for children with a latest BMI-for-age z. The reading may not be from the same day as the weight and height. Groups under 20 are hidden.';
   if(!any){
-    growthHold(canvas, 'Not enough children with both a growth z and an HbA1c.');
-    if(foot) foot.textContent=rules;
+    growthHold(canvas, 'Not enough children with both a growth measure and an HbA1c.');
     return;
   }
   growthRelease(canvas);
@@ -6545,7 +6554,6 @@ function renderGrowthHbaGroup(){
       }
     }
   });
-  if(foot) foot.textContent=rules;
 }
 if(typeof window!=='undefined'&&window.addEventListener){
   let growthWasNarrow=growthNarrow();
