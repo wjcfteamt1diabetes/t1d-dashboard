@@ -2103,7 +2103,7 @@ let MAX=0, off=[null,null];   // null = not yet positioned → defaults to lates
 // Follow-up runs on its own axis: it only carries months the sheet has marks
 // for, so it neither starts nor ends where the enrolment months do.
 const FWIN=7;
-let FUP_MAX=0, fupOff=null, FUP_MATCHED=0;
+let FUP_MAX=0, fupOff=null, FUP_MATCHED=0, fupFilterStamp='';
 let _c1,_c2,_cg,_cp,_cs2,_cfl,_chc,_cha,_cco,_cod,_cfup;
 
 const MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -3255,14 +3255,31 @@ function monthList(ms){
 // reading as a broken fetch, and this says why they are empty and what the visit
 // records show for them — SMBG_HyperHypo covers only visits that came with SMBG
 // data, so that count is a floor on attendance, never the percentage itself.
-function fupNote(){
+function fupFilterKey(f){
+  f=f||{};
+  return ['state','division','district','facility','dpc','status','sex','age','support','period','from','to']
+    .map(k=>String(f[k]==null?'':f[k])).join('|');
+}
+// null means the latest window. buildFupChart turns that into the last page.
+function syncFupOffset(f){
+  const key=fupFilterKey(f);
+  if(key===fupFilterStamp) return false;
+  fupOff=null;
+  fupFilterStamp=key;
+  return true;
+}
+function fupNote(win, atLatest){
   if(!FUP_MATCHED) return 'No matching patients in this view.';
+  const shown=win||[];
+  const months={};
+  shown.forEach(r=>{ if(r&&r.m) months[r.m]=true; });
   const parts=[],cur=(FUP_MOM||[])[0];
-  if(cur&&cur.partial) parts.push(cur.m+' is incomplete: attendance to date / '+(cur.n||0).toLocaleString()+' due. Excluded from donor average.');
-  const pending=FUP_PENDING||[];
+  if(cur&&cur.partial&&months[cur.m]) parts.push(cur.m+' is incomplete: attendance to date / '+(cur.n||0).toLocaleString()+' due. Excluded from donor average.');
+  const pending=(FUP_PENDING||[]).filter(x=>months[x.m]);
   if(pending.length) parts.push(monthList(pending.map(x=>x.m))+': not marked Y/N; blank means unreported, not 0%.');
   if(pending.some(x=>x.visits>0)) parts.push('SMBG visits exist but do not establish the attendance denominator.');
   if(PERIOD) parts.push('Months in '+periodLabel(PERIOD)+'.');
+  if(atLatest===false && !pending.length) parts.push('Showing earlier months — use Forward to return to latest.');
   return parts.join(' ');
 }
 
@@ -3280,14 +3297,13 @@ function shiftFup(d){
 
 function buildFupChart(o){
   if(_cfup)_cfup.destroy();
-  const note=document.getElementById('fup-note');
-  if(note) note.textContent=fupNote();
-
   const axis=fupAxis();
   FUP_MAX=Math.max(0,axis.length-FWIN);
   o=(o==null)?FUP_MAX:Math.max(0,Math.min(FUP_MAX,o));
   fupOff=o;
   const win=axis.slice(o,o+FWIN);
+  const note=document.getElementById('fup-note');
+  if(note) note.textContent=fupNote(win, o>=FUP_MAX);
 
   const nl=document.getElementById('nlf');
   if(nl) nl.textContent=!win.length?'' : win.length>1?win[0].m+' – '+win[win.length-1].m : win[0].m;
@@ -4789,6 +4805,7 @@ function recompute(){
   const range=resolvePeriod(f.period, f.from, f.to, new Date());
   const stamp=range?range.from+':'+range.to:'all';
   if(stamp!==periodStamp){off=[null,null]; fupOff=null; periodStamp=stamp;}
+  syncFupOffset(f);
   PERIOD=range;
   const support=normSupport(f.support);
   const fa=RAW.facAttr||{};
